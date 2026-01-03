@@ -1,6 +1,8 @@
+import { Fragment } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, User, Repeat, Home, Calendar, QrCode } from 'lucide-react';
+import { Menu, Transition } from '@headlessui/react';
 
 export default function MainLayout() {
     const { user, logout, switchRole } = useAuth();
@@ -25,7 +27,7 @@ export default function MainLayout() {
                         <div className="flex items-center gap-8">
                             <Link to="/" className="flex-shrink-0 flex items-center">
                                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                                    NearEstate
+                                    NearEstate {user?.email}
                                 </span>
                             </Link>
 
@@ -72,29 +74,76 @@ export default function MainLayout() {
                         </div>
 
                         <div className="flex items-center space-x-2 sm:space-x-4">
-                            {user && (
-                                <>
-                                    <button
-                                        onClick={handleSwitchRole}
-                                        className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors flex items-center gap-2"
-                                        title="Switch Role"
+                            {!user ? (
+                                <Link to="/auth/login" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-sm">
+                                    Login
+                                </Link>
+                            ) : (
+                                <Menu as="div" className="ml-3 relative">
+                                    <div>
+                                        <Menu.Button className="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 items-center gap-2 p-1 border border-slate-200 hover:bg-slate-50 transition-colors">
+                                            <span className="sr-only">Open user menu</span>
+                                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                                <User size={18} />
+                                            </div>
+                                            <span className="hidden md:block font-medium text-slate-700 pr-2">{user.username || 'User'}</span>
+                                        </Menu.Button>
+                                    </div>
+                                    <Transition
+                                        as={Fragment}
+                                        enter="transition ease-out duration-200"
+                                        enterFrom="transform opacity-0 scale-95"
+                                        enterTo="transform opacity-100 scale-100"
+                                        leave="transition ease-in duration-75"
+                                        leaveFrom="transform opacity-100 scale-100"
+                                        leaveTo="transform opacity-0 scale-95"
                                     >
-                                        <Repeat size={18} />
-                                        <span className="hidden sm:inline">Switch to {user.role === 'VISITOR' ? 'Exhibitor' : 'Visitor'}</span>
-                                    </button>
+                                        <Menu.Items className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                                            <div className="px-4 py-3 border-b border-slate-100">
+                                                <p className="text-sm">Signed in as</p>
+                                                <p className="text-sm font-medium text-slate-900 truncate">{user.email}</p>
+                                                <p className="text-xs text-slate-500 capitalize">{user.role?.toLowerCase()}</p>
+                                            </div>
 
-                                    <Link to="/profile" className="p-2 text-slate-600 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-colors">
-                                        <User size={20} />
-                                    </Link>
+                                            <Menu.Item>
+                                                {({ active }) => (
+                                                    <Link
+                                                        to="/profile"
+                                                        className={`${active ? 'bg-slate-50' : ''} block px-4 py-2 text-sm text-slate-700 flex items-center gap-2`}
+                                                    >
+                                                        <User size={16} /> My Profile
+                                                    </Link>
+                                                )}
+                                            </Menu.Item>
 
-                                    <button
-                                        onClick={logout}
-                                        className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                        title="Logout"
-                                    >
-                                        <LogOut size={20} />
-                                    </button>
-                                </>
+                                            <Menu.Item>
+                                                {({ active }) => (
+                                                    <button
+                                                        onClick={handleSwitchRole}
+                                                        className={`${active ? 'bg-slate-50' : ''} block w-full text-left px-4 py-2 text-sm text-slate-700 flex items-center gap-2`}
+                                                    >
+                                                        <Repeat size={16} />
+                                                        Switch to {user.role === 'VISITOR' ? 'Exhibitor' : 'Visitor'}
+                                                    </button>
+                                                )}
+                                            </Menu.Item>
+
+                                            <Menu.Item>
+                                                {({ active }) => (
+                                                    <button
+                                                        onClick={() => {
+                                                            logout();
+                                                            navigate('/');
+                                                        }}
+                                                        className={`${active ? 'bg-slate-50' : ''} block w-full text-left px-4 py-2 text-sm text-red-600 flex items-center gap-2`}
+                                                    >
+                                                        <LogOut size={16} /> Sign out
+                                                    </button>
+                                                )}
+                                            </Menu.Item>
+                                        </Menu.Items>
+                                    </Transition>
+                                </Menu>
                             )}
                         </div>
                     </div>

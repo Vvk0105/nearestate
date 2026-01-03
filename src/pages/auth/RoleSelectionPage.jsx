@@ -9,19 +9,7 @@ export default function RoleSelectionPage() {
 
     const handleSelectRole = async (role) => {
         try {
-            // Logic: call Select Role API
-            // Endpoint: /auth/select-role/
             await apiClient.post('http://127.0.0.1:8000/api/auth/select-role/', { role });
-
-            // Update local user state? 
-            // The backend should return updated user or we might need to fetch me again?
-            // Or just navigate.
-
-            // If Exhibitor, redirect to profile form if not complete?
-            // Assuming backend handles role assignment.
-
-            // User requested: "if select visitor it redirect to visitor home page"
-            // "if select as exhibitor ... fill a form"
 
             if (role === 'VISITOR') {
                 navigate('/visitor/home');
@@ -38,8 +26,6 @@ export default function RoleSelectionPage() {
                     }
                 } catch (err) {
                     console.error("Profile status check failed", err);
-                    // If status check fails, safest to go to profile or home? 
-                    // Usually go to profile to ensure data.
                     navigate('/exhibitor/profile');
                 }
             }

@@ -38,8 +38,8 @@ export default function LoginPage() {
             toast.success('Login successful!');
             navigateUser(user);
         } catch (error) {
-            console.error(error);
-            toast.error('Invalid OTP. Please try again.');
+            console.error("Login verification failed:", error);
+            toast.error('Invalid OTP or Login Failed. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -49,43 +49,48 @@ export default function LoginPage() {
         if (!window.google) return;
 
         window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: async (response) => {
-            try {
-            const res = await apiClient.post("/auth/google/login/", {
-                token: response.credential,
-            });
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            callback: async (response) => {
+                try {
+                    const res = await apiClient.post("/auth/google/login/", {
+                        token: response.credential,
+                    });
 
-            const { access, user } = res.data;
+                    const { access, user } = res.data;
 
-            login(access, user);
-            toast.success("Google login successful");
+                    login(access, user);
+                    toast.success("Google login successful");
 
-            navigateUser(user);
-            } catch (err) {
-            console.error(err);
-            toast.error("Google login failed");
-            }
-        },
+                    navigateUser(user);
+                } catch (err) {
+                    console.error(err);
+                    toast.error("Google login failed");
+                }
+            },
         });
 
         window.google.accounts.id.renderButton(
-        document.getElementById("google-btn"),
-        {
-            theme: "outline",
-            size: "large",
-            width: "100%",
-        }
+            document.getElementById("google-btn"),
+            {
+                theme: "outline",
+                size: "large",
+                width: "100%",
+            }
         );
     }, []);
 
     const navigateUser = (user) => {
-        if (!user?.role) {
-            navigate('/select-role');
+        // Normalize role for check
+        let role = user?.role;
+        if (user?.active_role) role = user.active_role;
+        else if (Array.isArray(role)) role = role[0];
+
+        if (!role) {
+            navigate('/auth/select-role');
         } else {
-            if (user.role === 'VISITOR') navigate('/visitor/home');
-            else if (user.role === 'EXHIBITOR') navigate('/exhibitor/home');
-            else navigate('/select-role');
+            if (role === 'VISITOR') navigate('/visitor/home');
+            else if (role === 'EXHIBITOR') navigate('/exhibitor/home');
+            else navigate('/auth/select-role');
         }
     };
 
@@ -183,8 +188,8 @@ export default function LoginPage() {
                     <div className="space-y-6">
                         {/* Google button renders here */}
                         <div
-                        id="google-btn"
-                        className="flex justify-center"
+                            id="google-btn"
+                            className="flex justify-center"
                         />
                     </div>
                 </div>

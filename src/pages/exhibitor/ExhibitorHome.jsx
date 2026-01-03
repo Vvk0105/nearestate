@@ -76,10 +76,10 @@ export default function ExhibitorHome() {
                         </button>
                     ) : (
                         <button
-                            onClick={() => navigate(`/exhibitor/apply/${event.id}`)}
+                            onClick={() => navigate(`/visitor/events/${event.id}`)}
                             className="w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
                         >
-                            Apply for Exhibition
+                            View & Apply
                         </button>
                     );
 

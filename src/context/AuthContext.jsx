@@ -4,6 +4,7 @@ import { googleLogout } from '@react-oauth/google';
 
 const AuthContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
@@ -54,7 +55,7 @@ export const AuthProvider = ({ children }) => {
     const handleLogin = (newToken, userData) => {
         setToken(newToken);
         // Ensure role is consistent
-        if (userData.active_role) {
+        if (userData?.active_role) {
             userData.role = userData.active_role;
         }
         setUser(userData);

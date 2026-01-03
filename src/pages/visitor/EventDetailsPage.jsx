@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { MapPin, Calendar, Users, Store, Loader, CheckCircle } from 'lucide-react';
+import { MapPin, Calendar, Store, Loader, CheckCircle, Upload, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function EventDetailsPage() {
     const { id } = useParams();
-    const { apiClient } = useAuth();
+    const { apiClient, user } = useAuth();
     const [event, setEvent] = useState(null);
     const [exhibitors, setExhibitors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('details'); // details, exhibitors
     const [registering, setRegistering] = useState(false);
-    const [isRegistered, setIsRegistered] = useState(false); // Check if already registered?
+    const [isRegistered, setIsRegistered] = useState(false);
+
+    // Exhibitor Apply State
+    const [showApplyModal, setShowApplyModal] = useState(false);
+    const [applyFile, setApplyFile] = useState(null);
+    const [transactionId, setTransactionId] = useState('');
+    const [boothNumber, setBoothNumber] = useState('');
+    const [submittingApp, setSubmittingApp] = useState(false);
+    const [applicationStatus, setApplicationStatus] = useState(null); // null, PENDING, APPROVED, REJECTED
+
+    const isExhibitor = user?.role === 'EXHIBITOR';
 
     useEffect(() => {
         const fetchData = async () => {
@@ -23,9 +33,22 @@ export default function EventDetailsPage() {
                 ]);
                 setEvent(eventRes.data);
                 setExhibitors(exhibitorRes.data);
-                // Check registration status? API doesn't seem to have "am i registered" easily 
-                // without fetching "my-registrations". 
-                // We will just let them try to register or handle duplicate gracefully.
+
+                // Check registration/application status
+                if (user) {
+                    if (user.role === 'VISITOR') {
+                        // Check visitor registration? 
+                        // Maybe fetch my events and check ID.
+                        // Or just handle on button click (backend returns 'already registered').
+                    } else if (user.role === 'EXHIBITOR') {
+                        const appsRes = await apiClient.get('/exhibitions/exhibitor/my-applications/');
+                        const myApp = appsRes.data.find(a => a.exhibition.id === parseInt(id) || a.exhibition === parseInt(id));
+                        if (myApp) {
+                            setApplicationStatus(myApp.status);
+                            setIsRegistered(true); // Reusing this for "Applied" state visually
+                        }
+                    }
+                }
             } catch (error) {
                 console.error("Failed to fetch event details", error);
                 toast.error("Failed to load event details.");
@@ -34,9 +57,18 @@ export default function EventDetailsPage() {
             }
         };
         fetchData();
-    }, [id, apiClient]);
+    }, [id, apiClient, user]);
 
     const handleRegister = async () => {
+        if (!user) {
+            toast.error("Please login to register.");
+            return;
+        }
+        if (isExhibitor) {
+            setShowApplyModal(true);
+            return;
+        }
+
         setRegistering(true);
         try {
             await apiClient.post(`/exhibitions/visitor/register/${id}/`);
@@ -55,11 +87,40 @@ export default function EventDetailsPage() {
         }
     };
 
+    const handleApplySubmit = async (e) => {
+        e.preventDefault();
+        if (!applyFile) {
+            toast.error("Please upload payment screenshot.");
+            return;
+        }
+        setSubmittingApp(true);
+
+        const formData = new FormData();
+        formData.append('payment_screenshot', applyFile);
+        formData.append('transaction_id', transactionId);
+        if (boothNumber) formData.append('booth_number', boothNumber);
+
+        try {
+            await apiClient.post(`/exhibitions/exhibitor/apply/${id}/`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success("Application submitted successfully!");
+            setApplicationStatus('PENDING');
+            setIsRegistered(true); // Mark as applied
+            setShowApplyModal(false);
+        } catch (error) {
+            console.error(error);
+            toast.error("Application failed.");
+        } finally {
+            setSubmittingApp(false);
+        }
+    };
+
     if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
     if (!event) return <div className="text-center p-12">Event not found.</div>;
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 relative">
             <button onClick={() => window.history.back()} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors">
                 &larr; Back
             </button>
@@ -100,21 +161,35 @@ export default function EventDetailsPage() {
                     </button>
                 </div>
 
-                {/* Register Button */}
-                <button
-                    onClick={handleRegister}
-                    disabled={registering}
-                    className={`px-6 py-2.5 rounded-lg font-bold shadow-md transition-all flex items-center gap-2 ${isRegistered
-                        ? 'bg-green-600 text-white cursor-default'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
-                >
-                    {isRegistered ? (
-                        <><CheckCircle size={20} /> Registered</>
-                    ) : (
-                        <>{registering ? 'Registering...' : 'Register for Event'}</>
-                    )}
-                </button>
+                {/* Register or Apply Button */}
+                {!user ? (
+                    <Link to="/auth/login" className="px-6 py-2.5 rounded-lg font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors">
+                        Login to Register/Apply
+                    </Link>
+                ) : (
+                    <button
+                        onClick={handleRegister}
+                        disabled={registering || (isExhibitor && Boolean(applicationStatus)) || (!isExhibitor && isRegistered)}
+                        className={`px-6 py-2.5 rounded-lg font-bold shadow-md transition-all flex items-center gap-2 ${(isRegistered || applicationStatus) && !(applicationStatus === 'REJECTED')
+                                ? 'bg-green-600 text-white cursor-default'
+                                : (applicationStatus === 'REJECTED' ? 'bg-red-600 text-white cursor-default' : 'bg-blue-600 text-white hover:bg-blue-700')
+                            }`}
+                    >
+                        {isExhibitor ? (
+                            applicationStatus ? (
+                                <><CheckCircle size={20} /> Application {applicationStatus}</>
+                            ) : (
+                                "Apply for Exhibition"
+                            )
+                        ) : (
+                            isRegistered ? (
+                                <><CheckCircle size={20} /> Registered</>
+                            ) : (
+                                <>{registering ? 'Registering...' : 'Register for Event'}</>
+                            )
+                        )}
+                    </button>
+                )}
             </div>
 
             {/* Content */}
@@ -173,6 +248,77 @@ export default function EventDetailsPage() {
                     </div>
                 )}
             </div>
+
+            {/* Apply Modal */}
+            {showApplyModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-6 border-b pb-4">
+                            <h3 className="text-xl font-bold text-slate-900">Apply for Exhibition</h3>
+                            <button onClick={() => setShowApplyModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleApplySubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Payment Screenshot</label>
+                                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-md bg-slate-50 hover:bg-slate-100 transition-colors">
+                                    <div className="space-y-1 text-center">
+                                        {applyFile ? (
+                                            <div className="text-sm text-slate-600">
+                                                <p className="font-bold text-green-600 truncate max-w-xs mx-auto">{applyFile.name}</p>
+                                                <button type="button" onClick={() => setApplyFile(null)} className="text-red-500 text-xs mt-2 hover:underline">Remove</button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Upload className="mx-auto h-12 w-12 text-slate-400" />
+                                                <div className="flex text-sm text-slate-600 justify-center">
+                                                    <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                                                        <span>Upload a file</span>
+                                                        <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={(e) => setApplyFile(e.target.files[0])} accept="image/*" />
+                                                    </label>
+                                                </div>
+                                                <p className="text-xs text-slate-500">PNG, JPG up to 10MB</p>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Transaction ID (Optional)</label>
+                                <input
+                                    type="text"
+                                    className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    value={transactionId}
+                                    onChange={(e) => setTransactionId(e.target.value)}
+                                    placeholder="Enter UPI/Bank Transaction ID"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Requested Booth Number (Optional)</label>
+                                <input
+                                    type="number"
+                                    className="mt-1 block w-full border border-slate-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    value={boothNumber}
+                                    onChange={(e) => setBoothNumber(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button type="button" onClick={() => setShowApplyModal(false)} className="flex-1 py-2 px-4 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={submittingApp} className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
+                                    {submittingApp ? 'Submitting...' : 'Submit'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
