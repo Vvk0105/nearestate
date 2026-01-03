@@ -15,20 +15,26 @@ import MyApplicationsPage from './pages/exhibitor/MyApplicationsPage';
 import ManagePropertiesPage from './pages/exhibitor/ManagePropertiesPage';
 import AddPropertyForm from './pages/exhibitor/AddPropertyForm';
 
+import PublicHome from './pages/PublicHome';
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Auth Routes */}
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/select-role" element={<RoleSelectionPage />} />
-          <Route path="/exhibitor/profile" element={<ExhibitorProfileForm />} />
-        </Route>
-
-        {/* Protected Routes */}
+        {/* MainLayout wraps all routes */}
         <Route element={<MainLayout />}>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Public Home Route */}
+          <Route path="/" element={<PublicHome />} />
+
+          {/* Auth Routes (now nested under MainLayout) */}
+          <Route element={<AuthLayout />}>
+            <Route path="/auth/login" element={<LoginPage />} />
+            <Route path="/auth/select-role" element={<RoleSelectionPage />} />
+            <Route path="/exhibitor/profile" element={<ExhibitorProfileForm />} /> {/* This was previously under AuthLayout */}
+          </Route>
+
+          {/* Protected Routes (remaining routes that use MainLayout directly) */}
+          {/* The original "/" Navigate route is removed as PublicHome now occupies "/" */}
 
           {/* Visitor Routes */}
           <Route path="/visitor/home" element={<VisitorHome />} />

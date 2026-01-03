@@ -55,7 +55,18 @@ export default function MainLayout() {
                                     >
                                         <Home size={18} /> Dashboard
                                     </Link>
-                                    {/* Add more links for exhibitor later */}
+                                    <Link
+                                        to="/exhibitor/applications"
+                                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${isActive('/exhibitor/applications') ? 'bg-slate-100 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
+                                    >
+                                        <Calendar size={18} /> My Applications
+                                    </Link>
+                                    <Link
+                                        to="/exhibitor/properties"
+                                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${isActive('/exhibitor/properties') ? 'bg-slate-100 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
+                                    >
+                                        <Home size={18} /> My Properties
+                                    </Link>
                                 </div>
                             )}
                         </div>

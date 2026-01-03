@@ -1,31 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Loader, Plus, List, Home, BarChart } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import EventCard from '../../components/EventCard';
+import { Loader } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ExhibitorHome() {
-    const { apiClient, user } = useAuth();
-    const [profile, setProfile] = useState(null);
-    const [stats, setStats] = useState({ applications: 0, properties: 0 });
+    const { apiClient } = useAuth();
+    const [events, setEvents] = useState([]);
+    const [myApplications, setMyApplications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const profileRes = await apiClient.get('/exhibitions/exhibitor/profile/');
-                setProfile(profileRes.data);
+                // Get all public events
+                const eventsRes = await apiClient.get('/exhibitions/public/exhibitions/');
 
-                // Get Application count
+                // Get my applications to check status
                 const appsRes = await apiClient.get('/exhibitions/exhibitor/my-applications/');
-                // Get Property count
-                const propsRes = await apiClient.get('/exhibitions/exhibitor/my-properties/');
+                setMyApplications(appsRes.data);
 
-                setStats({
-                    applications: appsRes.data.length,
-                    properties: propsRes.data.length
-                });
+                // Set events
+                setEvents(eventsRes.data);
             } catch (error) {
-                console.error("Dashboard fetch failed", error);
+                console.error("Failed to fetch data", error);
             } finally {
                 setLoading(false);
             }
@@ -33,59 +32,68 @@ export default function ExhibitorHome() {
         fetchData();
     }, [apiClient]);
 
+    const getApplicationStatus = (eventId) => {
+        const app = myApplications.find(a => a.exhibition.id === eventId || a.exhibition === eventId);
+        return app ? app.status : null;
+    };
+
     if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
+
+    const activeEvents = events.filter(e => e.is_active && new Date(e.end_date) >= new Date());
 
     return (
         <div className="space-y-8">
-            <div className="bg-white rounded-xl shadow p-6 border border-slate-200">
-                <h1 className="text-2xl font-bold text-slate-900">Welcome, {profile?.user.first_name || user?.username}</h1>
-                <p className="text-slate-600">Council: {profile?.council_area}</p>
+            <div className="bg-white rounded-xl shadow p-6 border border-slate-200 flex justify-between items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Exhibitor Dashboard</h1>
+                    <p className="text-slate-600">Apply for events and manage your listings.</p>
+                </div>
+                {/* Maybe Profile Edit Button here later */}
             </div>
 
-            {/* Quick Stats/Actions */}
+            {/* Event List */}
+            <h2 className="text-xl font-bold text-slate-900 border-l-4 border-blue-600 pl-3">Available Exhibitions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Link to="/exhibitor/applications/new" className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow flex flex-col justify-between h-40">
-                    <div className="flex justify-between items-start">
-                        <span className="bg-white/20 p-2 rounded-lg"><Plus size={24} /></span>
-                        <span className="text-sm font-medium opacity-80">Action</span>
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-bold">Apply for Exhibition</h3>
-                        <p className="text-sm opacity-90 mt-1">Join upcoming events</p>
-                    </div>
-                </Link>
+                {activeEvents.map(event => {
+                    const status = getApplicationStatus(event.id);
+                    const actionButton = status === 'APPROVED' ? (
+                        <button
+                            className="w-full py-2 bg-green-100 text-green-700 font-bold rounded-lg cursor-default border border-green-200"
+                        >
+                            Approved - Add Properties ✓
+                        </button>
+                    ) : status === 'PENDING' ? (
+                        <button
+                            className="w-full py-2 bg-yellow-100 text-yellow-700 font-bold rounded-lg cursor-default border border-yellow-200"
+                        >
+                            Application Pending
+                        </button>
+                    ) : status === 'REJECTED' ? (
+                        <button
+                            className="w-full py-2 bg-red-100 text-red-700 font-bold rounded-lg cursor-default border border-red-200"
+                        >
+                            Application Rejected
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => navigate(`/exhibitor/apply/${event.id}`)}
+                            className="w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                            Apply for Exhibition
+                        </button>
+                    );
 
-                <Link to="/exhibitor/applications" className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:border-blue-400 transition-colors flex flex-col justify-between h-40">
-                    <div className="flex justify-between items-start">
-                        <span className="bg-orange-100 text-orange-600 p-2 rounded-lg"><List size={24} /></span>
-                        <span className="text-2xl font-bold text-slate-900">{stats.applications}</span>
+                    return (
+                        <div key={event.id}>
+                            <EventCard event={event} action={actionButton} />
+                        </div>
+                    );
+                })}
+                {activeEvents.length === 0 && (
+                    <div className="col-span-full text-center py-12 text-slate-500">
+                        No active exhibitions found.
                     </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-800">My Applications</h3>
-                        <p className="text-sm text-slate-500 mt-1">Check status</p>
-                    </div>
-                </Link>
-
-                <Link to="/exhibitor/properties" className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:border-blue-400 transition-colors flex flex-col justify-between h-40">
-                    <div className="flex justify-between items-start">
-                        <span className="bg-green-100 text-green-600 p-2 rounded-lg"><Home size={24} /></span>
-                        <span className="text-2xl font-bold text-slate-900">{stats.properties}</span>
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-800">My Properties</h3>
-                        <p className="text-sm text-slate-500 mt-1">Manage listings</p>
-                    </div>
-                </Link>
-            </div>
-
-            {/* Guide / Info */}
-            <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
-                <h3 className="font-bold text-slate-900 mb-2">Getting Started</h3>
-                <ol className="list-decimal list-inside space-y-2 text-slate-600">
-                    <li>Apply for an exhibition using the dashboard card.</li>
-                    <li>Wait for Admin approval (Check "My Applications").</li>
-                    <li>Once approved, you can list properties for that exhibition in "My Properties".</li>
-                </ol>
+                )}
             </div>
         </div>
     );

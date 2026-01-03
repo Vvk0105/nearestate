@@ -60,6 +60,10 @@ export default function EventDetailsPage() {
 
     return (
         <div className="space-y-8">
+            <button onClick={() => window.history.back()} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors">
+                &larr; Back
+            </button>
+
             {/* Header/Banner */}
             <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-lg bg-slate-900">
                 {event.map_image ? (
@@ -101,8 +105,8 @@ export default function EventDetailsPage() {
                     onClick={handleRegister}
                     disabled={registering}
                     className={`px-6 py-2.5 rounded-lg font-bold shadow-md transition-all flex items-center gap-2 ${isRegistered
-                            ? 'bg-green-600 text-white cursor-default'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        ? 'bg-green-600 text-white cursor-default'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
                         }`}
                 >
                     {isRegistered ? (

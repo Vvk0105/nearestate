@@ -10,7 +10,7 @@ export default function ExhibitorDetailsPage() {
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -21,7 +21,7 @@ export default function ExhibitorDetailsPage() {
 
                 const propsRes = await apiClient.get(`/exhibitions/public/exhibition/${exhibitorId}/properties/`);
                 console.log('hlooo');
-                
+
                 if (foundExhibitor) {
 
                     const userProps = propsRes.data.filter(p => p.exhibitor === foundExhibitor.user || p.exhibitor.id === foundExhibitor.user);
@@ -41,6 +41,11 @@ export default function ExhibitorDetailsPage() {
 
     return (
         <div className="space-y-8">
+            <button onClick={() => window.history.back()} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors">
+                &larr; Back
+            </button>
+
+            {/* Profile Header */}
             <div className="bg-white rounded-xl shadow border border-slate-200 p-8">
                 <h1 className="text-3xl font-bold text-slate-900 mb-2">{exhibitor.company_name}</h1>
                 <div className="flex flex-wrap gap-4 text-slate-600 mt-4">

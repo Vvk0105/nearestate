@@ -33,8 +33,13 @@ export const AuthProvider = ({ children }) => {
                 return;
             }
             try {
-                const response = await apiClient.get('/auth/me/'); // Adjusted based on auth/urls.py
-                setUser(response.data);
+                const response = await apiClient.get('/auth/me/');
+                const userData = response.data;
+                // Normalize active_role to role for frontend consistency
+                if (userData.active_role) {
+                    userData.role = userData.active_role;
+                }
+                setUser(userData);
             } catch (error) {
                 console.error("Failed to fetch user", error);
                 handleLogout();
@@ -48,6 +53,10 @@ export const AuthProvider = ({ children }) => {
 
     const handleLogin = (newToken, userData) => {
         setToken(newToken);
+        // Ensure role is consistent
+        if (userData.active_role) {
+            userData.role = userData.active_role;
+        }
         setUser(userData);
         localStorage.setItem('token', newToken);
     };
@@ -63,7 +72,7 @@ export const AuthProvider = ({ children }) => {
         // Implement role switch logic if backend supports immediate switch or just update local
         // The backend has /auth/switch-role/
         try {
-            const response = await apiClient.post('/auth/switch-role/', { role: newRole });
+            await apiClient.post('/auth/switch-role/', { role: newRole });
             setUser(prev => ({ ...prev, role: newRole })); // Assuming response or optimistic update
             return true;
         } catch (error) {

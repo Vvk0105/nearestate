@@ -1,7 +1,7 @@
 import { Calendar, MapPin, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function EventCard({ event }) {
+export default function EventCard({ event, action }) {
     const isUpcoming = new Date(event.start_date) > new Date();
 
     return (
@@ -20,8 +20,8 @@ export default function EventCard({ event }) {
                 )}
                 <div className="absolute top-4 right-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${isUpcoming
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-green-100 text-green-800'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-green-100 text-green-800'
                         }`}>
                         {isUpcoming ? 'Upcoming' : 'Ongoing'}
                     </span>
@@ -45,12 +45,17 @@ export default function EventCard({ event }) {
                     </div>
                 </div>
 
-                <Link
-                    to={`/visitor/events/${event.id}`}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900"
-                >
-                    View Details <ArrowRight size={16} />
-                </Link>
+                {/* Custom Action or Default Button */}
+                {action ? (
+                    action
+                ) : (
+                    <Link
+                        to={`/visitor/events/${event.id}`}
+                        className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900"
+                    >
+                        View Details <ArrowRight size={16} />
+                    </Link>
+                )}
             </div>
         </div>
     );
