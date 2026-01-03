@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 
 export default function EventCard({ event, action }) {
     const isUpcoming = new Date(event.start_date) > new Date();
-
+    console.log(event);
+    
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
             <div className="h-48 overflow-hidden bg-slate-100 relative">
                 {event.map_image ? (
                     <img
-                        src={event.map_image}
+                        src="banner.avif"
                         alt={event.name}
                         className="w-full h-full object-cover"
                     />

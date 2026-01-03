@@ -8,15 +8,14 @@ export default function AdminEventsPage() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [filter, setFilter] = useState('all'); // all, ongoing, upcoming, completed
+
     useEffect(() => {
         fetchEvents();
     }, []);
 
     const fetchEvents = async () => {
         try {
-            // Admin should see ALL events, even inactive? 
-            // Public endpoint shows all or filtred? usually public shows active.
-            // Using public for now, but ideal is admin endpoint.
             const res = await apiClient.get('/exhibitions/public/exhibitions/');
             setEvents(res.data);
         } catch (error) {
@@ -26,7 +25,28 @@ export default function AdminEventsPage() {
         }
     };
 
+    const getFilteredEvents = () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        return events.filter(event => {
+            const start = new Date(event.start_date);
+            const end = new Date(event.end_date);
+
+            if (filter === 'ongoing') {
+                return start <= today && end >= today && event.is_active;
+            } else if (filter === 'upcoming') {
+                return start > today;
+            } else if (filter === 'completed') {
+                return end < today;
+            }
+            return true;
+        });
+    };
+
     if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
+
+    const filteredEvents = getFilteredEvents();
 
     return (
         <div className="space-y-8">
@@ -35,6 +55,19 @@ export default function AdminEventsPage() {
                 <Link to="/admin/events/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-lg">
                     <Plus size={18} /> Create Event
                 </Link>
+            </div>
+
+            {/* Filters */}
+            <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg w-fit">
+                {['all', 'ongoing', 'upcoming', 'completed'].map(f => (
+                    <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-all ${filter === f ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        {f}
+                    </button>
+                ))}
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -49,7 +82,7 @@ export default function AdminEventsPage() {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-slate-200">
-                        {events.map(event => (
+                        {filteredEvents.map(event => (
                             <tr key={event.id} className="hover:bg-slate-50 transition-colors">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
@@ -84,8 +117,8 @@ export default function AdminEventsPage() {
                         ))}
                     </tbody>
                 </table>
-                {events.length === 0 && (
-                    <div className="p-12 text-center text-slate-500">No events found.</div>
+                {filteredEvents.length === 0 && (
+                    <div className="p-12 text-center text-slate-500">No events found for this filter.</div>
                 )}
             </div>
         </div>

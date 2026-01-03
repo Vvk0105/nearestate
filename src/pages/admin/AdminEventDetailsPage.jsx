@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Loader, CheckCircle, XCircle, Users, Store, MapPin, Calendar, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { ApprovalModal } from './ApprovalModal';
 
 export default function AdminEventDetailsPage() {
     const { id } = useParams();
@@ -11,6 +12,10 @@ export default function AdminEventDetailsPage() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview'); // overview, requests, exhibitors, visitors
+
+    // Modal State
+    const [selectedReq, setSelectedReq] = useState(null);
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -31,14 +36,33 @@ export default function AdminEventDetailsPage() {
         }
     };
 
-    const handleStatusUpdate = async (applicationId, status) => {
+    const handleReject = async (reqId) => {
+        if (!window.confirm("Are you sure you want to reject this application?")) return;
         try {
-            await apiClient.patch(`/exhibitions/admin/applications/${applicationId}/status/`, { status });
-            toast.success(`Application ${status}`);
-            fetchData(); // Refresh
+            await apiClient.post(`exhibitions/admin/exhibitor-application/${reqId}/`, { action: 'REJECT' });
+            toast.success("Application Rejected");
+            fetchData();
         } catch (error) {
             console.error(error);
-            toast.error("Failed to update status");
+            toast.error("Failed to reject");
+        }
+    };
+
+    const openApprovalModal = (req) => {
+        setSelectedReq(req);
+        setShowModal(true);
+    };
+
+    const handleConfirmApproval = async (reqId, formData) => {
+        try {
+            await apiClient.post(`exhibitions/admin/exhibitor-application/${reqId}/`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success("Application Approved");
+            fetchData();
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.error || "Failed to approve");
         }
     };
 
@@ -91,17 +115,37 @@ export default function AdminEventDetailsPage() {
                             {requests.map(req => (
                                 <li key={req.id} className="p-6 flex items-center justify-between hover:bg-slate-50">
                                     <div>
-                                        <p className="font-bold text-slate-900">{req.company_name}</p>
-                                        <p className="text-sm text-slate-500">Requested Booth: {req.booth_number || 'Any'}</p>
-                                        <p className="text-xs text-slate-400 mt-1">Files: {req.payment_screenshot ? <a href={req.payment_screenshot} target="_blank" rel="noreferrer" className="text-blue-500 underline">View Payment</a> : 'None'}</p>
+                                        <div className="flex items-center gap-3">
+                                            <p className="font-bold text-slate-900">{req.company}</p>
+                                            <span className={`text-xs px-2 py-0.5 rounded ${req.status === 'APPROVED' ? 'bg-green-100 text-green-700' : req.status === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{req.status}</span>
+                                        </div>
+                                        <p className="text-sm text-slate-500">{req.email} • ID: {req.transaction_id || 'N/A'}</p>
+                                        <p className="text-xs text-slate-400 mt-1">
+                                            {req.payment_screenshot ? (
+                                                <a href={req.payment_screenshot} target="_blank" rel="noreferrer" className="text-blue-500 underline">View Payment</a>
+                                            ) : 'No Proof'}
+                                            {req.badge && (
+                                                <span className="ml-2">• <a href={req.badge} target="_blank" rel="noreferrer" className="text-purple-500 underline">View Assigned Badge</a></span>
+                                            )}
+                                        </p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button onClick={() => handleStatusUpdate(req.id, 'APPROVED')} className="p-2 text-green-600 hover:bg-green-50 rounded-full" title="Approve">
-                                            <CheckCircle size={24} />
-                                        </button>
-                                        <button onClick={() => handleStatusUpdate(req.id, 'REJECTED')} className="p-2 text-red-600 hover:bg-red-50 rounded-full" title="Reject">
-                                            <XCircle size={24} />
-                                        </button>
+                                        {req.status === 'PENDING' && (
+                                            <>
+                                                <button onClick={() => openApprovalModal(req)} className="p-2 text-green-600 hover:bg-green-50 rounded-full" title="Approve">
+                                                    <CheckCircle size={24} />
+                                                </button>
+                                                <button onClick={() => handleReject(req.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-full" title="Reject">
+                                                    <XCircle size={24} />
+                                                </button>
+                                            </>
+                                        )}
+                                        {req.status === 'APPROVED' && (
+                                            <div className="text-center">
+                                                <span className="block text-xs text-slate-500">Booth</span>
+                                                <span className="font-bold text-slate-900">{req.booth_number}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </li>
                             ))}
@@ -129,6 +173,14 @@ export default function AdminEventDetailsPage() {
                     List functionality coming soon.
                 </div>
             )}
+
+            {/* Modal */}
+            <ApprovalModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                onConfirm={handleConfirmApproval}
+                req={selectedReq}
+            />
         </div>
     );
 }

@@ -11,7 +11,6 @@ export default function VisitorHome() {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                // API Endpoint: /exhibitions/public/exhibitions/
                 const res = await apiClient.get('/exhibitions/public/exhibitions/');
                 setEvents(res.data);
             } catch (error) {
@@ -32,20 +31,10 @@ export default function VisitorHome() {
         );
     }
 
-    // Filter Upcoming vs Ongoing?
-    // User Prompt: "upcoming and ongoing events in the home page like cards"
-    // API might return all.
     const now = new Date();
     
     const upcoming = events.filter(e => new Date(e.start_date) > now);
     const ongoing = events.filter(e => new Date(e.start_date) <= now && new Date(e.end_date) >= now);
-
-    // Combine? Or Section?
-    // Prompt: "like cards ... place nicely ok"
-    // I will just show all, sorted by date? Or sections.
-    // "upcoming and ongoing events in the home page" implies showing both.
-
-    // Let's create a combined list or sections. Sections look better "Premium".
 
     return (
         <div className="space-y-12 pb-12">

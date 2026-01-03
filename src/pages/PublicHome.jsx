@@ -42,8 +42,8 @@ export default function PublicHome() {
     return (
         <div className="space-y-12">
             {/* Hero Section */}
-            <section className="text-center py-16 px-4 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl text-white shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3')] bg-cover bg-center"></div>
+            <section className="text-center py-16 px-4 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl text-white shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('banner.avif')] bg-cover bg-center"></div>
                 <div className="relative z-10 max-w-3xl mx-auto space-y-6">
                     <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">Discover Premium Real Estate Events</h1>
                     <p className="text-lg md:text-xl text-slate-300">Join thousands of visitors and exhibitors connecting in world-class exhibitions near you.</p>
