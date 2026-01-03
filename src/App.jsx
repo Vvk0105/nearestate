@@ -25,9 +25,12 @@ import MyApplicationsPage from './pages/exhibitor/MyApplicationsPage';
 import ManagePropertiesPage from './pages/exhibitor/ManagePropertiesPage';
 import AddPropertyForm from './pages/exhibitor/AddPropertyForm';
 
-import AdminDashboard from './pages/admin/AdminDashboard'; // New
-import AdminEventsPage from './pages/admin/AdminEventsPage'; // New
-import AdminEventDetailsPage from './pages/admin/AdminEventDetailsPage'; // New
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminEventsPage from './pages/admin/AdminEventsPage';
+import AdminEventDetailsPage from './pages/admin/AdminEventDetailsPage';
+import AdminEventForm from './pages/admin/AdminEventForm';
+import AdminEditEventPage from './pages/admin/AdminEditEventPage';
+import AdminQRScanPage from './pages/admin/AdminQRScanPage';
 
 import ProfilePage from './pages/common/ProfilePage';
 import PublicHome from './pages/PublicHome';
@@ -41,51 +44,53 @@ function App() {
           <Routes>
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
-            
+
             <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="events" element={<AdminEventsPage />} />
-                <Route path="events/:id" element={<AdminEventDetailsPage />} />
-                <Route path="events/new" element={<div className="p-8">Create Event Form Coming Soon</div>} /> 
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="events" element={<AdminEventsPage />} />
+              <Route path="events/new" element={<AdminEventForm />} />
+              <Route path="events/:id" element={<AdminEventDetailsPage />} />
+              <Route path="events/:id/edit" element={<AdminEditEventPage />} />
+              <Route path="scan" element={<AdminQRScanPage />} />
             </Route>
-            
+
             <Route path="/auth/select-role" element={<RoleSelectionPage />} />
 
             {/* Main Application Routes */}
             <Route element={<MainLayout />}>
               {/* Public Routes */}
               <Route path="/" element={<PublicHome />} />
-              
+
               {/* Auth Routes */}
               <Route element={<AuthLayout />}>
                 <Route path="/auth/login" element={<LoginPage />} />
               </Route>
 
-               {/* Protected User Routes */}
-               <Route element={<ProtectedRoute />}>
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/exhibitor/profile" element={<ExhibitorProfileForm />} /> 
-               </Route>
+              {/* Protected User Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/exhibitor/profile" element={<ExhibitorProfileForm />} />
+              </Route>
 
               {/* Visitor Routes */}
               <Route element={<ProtectedRoute allowedRoles={['VISITOR']} />}>
-                  <Route path="/visitor/home" element={<VisitorHome />} />
-                  <Route path="/visitor/events/:id" element={<EventDetailsPage />} />
-                  <Route path="/visitor/events/:eventId/exhibitors/:exhibitorId" element={<ExhibitorDetailsPage />} />
-                  <Route path="/visitor/my-events" element={<MyEventsPage />} />
+                <Route path="/visitor/home" element={<VisitorHome />} />
+                <Route path="/visitor/events/:id" element={<EventDetailsPage />} />
+                <Route path="/visitor/events/:eventId/exhibitors/:exhibitorId" element={<ExhibitorDetailsPage />} />
+                <Route path="/visitor/my-events" element={<MyEventsPage />} />
               </Route>
 
               {/* Exhibitor Routes */}
               <Route element={<ProtectedRoute allowedRoles={['EXHIBITOR']} />}>
-                  <Route path="/exhibitor/home" element={<ExhibitorHome />} />
-                  <Route path="/exhibitor/events/:id" element={<EventDetailsPage />} />
-                  <Route path="/exhibitor/events/:eventId/exhibitors/:exhibitorId" element={<ExhibitorDetailsPage />} />
-                  <Route path="/exhibitor/applications" element={<MyApplicationsPage />} />
-                  <Route path="/exhibitor/applications/new" element={<ApplyExhibitionPage />} />
-                  <Route path="/exhibitor/apply/:id" element={<ApplicationFormPage />} />
-                  <Route path="/exhibitor/properties" element={<ManagePropertiesPage />} />
-                  <Route path="/exhibitor/properties/new" element={<AddPropertyForm />} />
+                <Route path="/exhibitor/home" element={<ExhibitorHome />} />
+                <Route path="/exhibitor/events/:id" element={<EventDetailsPage />} />
+                <Route path="/exhibitor/events/:eventId/exhibitors/:exhibitorId" element={<ExhibitorDetailsPage />} />
+                <Route path="/exhibitor/applications" element={<MyApplicationsPage />} />
+                <Route path="/exhibitor/applications/new" element={<ApplyExhibitionPage />} />
+                <Route path="/exhibitor/apply/:id" element={<ApplicationFormPage />} />
+                <Route path="/exhibitor/properties" element={<ManagePropertiesPage />} />
+                <Route path="/exhibitor/properties/new" element={<AddPropertyForm />} />
               </Route>
             </Route>
           </Routes>

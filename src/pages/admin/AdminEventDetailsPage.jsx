@@ -71,9 +71,14 @@ export default function AdminEventDetailsPage() {
 
     return (
         <div className="space-y-6">
-            <Link to="/admin/events" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors">
-                <ArrowLeft size={18} /> Back to Events
-            </Link>
+            <div className="flex justify-between items-center">
+                <Link to="/admin/events" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors">
+                    <ArrowLeft size={18} /> Back to Events
+                </Link>
+                <Link to={`/admin/events/${id}/edit`} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    Edit Event
+                </Link>
+            </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <div className="flex justify-between items-start">

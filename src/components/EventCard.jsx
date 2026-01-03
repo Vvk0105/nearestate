@@ -1,18 +1,25 @@
 import { Calendar, MapPin, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ImageCarousel from './ImageCarousel';
 
 export default function EventCard({ event, action }) {
+    const API_BASE = 'http://127.0.0.1:8000/';
     const isUpcoming = new Date(event.start_date) > new Date();
     console.log(event);
     
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
             <div className="h-48 overflow-hidden bg-slate-100 relative">
-                {event.map_image ? (
-                    <img
-                        src="banner.avif"
-                        alt={event.name}
-                        className="w-full h-full object-cover"
+                {event.images ? (
+                    <ImageCarousel
+                        images={event.images.map((img, i) => ({
+                        id: img.id,
+                        image: img.image.startsWith("http")
+                            ? img.image
+                            : `${API_BASE}${img.image}`,
+                        }))}
+                        height="h-full"
+                        rounded="rounded-none"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400">

@@ -3,8 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { MapPin, Calendar, Store, Loader, CheckCircle, Upload, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ImageCarousel from '../../components/ImageCarousel';
 
 export default function EventDetailsPage() {
+    const API_BASE = 'http://127.0.0.1:8000/';
     const { id } = useParams();
     const { apiClient, user } = useAuth();
     const [event, setEvent] = useState(null);
@@ -132,8 +134,18 @@ export default function EventDetailsPage() {
 
             {/* Header/Banner */}
             <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-lg bg-slate-900">
-                {event.map_image ? (
-                    <img src={event.map_image} alt={event.name} className="w-full h-full object-cover opacity-80" />
+                {event.images ? (
+                    // <img src={event.map_image} alt={event.name} className="w-full h-full object-cover opacity-80" />
+                    <ImageCarousel
+                    images={event.images.map((img, i) => ({
+                    id: img.id,
+                    image: img.image.startsWith("http")
+                        ? img.image
+                        : `${API_BASE}${img.image}`,
+                    }))}
+                    height="h-full"
+                    rounded="rounded-none"
+                />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-500">
                         <span className="text-6xl font-black opacity-20">EVENT BANNER</span>

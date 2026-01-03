@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Loader, MapPin, Building, Phone } from 'lucide-react';
+import ImageCarousel from '../../components/ImageCarousel';
 
 export default function ExhibitorDetailsPage() {
+    const API_BASE = 'http://127.0.0.1:8000/';
+    // ... no changes to logic ...
     const { eventId, exhibitorId } = useParams();
     const { apiClient } = useAuth();
     const [exhibitor, setExhibitor] = useState(null);
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
-
-
-
+    console.log('ImageCarousel',properties);
+    
     useEffect(() => {
+        // ... same fetch logic ...
         const fetchData = async () => {
             try {
                 const exhibitorsRes = await apiClient.get(`/exhibitions/public/exhibitions/${eventId}/exhibitors/`);
@@ -20,10 +23,8 @@ export default function ExhibitorDetailsPage() {
                 setExhibitor(foundExhibitor);
 
                 const propsRes = await apiClient.get(`/exhibitions/public/exhibition/${exhibitorId}/properties/`);
-                console.log('hlooo');
 
                 if (foundExhibitor) {
-
                     const userProps = propsRes.data.filter(p => p.exhibitor === foundExhibitor.user || p.exhibitor.id === foundExhibitor.user);
                     setProperties(userProps);
                 }
@@ -67,9 +68,17 @@ export default function ExhibitorDetailsPage() {
                     {properties.map(property => (
                         <div key={property.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all">
                             <div className="h-48 bg-slate-200 relative">
-                                {/* Handle multiple images or single */}
                                 {property.images && property.images.length > 0 ? (
-                                    <img src={property.images[0].image || property.images[0]} alt={property.title} className="w-full h-full object-cover" />
+                                    <ImageCarousel
+                                        images={property.images.map((img, i) => ({
+                                        id: img.id,
+                                        image: img.image.startsWith("http")
+                                            ? img.image
+                                            : `${API_BASE}${img.image}`,
+                                        }))}
+                                        height="h-full"
+                                        rounded="rounded-none"
+                                    />
                                 ) : (
                                     <div className="flex items-center justify-center h-full text-slate-400 font-bold">NO IMAGE</div>
                                 )}
