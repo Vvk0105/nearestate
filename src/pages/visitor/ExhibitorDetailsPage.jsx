@@ -10,42 +10,20 @@ export default function ExhibitorDetailsPage() {
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // We need to fetch Exhibitor details.
-    // The API list `PublicExhibitorsByExhibitionView` gave use a list.
-    // Is there a Single Exhibitor Public API? 
-    // Maybe not directly. We might have to fetch list and find?
-    // Or maybe "properties" view returns exhibitor details?
-    // Let's assume we can fetch properties and filtering helps us.
+    
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Get all exhibitors to find ours (since we lack direct ID endpoint in list above? or maybe valid)
                 const exhibitorsRes = await apiClient.get(`/exhibitions/public/exhibitions/${eventId}/exhibitors/`);
                 const foundExhibitor = exhibitorsRes.data.find(e => e.id.toString() === exhibitorId);
                 setExhibitor(foundExhibitor);
 
-                // Get properties
-                // API: /exhibitions/public/exhibitions/<id>/properties/
-                const propsRes = await apiClient.get(`/exhibitions/public/exhibition/${eventId}/properties/`);
-                // Filter by exhibitor_id? The properties model has `exhibitor` field (User ID or Profile ID?)
-                // Property model has `exhibitor` as User foreign key.
-                // ExhibitorProfile has `user` OneToOne.
-                // The JSON from API usually serializes nested or ID.
-                // Let's assume we filter by `exhibitor.id` matching `foundExhibitor.user` or `foundExhibitor.id`.
-                // We need to match correctly.
-                // If `foundExhibitor` has `user` id, and property has `exhibitor` id.
-                // Safe bet: match based on available fields.
-                // Let's dump all for now if filter logic is hard, or Try to filter.
-                // Better: Checking `backend/exhibitions/serializers.py` would confirm.
-                // Assuming property.exhibitor matches foundExhibitor.user (User ID).
+                const propsRes = await apiClient.get(`/exhibitions/public/exhibition/${exhibitorId}/properties/`);
+                console.log('hlooo');
+                
                 if (foundExhibitor) {
-                    const exhibUser = foundExhibitor.user; // Assuming ID
-                    // Or foundExhibitor.id is profile ID.
-                    // This is tricky without inspecting API response.
-                    // I will display all for the event if filter fails, but try to filter.
-                    // Actually, "filtering properties by exhibitor" is key requirement. "by clikcing each exhibitor they can see the properties".
-                    // I will filter assuming property.exhibitor == foundExhibitor.user
+
                     const userProps = propsRes.data.filter(p => p.exhibitor === foundExhibitor.user || p.exhibitor.id === foundExhibitor.user);
                     setProperties(userProps);
                 }

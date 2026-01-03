@@ -4,14 +4,14 @@ import { User, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function RoleSelectionPage() {
-    const { apiClient, login, user } = useAuth();
+    const { apiClient } = useAuth();
     const navigate = useNavigate();
 
     const handleSelectRole = async (role) => {
         try {
             // Logic: call Select Role API
             // Endpoint: /auth/select-role/
-            const res = await apiClient.post('http://127.0.0.1:8000/api/auth/select-role/', { role });
+            await apiClient.post('http://127.0.0.1:8000/api/auth/select-role/', { role });
 
             // Update local user state? 
             // The backend should return updated user or we might need to fetch me again?
@@ -27,10 +27,21 @@ export default function RoleSelectionPage() {
                 navigate('/visitor/home');
                 toast.success("Welcome, Visitor!");
             } else {
-                // Check if profile exists? Or just always go to profile form?
-                // Prompt: "if select as exhibitor the user need to fill a form ... ExhibitorProfile form"
-                navigate('/exhibitor/profile');
-                toast.success("Please complete your exhibitor profile.");
+                try {
+                    const statusRes = await apiClient.get('/exhibitions/exhibitor/profile/status/');
+                    if (statusRes.data.exists) {
+                        navigate('/exhibitor/home');
+                        toast.success("Welcome back to your Dashboard!");
+                    } else {
+                        navigate('/exhibitor/profile');
+                        toast.success("Please complete your exhibitor profile.");
+                    }
+                } catch (err) {
+                    console.error("Profile status check failed", err);
+                    // If status check fails, safest to go to profile or home? 
+                    // Usually go to profile to ensure data.
+                    navigate('/exhibitor/profile');
+                }
             }
         } catch (error) {
             console.error(error);
