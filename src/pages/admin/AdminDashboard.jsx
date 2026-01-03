@@ -15,12 +15,6 @@ export default function AdminDashboard() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                // Assuming backend has /exhibitions/admin/stats/ endpoint
-                // Or we fetch lists and count.
-                // Reusing public endpoints for lists if admin endpoint missing, but Admin usually sees more.
-                // Let's assume we implement a stats endpoint or fetch lists efficiently.
-                // For MVP, likely fetching lists.
-
                 const [eventsRes] = await Promise.all([
                     apiClient.get('/exhibitions/public/exhibitions/')
                 ]);
@@ -31,8 +25,8 @@ export default function AdminDashboard() {
                 setStats({
                     total_events: events.length,
                     active_events: active.length,
-                    total_visitors: 0, // Placeholder
-                    total_exhibitors: 0 // Placeholder
+                    total_visitors: 0,
+                    total_exhibitors: 0 
                 });
             } catch (error) {
                 console.error("Fetch stats failed", error);

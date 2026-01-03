@@ -22,6 +22,7 @@ export default function MyApplicationsPage() {
     }, [apiClient]);
 
     if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
+console.log('applications',applications);
 
     return (
         <div className="space-y-8">
@@ -31,13 +32,20 @@ export default function MyApplicationsPage() {
                 {applications.map(app => (
                     <div key={app.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h3 className="text-lg font-bold text-slate-900">{app.exhibition?.name}</h3>
+                            <h3 className="text-lg font-bold text-slate-900">{app?.exhibition}</h3>
                             <div className="flex items-center gap-2 text-sm text-slate-600 mt-1">
-                                <Calendar size={14} /> Applied on: {new Date(app.applied_at).toLocaleDateString()}
+                                {/* <Calendar size={14} /> Applied on: {new Date(app.applied_at).toLocaleDateString()} */}
                             </div>
-                            {app.booth_number && (
-                                <p className="text-sm text-slate-600 mt-1">Booth: <strong>{app.booth_number}</strong></p>
-                            )}
+                            <div className='flex flex-row gap-4 justify-center items-center'>
+                                {app.booth_number && (
+                                    <p className="text-sm text-slate-600 mt-1">Booth: <strong>{app?.booth_number}</strong></p>
+                                )}
+                                {app.badge ? (
+                                <a href={app?.badge} target="_blank" rel="noreferrer" className="text-purple-500 underline text-sm">Badge</a>
+                                ): (
+                                    <span>No Badge</span>
+                                )}
+                            </div>
                         </div>
 
                         <div>
