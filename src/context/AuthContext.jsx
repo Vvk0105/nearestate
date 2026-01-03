@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }) => {
             try {
                 const response = await apiClient.get('/auth/me/');
                 const userData = response.data;
-                // Normalize active_role to role for frontend consistency
                 if (userData.active_role) {
                     userData.role = userData.active_role;
                 }
@@ -70,11 +69,9 @@ export const AuthProvider = ({ children }) => {
     };
 
     const handleRoleSwitch = async (newRole) => {
-        // Implement role switch logic if backend supports immediate switch or just update local
-        // The backend has /auth/switch-role/
         try {
             await apiClient.post('/auth/switch-role/', { role: newRole });
-            setUser(prev => ({ ...prev, role: newRole })); // Assuming response or optimistic update
+            setUser(prev => ({ ...prev, role: newRole }));
             return true;
         } catch (error) {
             console.error("Switch role failed", error);
@@ -84,6 +81,7 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
+        setUser,
         token,
         loading,
         login: handleLogin,

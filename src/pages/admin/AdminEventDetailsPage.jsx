@@ -20,12 +20,7 @@ export default function AdminEventDetailsPage() {
         try {
             const [eventRes, requestsRes] = await Promise.all([
                 apiClient.get(`/exhibitions/public/exhibitions/${id}/`),
-                // Assuming admin endpoints exist. If not, mocking or using what's available.
-                // We need an endpoint for ALL applications for an event.
-                // '/exhibitions/admin/events/${id}/applications/' ?
-                // For now, I'll use a placeholder or assume list exists.
-                // Let's try to hit a likely endpoint or just empty list for now if failure.
-                apiClient.get(`/exhibitions/admin/events/${id}/applications/`).catch(() => ({ data: [] }))
+                apiClient.get(`/exhibitions/admin/exhibitor-applications/${id}/`).catch(() => ({ data: [] }))
             ]);
             setEvent(eventRes.data);
             setRequests(requestsRes.data);

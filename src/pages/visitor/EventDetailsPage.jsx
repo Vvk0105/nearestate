@@ -24,6 +24,11 @@ export default function EventDetailsPage() {
 
     const isExhibitor = user?.role === 'EXHIBITOR';
 
+    const roleBasePath =
+        user?.role === "EXHIBITOR"
+            ? "/exhibitor"
+            : "/visitor";
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -220,7 +225,7 @@ export default function EventDetailsPage() {
                         {exhibitors.map(exhibitor => (
                             <Link
                                 key={exhibitor.id}
-                                to={`/visitor/events/${id}/exhibitors/${exhibitor.id}`}
+                                to={`${roleBasePath}/events/${id}/exhibitors/${exhibitor.id}`}
                                 className="block group"
                             >
                                 <div className="bg-white rounded-lg border border-slate-200 p-5 hover:shadow-lg hover:border-blue-400 transition-all cursor-pointer h-full">

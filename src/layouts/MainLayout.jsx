@@ -27,7 +27,7 @@ export default function MainLayout() {
                         <div className="flex items-center gap-8">
                             <Link to="/" className="flex-shrink-0 flex items-center">
                                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                                    NearEstate {user?.email}
+                                    NearEstate
                                 </span>
                             </Link>
 

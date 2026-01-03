@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import EventCard from '../../components/EventCard';
-import { Loader } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowRight, Loader } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function ExhibitorHome() {
     const { apiClient } = useAuth();
@@ -75,12 +75,18 @@ export default function ExhibitorHome() {
                             Application Rejected
                         </button>
                     ) : (
-                        <button
-                            onClick={() => navigate(`/visitor/events/${event.id}`)}
-                            className="w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        // <button
+                        //     onClick={() => navigate(`/visitor/events/${event.id}`)}
+                        //     className="w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        // >
+                        //     View & Apply
+                        // </button>
+                        <Link
+                            to={`/exhibitor/events/${event.id}`}
+                            className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900"
                         >
-                            View & Apply
-                        </button>
+                            View Details <ArrowRight size={16} />
+                        </Link>
                     );
 
                     return (

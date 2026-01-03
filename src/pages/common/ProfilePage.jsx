@@ -28,14 +28,10 @@ export default function ProfilePage() {
         e.preventDefault();
         setLoading(true);
         try {
-            // Check if endpoint exists, otherwise we might need to create it in backend
-            // Standard Dj-Rest-Auth /user/ or /profile/update/
-            // Implementation plan mentions /profile/update/
-            await apiClient.patch('/accounts/profile/update/', { username: formData.username });
+            await apiClient.put('/auth/profile/update/', { username: formData.username });
             toast.success("Profile updated successfully.");
-
-            // Update local user context
             setUser({ ...user, username: formData.username });
+            
         } catch (error) {
             console.error("Profile update failed", error);
             toast.error("Failed to update profile.");

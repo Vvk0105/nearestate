@@ -79,6 +79,8 @@ function App() {
               {/* Exhibitor Routes */}
               <Route element={<ProtectedRoute allowedRoles={['EXHIBITOR']} />}>
                   <Route path="/exhibitor/home" element={<ExhibitorHome />} />
+                  <Route path="/exhibitor/events/:id" element={<EventDetailsPage />} />
+                  <Route path="/exhibitor/events/:eventId/exhibitors/:exhibitorId" element={<ExhibitorDetailsPage />} />
                   <Route path="/exhibitor/applications" element={<MyApplicationsPage />} />
                   <Route path="/exhibitor/applications/new" element={<ApplyExhibitionPage />} />
                   <Route path="/exhibitor/apply/:id" element={<ApplicationFormPage />} />
