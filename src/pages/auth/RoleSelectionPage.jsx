@@ -1,0 +1,81 @@
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { User, Store } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+export default function RoleSelectionPage() {
+    const { apiClient, login, user } = useAuth();
+    const navigate = useNavigate();
+
+    const handleSelectRole = async (role) => {
+        try {
+            // Logic: call Select Role API
+            // Endpoint: /auth/select-role/
+            const res = await apiClient.post('http://127.0.0.1:8000/api/auth/select-role/', { role });
+
+            // Update local user state? 
+            // The backend should return updated user or we might need to fetch me again?
+            // Or just navigate.
+
+            // If Exhibitor, redirect to profile form if not complete?
+            // Assuming backend handles role assignment.
+
+            // User requested: "if select visitor it redirect to visitor home page"
+            // "if select as exhibitor ... fill a form"
+
+            if (role === 'VISITOR') {
+                navigate('/visitor/home');
+                toast.success("Welcome, Visitor!");
+            } else {
+                // Check if profile exists? Or just always go to profile form?
+                // Prompt: "if select as exhibitor the user need to fill a form ... ExhibitorProfile form"
+                navigate('/exhibitor/profile');
+                toast.success("Please complete your exhibitor profile.");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to select role.");
+        }
+    };
+
+    return (
+        <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-extrabold text-slate-900 text-center mb-8">
+                How would you like to continue?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {/* Visitor Card */}
+                <button
+                    onClick={() => handleSelectRole('VISITOR')}
+                    className="flex flex-col items-center p-6 bg-white rounded-xl shadow-md border 
+                     border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all group"
+                >
+                    <div className="p-4 bg-teal-50 rounded-full group-hover:bg-teal-100 mb-4 text-teal-600">
+                        <User size={48} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">Visitor</h3>
+                    <p className="text-slate-500 text-center text-sm">
+                        Explore upcoming events, view properties, and manage your registrations.
+                    </p>
+                </button>
+
+                {/* Exhibitor Card */}
+                <button
+                    onClick={() => handleSelectRole('EXHIBITOR')}
+                    className="flex flex-col items-center p-6 bg-white rounded-xl shadow-md border 
+                     border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all group"
+                >
+                    <div className="p-4 bg-indigo-50 rounded-full group-hover:bg-indigo-100 mb-4 text-indigo-600">
+                        <Store size={48} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">Exhibitor</h3>
+                    <p className="text-slate-500 text-center text-sm">
+                        Showcase your properties, manage inquiries, and connect with visitors.
+                    </p>
+                </button>
+
+            </div>
+        </div>
+    );
+}
