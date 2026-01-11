@@ -11,7 +11,9 @@ export default function AdminEventDetailsPage() {
     const [event, setEvent] = useState(null);
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('overview'); // overview, requests, exhibitors, visitors
+    const [activeTab, setActiveTab] = useState('overview');
+    const [exhibitorsList, setExhibitorsList] = useState([]);
+    const [visitorsList, setVisitorsList] = useState([]);
 
     // Modal State
     const [selectedReq, setSelectedReq] = useState(null);
@@ -23,12 +25,16 @@ export default function AdminEventDetailsPage() {
 
     const fetchData = async () => {
         try {
-            const [eventRes, requestsRes] = await Promise.all([
+            const [eventRes, requestsRes, exRes, visRes] = await Promise.all([
                 apiClient.get(`/exhibitions/public/exhibitions/${id}/`),
-                apiClient.get(`/exhibitions/admin/exhibitor-applications/${id}/`).catch(() => ({ data: [] }))
+                apiClient.get(`/exhibitions/admin/exhibitor-applications/${id}/`).catch(() => ({ data: [] })),
+                apiClient.get(`/exhibitions/admin/exhibitions/${id}/exhibitors/`).catch(() => ({ data: [] })),
+                apiClient.get(`/exhibitions/admin/exhibitions/${id}/visitors/`).catch(() => ({ data: [] }))
             ]);
             setEvent(eventRes.data);
             setRequests(requestsRes.data);
+            setExhibitorsList(exRes.data);
+            setVisitorsList(visRes.data);
         } catch (error) {
             console.error("Failed to fetch event admin details", error);
         } finally {
@@ -172,10 +178,61 @@ export default function AdminEventDetailsPage() {
                 </div>
             )}
 
-            {/* Placeholders for other tabs */}
-            {(activeTab === 'exhibitors' || activeTab === 'visitors') && (
-                <div className="bg-white p-12 text-center text-slate-500 border border-slate-200 rounded-xl border-dashed">
-                    List functionality coming soon.
+            {activeTab === 'exhibitors' && (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-slate-100 font-bold text-slate-900">
+                        Approved Exhibitors
+                    </div>
+                    <ul className="divide-y divide-slate-100">
+                        {exhibitorsList.length === 0 ? <li className="p-6 text-slate-500 text-center">No exhibitors approved yet.</li> : exhibitorsList.map(ex => (
+                            <li key={ex.id} className="p-6 flex items-center justify-between hover:bg-slate-50">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-bold">
+                                        <Store size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-900">{ex.company_name}</p>
+                                        <p className="text-sm text-slate-500">{ex.email}</p>
+                                        <p className="text-xs text-slate-400 mt-1">Booth: <span className="font-bold text-slate-700">{ex.booth_number}</span></p>
+                                    </div>
+                                </div>
+                                {ex.badge && (
+                                    <a href={ex.badge} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">View Badge</a>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {activeTab === 'visitors' && (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-slate-100 font-bold text-slate-900">
+                        Registered Visitors
+                    </div>
+                    <ul className="divide-y divide-slate-100">
+                        {visitorsList.length === 0 ? <li className="p-6 text-slate-500 text-center">No visitors registered yet.</li> : visitorsList.map(vis => (
+                            <li key={vis.id} className="p-6 flex items-center justify-between hover:bg-slate-50">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 font-bold">
+                                        <Users size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-900">{vis.name}</p>
+                                        <p className="text-sm text-slate-500">{vis.email}</p>
+                                        <p className="text-xs text-slate-400 mt-1">Checked In:
+                                            <span className={`ml-1 font-bold ${vis.is_checked_in ? 'text-green-600' : 'text-slate-500'}`}>
+                                                {vis.is_checked_in ? 'Yes' : 'No'}
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs text-slate-400">QR: {vis.qr_code.substring(0, 8)}...</p>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             )}
 

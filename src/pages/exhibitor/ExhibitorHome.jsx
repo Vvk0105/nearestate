@@ -18,6 +18,8 @@ export default function ExhibitorHome() {
     const [editProfileForm, setEditProfileForm] = useState({});
     const [savingProfile, setSavingProfile] = useState(false);
 
+    // Query param check removed as My Profile now opens UserProfileModal globally
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -31,7 +33,7 @@ export default function ExhibitorHome() {
                 setMyApplications(appsRes.data);
 
                 // If profile exists, set it
-                if (profileRes.data.profile_exists) {
+                if (profileRes.data.exists) {
                     // Fetch full profile details if status doesn't give it all. 
                     // Based on previous code, endpoint might be different for fetching details.
                     // Let's assume GET /exhibitions/exhibitor/profile/ returns details if it exists.
@@ -74,7 +76,8 @@ export default function ExhibitorHome() {
         e.preventDefault();
         setSavingProfile(true);
         try {
-            const res = await apiClient.post('/exhibitions/exhibitor/profile/', editProfileForm);
+            // Use PATCH since we are editing existing profile
+            const res = await apiClient.patch('/exhibitions/exhibitor/profile/', editProfileForm);
             setProfile(res.data);
             toast.success("Profile updated successfully!");
             setShowProfileModal(false);
@@ -107,7 +110,7 @@ export default function ExhibitorHome() {
                                 onClick={openProfileModal}
                                 className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all"
                             >
-                                <Edit size={16} /> Edit Profile
+                                <Edit size={16} /> Edit Company Details
                             </button>
                         )}
                         <Link to="/exhibitor/properties" className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold shadow-lg flex items-center gap-2 transition-all">
@@ -184,7 +187,7 @@ export default function ExhibitorHome() {
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-0 overflow-hidden animate-in fade-in zoom-in duration-200">
                         <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                             <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                                <Building2 className="text-blue-600" size={20} /> Edit Profile
+                                <Building2 className="text-blue-600" size={20} /> Edit Company Details
                             </h3>
                             <button onClick={() => setShowProfileModal(false)} className="text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full p-1 transition-colors">
                                 <X size={20} />

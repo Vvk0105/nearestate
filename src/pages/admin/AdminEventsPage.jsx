@@ -8,7 +8,7 @@ export default function AdminEventsPage() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const [filter, setFilter] = useState('all'); // all, ongoing, upcoming, completed
+    const [filter, setFilter] = useState('all');
 
     useEffect(() => {
         fetchEvents();

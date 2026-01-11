@@ -15,19 +15,8 @@ export default function AdminDashboard() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const [eventsRes] = await Promise.all([
-                    apiClient.get('/exhibitions/public/exhibitions/')
-                ]);
-
-                const events = eventsRes.data;
-                const active = events.filter(e => e.is_active);
-
-                setStats({
-                    total_events: events.length,
-                    active_events: active.length,
-                    total_visitors: 0,
-                    total_exhibitors: 0 
-                });
+                const res = await apiClient.get('/exhibitions/admin/dashboard/stats/');
+                setStats(res.data);
             } catch (error) {
                 console.error("Fetch stats failed", error);
             } finally {

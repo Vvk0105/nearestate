@@ -35,7 +35,7 @@ export default function AdminEditEventPage() {
         visitor_capacity: '',
         is_active: true
     });
-    
+
     useEffect(() => {
         fetchEvent();
     }, [id]);
@@ -239,7 +239,7 @@ export default function AdminEditEventPage() {
                             <div className="flex flex-wrap gap-4">
                                 {existingImages.map((img) => (
                                     <div key={img.id} className="relative w-24 h-24 bg-slate-100 rounded-lg overflow-hidden border">
-                                        <img src={img.image} alt="existing" className="w-full h-full object-cover" />
+                                        <img src={img.image.startsWith('http') ? img.image : `${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}${img.image}`} alt="existing" className="w-full h-full object-cover" />
                                         <button
                                             type="button"
                                             onClick={() => removeExistingImage(img.id)}

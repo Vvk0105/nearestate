@@ -4,6 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { LogOut, User, Repeat, Home, Calendar, QrCode } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Menu, Transition } from '@headlessui/react';
+import Footer from '../components/Footer';
+import UserProfileModal from '../components/UserProfileModal';
+import { useState } from 'react';
 
 export default function MainLayout() {
     const { user, logout, switchRole, selectRole, apiClient } = useAuth();
@@ -42,6 +45,23 @@ export default function MainLayout() {
                     navigate('/exhibitor/profile');
                 }
             }
+        }
+    };
+
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+    const handleProfileClick = () => {
+        if (user.role === 'EXHIBITOR') {
+            // Check if they want to edit user details or company details?
+            // User requested "My Profile" (in navbar) to be for USERNAME/EMAIL edit.
+            // Exhibitor Dashboard "Edit Company Details" is for COMPANY info.
+            // So "My Profile" in navbar should ALWAYS be for User Profile Modal?
+            // User said: "My Profile (ProfilePage)... i need as a model too".
+            // Let's make "My Profile" in navbar open UserProfileModal for EVERYONE.
+            // And Exhibitor Dashboard has the separate "Edit Company Details" button.
+            setIsProfileModalOpen(true);
+        } else {
+            setIsProfileModalOpen(true);
         }
     };
 
@@ -135,12 +155,12 @@ export default function MainLayout() {
 
                                             <Menu.Item>
                                                 {({ active }) => (
-                                                    <Link
-                                                        to="/profile"
-                                                        className={`${active ? 'bg-slate-50' : ''} block px-4 py-2 text-sm text-slate-700 flex items-center gap-2`}
+                                                    <button
+                                                        onClick={handleProfileClick}
+                                                        className={`${active ? 'bg-slate-50' : ''} block w-full text-left px-4 py-2 text-sm text-slate-700 flex items-center gap-2`}
                                                     >
                                                         <User size={16} /> My Profile
-                                                    </Link>
+                                                    </button>
                                                 )}
                                             </Menu.Item>
 
@@ -182,11 +202,8 @@ export default function MainLayout() {
                 <Outlet />
             </main>
 
-            <footer className="bg-white border-t border-slate-200 mt-auto">
-                <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-slate-500 text-sm">
-                    &copy; {new Date().getFullYear()} NearEstate. All rights reserved.
-                </div>
-            </footer>
+            <Footer />
+            <UserProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
         </div>
     );
 }
