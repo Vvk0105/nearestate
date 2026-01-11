@@ -16,7 +16,10 @@ export default function AdminEditEventPage() {
 
     // Existing Data
     const [existingImages, setExistingImages] = useState([]);
+    const [existingMapImage, setExistingMapImage] = useState(null);
     const [removedImageIds, setRemovedImageIds] = useState([]);
+    const [removeMapImage, setRemoveMapImage] = useState(false);
+
 
     // New Data
     const [newImages, setNewImages] = useState([]);
@@ -59,6 +62,9 @@ export default function AdminEditEventPage() {
                 map_image: data.map_image
             });
             setExistingImages(data.images || []);
+            setExistingMapImage(data.map_image);
+            console.log(data.map_image);
+            
             // setMapImage(data.map_image) - we only show preview or existing link
         } catch (error) {
             console.error("Failed to load event", error);
@@ -95,21 +101,38 @@ export default function AdminEditEventPage() {
         setSaving(true);
 
         const data = new FormData();
-        Object.keys(formData).forEach(key => data.append(key, formData[key]));
 
-        if (newMapImage) data.append('map_image', newMapImage);
+        // Normal fields
+        Object.keys(formData).forEach((key) => {
+            data.append(key, formData[key]);
+        });
 
-        newImages.forEach(img => data.append('images', img));
+        // 🔹 Map image replace
+        if (newMapImage) {
+            data.append("map_image", newMapImage);
+        }
+
+        // 🔹 Map image remove
+        if (removeMapImage) {
+            data.append("remove_map_image", "true");
+        }
+
+        // Gallery images (unchanged)
+        newImages.forEach((img) => data.append("images", img));
+
         if (removedImageIds.length > 0) {
-            data.append('remove_image_ids', removedImageIds.join(','));
+            data.append("remove_image_ids", removedImageIds.join(","));
         }
 
         try {
-            await apiClient.put(`/exhibitions/admin/exhibitions/${id}/update/`, data, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            await apiClient.put(
+                `/exhibitions/admin/exhibitions/${id}/update/`,
+                data,
+                { headers: { "Content-Type": "multipart/form-data" } }
+            );
+
             toast.success("Event Updated Successfully!");
-            navigate('/admin/events');
+            navigate("/admin/events");
         } catch (error) {
             console.error(error);
             toast.error("Failed to update event");
@@ -209,7 +232,11 @@ export default function AdminEditEventPage() {
 
                     {/* Map Image */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Update Banner/Map</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Update Banner / Map Image
+                        </label>
+
+                        {/* Upload box */}
                         <div
                             className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 cursor-pointer"
                             onClick={() => mapInputRef.current?.click()}
@@ -218,11 +245,17 @@ export default function AdminEditEventPage() {
                                 type="file"
                                 className="hidden"
                                 ref={mapInputRef}
-                                onChange={e => setNewMapImage(e.target.files[0])}
                                 accept="image/*"
+                                onChange={(e) => {
+                                    setNewMapImage(e.target.files[0]);
+                                    setRemoveMapImage(false);
+                                }}
                             />
+
                             {newMapImage ? (
-                                <p className="text-sm text-green-600 font-bold">{newMapImage.name}</p>
+                                <p className="text-sm text-green-600 font-bold">
+                                    {newMapImage.name}
+                                </p>
                             ) : (
                                 <div className="text-slate-500">
                                     <Upload className="mx-auto h-8 w-8 mb-2" />
@@ -230,7 +263,37 @@ export default function AdminEditEventPage() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Existing Map Image Preview */}
+                        {existingMapImage && !removeMapImage && !newMapImage && (
+                            <div className="mt-4 relative w-64 h-36 border rounded-lg overflow-hidden">
+                                <img
+                                    src={
+                                        existingMapImage.startsWith("http")
+                                            ? existingMapImage
+                                            : `${import.meta.env.VITE_MEDIA_BASE_URL}${existingMapImage}`
+                                    }
+                                    alt="Map"
+                                    className="w-full h-full object-cover"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setRemoveMapImage(true)}
+                                    className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded hover:bg-red-700"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Removed indicator */}
+                        {removeMapImage && (
+                            <p className="mt-3 text-sm text-red-600 font-medium">
+                                Map image will be removed
+                            </p>
+                        )}
                     </div>
+
 
                     {/* Existing Images */}
                     {existingImages.length > 0 && (
@@ -239,7 +302,7 @@ export default function AdminEditEventPage() {
                             <div className="flex flex-wrap gap-4">
                                 {existingImages.map((img) => (
                                     <div key={img.id} className="relative w-24 h-24 bg-slate-100 rounded-lg overflow-hidden border">
-                                        <img src={img.image.startsWith('http') ? img.image : `${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}${img.image}`} alt="existing" className="w-full h-full object-cover" />
+                                        <img src={img.image.startsWith('http') ? img.image : `${import.meta.env.VITE_MEDIA_BASE_URL}${img.image}`} alt="existing" className="w-full h-full object-cover" />
                                         <button
                                             type="button"
                                             onClick={() => removeExistingImage(img.id)}
