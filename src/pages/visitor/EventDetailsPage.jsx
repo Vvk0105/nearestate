@@ -12,7 +12,7 @@ export default function EventDetailsPage() {
     const [event, setEvent] = useState(null);
     const [exhibitors, setExhibitors] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('details'); // details, exhibitors
+    const [activeTab, setActiveTab] = useState('details');
     const [registering, setRegistering] = useState(false);
     const [isRegistered, setIsRegistered] = useState(false);
 
@@ -22,8 +22,8 @@ export default function EventDetailsPage() {
     const [transactionId, setTransactionId] = useState('');
     const [boothNumber, setBoothNumber] = useState('');
     const [submittingApp, setSubmittingApp] = useState(false);
-    const [applicationStatus, setApplicationStatus] = useState(null); // null, PENDING, APPROVED, REJECTED
-
+    const [applicationStatus, setApplicationStatus] = useState(null);
+    
     const isExhibitor = user?.role === 'EXHIBITOR';
 
     const roleBasePath =
@@ -50,7 +50,7 @@ export default function EventDetailsPage() {
                         setIsRegistered(statusRes.data.is_registered);
                     } else if (user.role === 'EXHIBITOR') {
                         const appsRes = await apiClient.get('/exhibitions/exhibitor/my-applications/');
-                        const myApp = appsRes.data.find(a => a.exhibition.id === parseInt(id) || a.exhibition === parseInt(id));
+                        const myApp = appsRes.data.find(a => a.exhibition_id  === parseInt(id));
                         if (myApp) {
                             setApplicationStatus(myApp.status);
                             setIsRegistered(true);

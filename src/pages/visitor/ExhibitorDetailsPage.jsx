@@ -12,7 +12,6 @@ export default function ExhibitorDetailsPage() {
     const [exhibitor, setExhibitor] = useState(null);
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
-    console.log('ImageCarousel',properties);
     
     useEffect(() => {
         // ... same fetch logic ...

@@ -35,7 +35,6 @@ export default function AdminEditEventPage() {
         visitor_capacity: '',
         is_active: true
     });
-    console.log('formdata', formData);
     
     useEffect(() => {
         fetchEvent();

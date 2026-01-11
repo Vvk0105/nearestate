@@ -74,7 +74,6 @@ export default function AddPropertyForm() {
         formData.images.forEach((img) => {
             data.append('uploaded_images', img);
         });
-        console.log("Selected exhibition:", formData.exhibition);
         try {
             await apiClient.post(`exhibitions/exhibitor/properties/${formData.exhibition}/create/`, data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
@@ -88,7 +87,6 @@ export default function AddPropertyForm() {
             setLoading(false);
         }
     };
-    console.log(exhibitions);
     
     return (
         <div className="max-w-2xl mx-auto py-12 px-4">

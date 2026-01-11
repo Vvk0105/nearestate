@@ -5,7 +5,6 @@ import ImageCarousel from './ImageCarousel';
 export default function EventCard({ event, action }) {
     const API_BASE = 'http://127.0.0.1:8000/';
     const isUpcoming = new Date(event.start_date) > new Date();
-    console.log(event);
     
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">

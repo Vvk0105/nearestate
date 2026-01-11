@@ -22,7 +22,6 @@ export default function MyApplicationsPage() {
     }, [apiClient]);
 
     if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
-console.log('applications',applications);
 
     return (
         <div className="space-y-8">
