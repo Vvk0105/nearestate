@@ -166,14 +166,42 @@ export default function AdminEventDetailsPage() {
             )}
 
             {activeTab === 'overview' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 className="text-slate-500 text-sm font-medium uppercase">Visitor Capacity</h3>
-                        <p className="text-2xl font-bold text-slate-900 mt-2">{event.visitor_capacity}</p>
-                    </div>
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 className="text-slate-500 text-sm font-medium uppercase">Booth Capacity</h3>
-                        <p className="text-2xl font-bold text-slate-900 mt-2">{event.booth_capacity}</p>
+                <div>
+                    {/* Status Card */}
+                    <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <Users size={20} className="text-indigo-500" /> Availability
+                        </h3>
+
+                        <div className="space-y-4 mb-8">
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-sm font-medium text-slate-600">Available Booths</span>
+                                    <span className="text-sm font-bold text-slate-900">{event.available_booths} / {event.booth_capacity}</span>
+                                </div>
+                                <div className="w-full bg-slate-200 rounded-full h-2">
+                                    <div
+                                        className="bg-indigo-500 h-2 rounded-full transition-all duration-1000"
+                                        style={{ width: `${(event.available_booths / event.booth_capacity) * 100}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-sm font-medium text-slate-600">Visitor Passes</span>
+                                    <span className="text-sm font-bold text-slate-900">{event.available_visitors} left</span>
+                                </div>
+                                <div className="w-full bg-slate-200 rounded-full h-2">
+                                    <div
+                                        className="bg-emerald-500 h-2 rounded-full transition-all duration-1000"
+                                        style={{ width: `${(event.available_visitors / event.visitor_capacity) * 100}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        
                     </div>
                 </div>
             )}
