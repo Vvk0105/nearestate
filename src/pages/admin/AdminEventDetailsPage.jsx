@@ -1,78 +1,160 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Loader, CheckCircle, XCircle, Users, Store, MapPin, Calendar, ArrowLeft, Info, ToggleLeft, ToggleRight, Search, Check } from 'lucide-react';
-import toast from 'react-hot-toast';
+import {
+    Table, Tabs, Button, Input, Tag, Drawer, Descriptions,
+    Space, Modal, message, Card, Row, Col, Progress, Spin
+} from 'antd';
+import {
+    ArrowLeftOutlined, EyeOutlined, CheckCircleOutlined,
+    CloseCircleOutlined, SearchOutlined, ReloadOutlined
+} from '@ant-design/icons';
 import { ApprovalModal } from './ApprovalModal';
+
+const { TabPane } = Tabs;
 
 export default function AdminEventDetailsPage() {
     const { id } = useParams();
     const { apiClient } = useAuth();
     const [event, setEvent] = useState(null);
-    const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('overview');
-    const [exhibitorsList, setExhibitorsList] = useState([]);
-    const [visitorsList, setVisitorsList] = useState([]);
-    const [visitorSearch, setVisitorSearch] = useState("");
 
-    // Modal State
+    // Exhibitor Requests State
+    const [requests, setRequests] = useState([]);
+    const [requestsLoading, setRequestsLoading] = useState(false);
+
+    // Exhibitors State
+    const [exhibitors, setExhibitors] = useState([]);
+    const [exhibitorsTotal, setExhibitorsTotal] = useState(0);
+    const [exhibitorsLoading, setExhibitorsLoading] = useState(false);
+    const [exhibitorsPagination, setExhibitorsPagination] = useState({ current: 1, pageSize: 10 });
+    const [exhibitorsSearch, setExhibitorsSearch] = useState("");
+
+    // Visitors State
+    const [visitors, setVisitors] = useState([]);
+    const [visitorsTotal, setVisitorsTotal] = useState(0);
+    const [visitorsLoading, setVisitorsLoading] = useState(false);
+    const [visitorsPagination, setVisitorsPagination] = useState({ current: 1, pageSize: 10 });
+    const [visitorsSearch, setVisitorsSearch] = useState("");
+
+    // Details Drawer State
+    const [drawerVisible, setDrawerVisible] = useState(false);
+    const [drawerItem, setDrawerItem] = useState(null);
+    const [drawerType, setDrawerType] = useState(null); // 'visitor' or 'exhibitor'
+
+    // Approval Modal State
     const [selectedReq, setSelectedReq] = useState(null);
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
-        fetchData();
+        fetchEventDetails();
+        fetchRequests();
     }, [id]);
 
-    const fetchData = async () => {
+    useEffect(() => {
+        if (event) {
+            fetchExhibitors(exhibitorsPagination.current, exhibitorsPagination.pageSize, exhibitorsSearch);
+            fetchVisitors(visitorsPagination.current, visitorsPagination.pageSize, visitorsSearch);
+        }
+    }, [event]); // Fetch lists after event loaded or on pagination/search change (handled by effect on pagination/search? No, called manually or via table change)
+
+    // Actually, typical pattern is to fetch in useEffect dependent on pagination/search state
+    useEffect(() => {
+        fetchExhibitors(exhibitorsPagination.current, exhibitorsPagination.pageSize, exhibitorsSearch);
+    }, [exhibitorsPagination, exhibitorsSearch]);
+
+    useEffect(() => {
+        fetchVisitors(visitorsPagination.current, visitorsPagination.pageSize, visitorsSearch);
+    }, [visitorsPagination, visitorsSearch]);
+
+
+    const fetchEventDetails = async () => {
         try {
-            const [eventRes, requestsRes, exRes, visRes] = await Promise.all([
-                apiClient.get(`/exhibitions/public/exhibitions/${id}/`),
-                apiClient.get(`/exhibitions/admin/exhibitor-applications/${id}/`).catch(() => ({ data: [] })),
-                apiClient.get(`/exhibitions/admin/exhibitions/${id}/exhibitors/`).catch(() => ({ data: [] })),
-                apiClient.get(`/exhibitions/admin/exhibitions/${id}/visitors/`).catch(() => ({ data: [] }))
-            ]);
-            setEvent(eventRes.data);
-            setRequests(requestsRes.data);
-            setExhibitorsList(exRes.data);
-            setVisitorsList(visRes.data);
+            const res = await apiClient.get(`/exhibitions/public/exhibitions/${id}/`);
+            setEvent(res.data);
         } catch (error) {
-            console.error("Failed to fetch event admin details", error);
+            message.error("Failed to load event details");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleToggleCheckIn = async (visId) => {
+    const fetchRequests = async () => {
+        setRequestsLoading(true);
+        try {
+            const res = await apiClient.get(`/exhibitions/admin/exhibitor-applications/${id}/`);
+            setRequests(res.data);
+        } catch (error) {
+            console.error("Requests fetch error", error);
+        } finally {
+            setRequestsLoading(false);
+        }
+    };
+
+    const fetchExhibitors = async (page, limit, search) => {
+        setExhibitorsLoading(true);
+        try {
+            const res = await apiClient.get(`/exhibitions/admin/exhibitions/${id}/exhibitors/`, {
+                params: { page, limit, search }
+            });
+            setExhibitors(res.data.data);
+            setExhibitorsTotal(res.data.total);
+        } catch (error) {
+            console.error("Exhibitors fetch error", error);
+        } finally {
+            setExhibitorsLoading(false);
+        }
+    };
+
+    const fetchVisitors = async (page, limit, search) => {
+        setVisitorsLoading(true);
+        try {
+            const res = await apiClient.get(`/exhibitions/admin/exhibitions/${id}/visitors/`, {
+                params: { page, limit, search }
+            });
+            setVisitors(res.data.data);
+            setVisitorsTotal(res.data.total);
+        } catch (error) {
+            console.error("Visitors fetch error", error);
+        } finally {
+            setVisitorsLoading(false);
+        }
+    };
+
+    const handleVisitorTableChange = (pagination) => {
+        setVisitorsPagination(pagination);
+    };
+
+    const handleExhibitorTableChange = (pagination) => {
+        setExhibitorsPagination(pagination);
+    };
+
+    // Actions
+    const handleToggleCheckIn = async (visId, currentStatus) => {
         try {
             const res = await apiClient.post(`exhibitions/admin/visitors/${visId}/toggle-checkin/`);
-            const updatedList = visitorsList.map(v =>
-                v.id === visId ? { ...v, is_checked_in: res.data.is_checked_in } : v
-            );
-            setVisitorsList(updatedList);
-            toast.success(`Visitor ${res.data.is_checked_in ? 'Checked In' : 'Checked Out'}`);
-            fetchData();
+            message.success(`Visitor ${res.data.is_checked_in ? 'Checked In' : 'Checked Out'}`);
+            // Optimistic update or refetch
+            setVisitors(visitors.map(v => v.id === visId ? { ...v, is_checked_in: res.data.is_checked_in } : v));
         } catch (error) {
-            console.error(error);
-            toast.error("Failed to update status");
+            message.error("Failed to update status");
         }
     };
 
-    const handleReject = async (reqId) => {
-        if (!window.confirm("Are you sure you want to reject this application?")) return;
-        try {
-            await apiClient.post(`exhibitions/admin/exhibitor-application/${reqId}/`, { action: 'REJECT' });
-            toast.success("Application Rejected");
-            fetchData();
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to reject");
-        }
-    };
-
-    const openApprovalModal = (req) => {
-        setSelectedReq(req);
-        setShowModal(true);
+    const handleReject = (reqId) => {
+        Modal.confirm({
+            title: 'Reject Application?',
+            content: 'Are you sure you want to reject this application?',
+            onOk: async () => {
+                try {
+                    await apiClient.post(`exhibitions/admin/exhibitor-application/${reqId}/`, { action: 'REJECT' });
+                    message.success("Application Rejected");
+                    fetchRequests();
+                } catch (error) {
+                    message.error("Failed to reject");
+                }
+            }
+        });
     };
 
     const handleConfirmApproval = async (reqId, formData) => {
@@ -80,261 +162,246 @@ export default function AdminEventDetailsPage() {
             await apiClient.post(`exhibitions/admin/exhibitor-application/${reqId}/`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Application Approved");
-            fetchData();
+            message.success("Application Approved");
+            fetchRequests();
+            // Refresh exhibitors if approved
+            fetchExhibitors(1, 10, "");
         } catch (error) {
-            console.error(error);
-            toast.error(error.response?.data?.error || "Failed to approve");
+            message.error(error.response?.data?.error || "Failed to approve");
         }
     };
 
-    if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
-    if (!event) return <div className="text-center p-12">Event not found</div>;
+    const showDetails = (item, type) => {
+        setDrawerItem(item);
+        setDrawerType(type);
+        setDrawerVisible(true);
+    };
+
+    // Columns
+    const requestColumns = [
+        { title: 'Company', dataIndex: 'company', key: 'company', render: text => <strong>{text}</strong> },
+        { title: 'Email', dataIndex: 'email', key: 'email' },
+        {
+            title: 'Status', dataIndex: 'status', key: 'status', render: status => (
+                <Tag color={status === 'APPROVED' ? 'green' : status === 'REJECTED' ? 'red' : 'gold'}>
+                    {status}
+                </Tag>
+            )
+        },
+        { title: 'Transaction ID', dataIndex: 'transaction_id', key: 'transaction_id' },
+        {
+            title: 'Actions', key: 'actions', render: (_, record) => (
+                <Space>
+                    {record.status === 'PENDING' && (
+                        <>
+                            <Button type="primary" shape="circle" icon={<CheckCircleOutlined />} onClick={() => { setSelectedReq(record); setShowModal(true); }} />
+                            <Button type="primary" danger shape="circle" icon={<CloseCircleOutlined />} onClick={() => handleReject(record.id)} />
+                        </>
+                    )}
+                    {record.status === 'APPROVED' && <span className="text-gray-500">Booth: {record.booth_number}</span>}
+                </Space>
+            )
+        },
+    ];
+
+    const exhibitorColumns = [
+        { title: 'Company Name', dataIndex: 'company_name', key: 'company_name', render: text => <strong>{text}</strong> },
+        { title: 'Email', dataIndex: 'email', key: 'email' },
+        { title: 'Booth', dataIndex: 'booth_number', key: 'booth_number' },
+        {
+            title: 'Action', key: 'action', render: (_, record) => (
+                <Button icon={<EyeOutlined />} onClick={() => showDetails(record, 'exhibitor')}>
+                    View Details
+                </Button>
+            )
+        }
+    ];
+
+    const visitorColumns = [
+        { title: 'Name', dataIndex: 'name', key: 'name', render: text => <strong>{text}</strong> },
+        { title: 'Email', dataIndex: 'email', key: 'email' },
+        {
+            title: 'Status', key: 'status', render: (_, record) => (
+                <Tag color={record.is_checked_in ? 'green' : 'orange'}>
+                    {record.is_checked_in ? 'Checked In' : 'Registered'}
+                </Tag>
+            )
+        },
+        { title: 'QR Code', dataIndex: 'qr_code', key: 'qr_code', render: qr => <span className="text-gray-400">{qr.substring(0, 8)}...</span> },
+        {
+            title: 'Actions', key: 'actions', render: (_, record) => (
+                <Space>
+                    <Button
+                        type={record.is_checked_in ? 'default' : 'primary'}
+                        onClick={() => handleToggleCheckIn(record.id, record.is_checked_in)}
+                    >
+                        {record.is_checked_in ? 'Check Out' : 'Check In'}
+                    </Button>
+                    <Button icon={<EyeOutlined />} onClick={() => showDetails(record, 'visitor')}>
+                        Details
+                    </Button>
+                </Space>
+            )
+        }
+    ];
+
+    if (loading) return <div className="p-12 text-center"><Spin size="large" /></div>;
+    if (!event) return <div className="p-12 text-center">Event not found</div>;
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <Link to="/admin/events" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors">
-                    <ArrowLeft size={18} /> Back to Events
+        <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+                <Link to="/admin/events" className="flex items-center gap-2 text-gray-500 hover:text-black">
+                    <ArrowLeftOutlined /> Back to Events
                 </Link>
-                <Link to={`/admin/events/${id}/edit`} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                    Edit Event
-                </Link>
+                <Button type="primary">
+                    <Link to={`/admin/events/${id}/edit`}>Edit Event</Link>
+                </Button>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{event.name}</h1>
-                        <div className="flex items-center gap-4 mt-2 text-slate-500">
-                            <span className="flex items-center gap-1"><Calendar size={16} /> {new Date(event.start_date).toLocaleDateString()}</span>
-                            <span className="flex items-center gap-1"><MapPin size={16} /> {event.city}</span>
-                        </div>
+            <Card className="mb-6 shadow-sm">
+                <Row gutter={24} align="middle">
+                    <Col span={16}>
+                        <h1 className="text-2xl font-bold mb-2">{event.name}</h1>
+                        <p className="text-gray-500 mb-0">{event.city} • {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}</p>
+                    </Col>
+                    <Col span={8} className="text-right">
+                        <Tag color={event.is_active ? 'green' : 'red'}>{event.is_active ? 'Active' : 'Inactive'}</Tag>
+                    </Col>
+                </Row>
+            </Card>
+
+            <Tabs defaultActiveKey="1" type="card">
+                <TabPane tab="Overview" key="1">
+                    <Row gutter={[16, 16]}>
+                        <Col span={12}>
+                            <Card title="Booth Availability">
+                                <Progress
+                                    percent={Math.round((event.available_booths / event.booth_capacity) * 100)}
+                                    status="active"
+                                    format={() => `${event.available_booths} / ${event.booth_capacity}`}
+                                />
+                            </Card>
+                        </Col>
+                        <Col span={12}>
+                            <Card title="Visitor Passes">
+                                <Progress
+                                    percent={Math.round((event.available_visitors / event.visitor_capacity) * 100)}
+                                    status="active"
+                                    strokeColor="#52c41a"
+                                    format={() => `${event.available_visitors} left`}
+                                />
+                            </Card>
+                        </Col>
+                        <Col span={24}>
+                            <Card title="Event Description">
+                                <p>{event.description}</p>
+                            </Card>
+                        </Col>
+                    </Row>
+                </TabPane>
+
+                <TabPane tab={`Requests (${requests.length})`} key="2">
+                    <Table
+                        columns={requestColumns}
+                        dataSource={requests}
+                        rowKey="id"
+                        loading={requestsLoading}
+                        pagination={{ pageSize: 5 }}
+                    />
+                </TabPane>
+
+                <TabPane tab="Exhibitors" key="3">
+                    <div className="mb-4 flex gap-2">
+                        <Input
+                            placeholder="Search exhibitors..."
+                            prefix={<SearchOutlined />}
+                            value={exhibitorsSearch}
+                            onChange={(e) => setExhibitorsSearch(e.target.value)}
+                            style={{ width: 300 }}
+                        />
+                        <Button icon={<ReloadOutlined />} onClick={() => fetchExhibitors(1, 10, "")}>Refresh</Button>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${event.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {event.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                </div>
-            </div>
+                    <Table
+                        columns={exhibitorColumns}
+                        dataSource={exhibitors}
+                        rowKey="id"
+                        loading={exhibitorsLoading}
+                        pagination={{
+                            current: exhibitorsPagination.current,
+                            pageSize: exhibitorsPagination.pageSize,
+                            total: exhibitorsTotal,
+                        }}
+                        onChange={handleExhibitorTableChange}
+                    />
+                </TabPane>
 
-            {/* Tabs */}
-            <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg w-fit">
-                {['overview', 'requests', 'exhibitors', 'visitors'].map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-all ${activeTab === tab ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        {tab}
-                    </button>
-                ))}
-            </div>
-
-            {activeTab === 'requests' && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100 font-bold text-slate-900">
-                        Exhibitor Applications ({requests.length})
+                <TabPane tab="Visitors" key="4">
+                    <div className="mb-4 flex gap-2">
+                        <Input
+                            placeholder="Search visitors..."
+                            prefix={<SearchOutlined />}
+                            value={visitorsSearch}
+                            onChange={(e) => setVisitorsSearch(e.target.value)}
+                            style={{ width: 300 }}
+                        />
+                        <Button icon={<ReloadOutlined />} onClick={() => fetchVisitors(1, 10, "")}>Refresh</Button>
                     </div>
-                    {requests.length === 0 ? (
-                        <div className="p-8 text-center text-slate-500">No pending requests found.</div>
-                    ) : (
-                        <ul className="divide-y divide-slate-100">
-                            {requests.map(req => (
-                                <li key={req.id} className="p-6 flex items-center justify-between hover:bg-slate-50">
-                                    <div>
-                                        <div className="flex items-center gap-3">
-                                            <p className="font-bold text-slate-900">{req.company}</p>
-                                            <span className={`text-xs px-2 py-0.5 rounded ${req.status === 'APPROVED' ? 'bg-green-100 text-green-700' : req.status === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{req.status}</span>
-                                        </div>
-                                        <p className="text-sm text-slate-500">{req.email} • ID: {req.transaction_id || 'N/A'}</p>
-                                        <p className="text-xs text-slate-400 mt-1">
-                                            {req.payment_screenshot ? (
-                                                <a href={req.payment_screenshot} target="_blank" rel="noreferrer" className="text-blue-500 underline">View Payment</a>
-                                            ) : 'No Proof'}
-                                            {req.badge && (
-                                                <span className="ml-2">• <a href={req.badge} target="_blank" rel="noreferrer" className="text-purple-500 underline">View Assigned Badge</a></span>
-                                            )}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {req.status === 'PENDING' && (
-                                            <>
-                                                <button onClick={() => openApprovalModal(req)} className="p-2 text-green-600 hover:bg-green-50 rounded-full" title="Approve">
-                                                    <CheckCircle size={24} />
-                                                </button>
-                                                <button onClick={() => handleReject(req.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-full" title="Reject">
-                                                    <XCircle size={24} />
-                                                </button>
-                                            </>
-                                        )}
-                                        {req.status === 'APPROVED' && (
-                                            <div className="text-center">
-                                                <span className="block text-xs text-slate-500">Booth</span>
-                                                <span className="font-bold text-slate-900">{req.booth_number}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-            )}
+                    <Table
+                        columns={visitorColumns}
+                        dataSource={visitors}
+                        rowKey="id"
+                        loading={visitorsLoading}
+                        pagination={{
+                            current: visitorsPagination.current,
+                            pageSize: visitorsPagination.pageSize,
+                            total: visitorsTotal,
+                        }}
+                        onChange={handleVisitorTableChange}
+                    />
+                </TabPane>
+            </Tabs>
 
-            {activeTab === 'overview' && (
-                <div>
-                    {/* Status Card */}
-                    <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <Users size={20} className="text-indigo-500" /> Availability
-                        </h3>
-
-                        <div className="space-y-4 mb-8">
-                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="text-sm font-medium text-slate-600">Available Booths</span>
-                                    <span className="text-sm font-bold text-slate-900">{event.available_booths} / {event.booth_capacity}</span>
-                                </div>
-                                <div className="w-full bg-slate-200 rounded-full h-2">
-                                    <div
-                                        className="bg-indigo-500 h-2 rounded-full transition-all duration-1000"
-                                        style={{ width: `${(event.available_booths / event.booth_capacity) * 100}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-
-                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="text-sm font-medium text-slate-600">Visitor Passes</span>
-                                    <span className="text-sm font-bold text-slate-900">{event.available_visitors} left</span>
-                                </div>
-                                <div className="w-full bg-slate-200 rounded-full h-2">
-                                    <div
-                                        className="bg-emerald-500 h-2 rounded-full transition-all duration-1000"
-                                        style={{ width: `${(event.available_visitors / event.visitor_capacity) * 100}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Event Details Card */}
-                        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                <Info size={20} className="text-blue-500" /> Event Details
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <p className="text-sm text-slate-500 mb-1">Description</p>
-                                    <p className="text-slate-800 text-sm whitespace-pre-wrap">{event.description || 'No description provided.'}</p>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-sm text-slate-500 mb-1">Venue & Location</p>
-                                        <p className="font-medium text-slate-900">{event.venue}</p>
-                                        <p className="text-slate-700">{event.city}, {event.state}, {event.country}</p>
-                                    </div>
-                                    <div className="flex gap-8">
-                                        <div>
-                                            <p className="text-sm text-slate-500 mb-1">Start Date</p>
-                                            <p className="font-medium text-slate-900">{new Date(event.start_date).toLocaleDateString()}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-slate-500 mb-1">End Date</p>
-                                            <p className="font-medium text-slate-900">{new Date(event.end_date).toLocaleDateString()}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'exhibitors' && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100 font-bold text-slate-900">
-                        Approved Exhibitors
-                    </div>
-                    <ul className="divide-y divide-slate-100">
-                        {exhibitorsList.length === 0 ? <li className="p-6 text-slate-500 text-center">No exhibitors approved yet.</li> : exhibitorsList.map(ex => (
-                            <li key={ex.id} className="p-6 flex items-center justify-between hover:bg-slate-50">
-                                <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-bold">
-                                        <Store size={20} />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-slate-900">{ex.company_name}</p>
-                                        <p className="text-sm text-slate-500">{ex.email}</p>
-                                        <p className="text-xs text-slate-400 mt-1">Booth: <span className="font-bold text-slate-700">{ex.booth_number}</span></p>
-                                    </div>
-                                </div>
-                                {ex.badge && (
-                                    <a href={ex.badge} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">View Badge</a>
+            <Drawer
+                title={`${drawerType === 'exhibitor' ? 'Exhibitor' : 'Visitor'} Details`}
+                placement="right"
+                onClose={() => setDrawerVisible(false)}
+                open={drawerVisible}
+                width={500}
+            >
+                {drawerItem && (
+                    <Descriptions column={1} bordered>
+                        <Descriptions.Item label="ID">{drawerItem.id}</Descriptions.Item>
+                        <Descriptions.Item label="Name/Company">{drawerItem.name || drawerItem.company_name}</Descriptions.Item>
+                        <Descriptions.Item label="Email">{drawerItem.email}</Descriptions.Item>
+                        {drawerType === 'exhibitor' && (
+                            <>
+                                <Descriptions.Item label="Booth">{drawerItem.booth_number}</Descriptions.Item>
+                                <Descriptions.Item label="Contact Number">{drawerItem.contact_number || 'N/A'}</Descriptions.Item>
+                                <Descriptions.Item label="Business Type">{drawerItem.business_type || 'N/A'}</Descriptions.Item>
+                                <Descriptions.Item label="Council Area">{drawerItem.council_area || 'N/A'}</Descriptions.Item>
+                                {drawerItem.badge && (
+                                    <Descriptions.Item label="Badge">
+                                        <a href={drawerItem.badge} target="_blank" rel="noreferrer">View Badge</a>
+                                    </Descriptions.Item>
                                 )}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+                            </>
+                        )}
+                        {drawerType === 'visitor' && (
+                            <>
+                                <Descriptions.Item label="Checked In">
+                                    <Tag color={drawerItem.is_checked_in ? 'green' : 'orange'}>
+                                        {drawerItem.is_checked_in ? 'Yes' : 'No'}
+                                    </Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="QR Code">{drawerItem.qr_code}</Descriptions.Item>
+                                <Descriptions.Item label="Registered At">{drawerItem.registered_at ? new Date(drawerItem.registered_at).toLocaleString() : 'N/A'}</Descriptions.Item>
+                            </>
+                        )}
+                    </Descriptions>
+                )}
+            </Drawer>
 
-            {activeTab === 'visitors' && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="font-bold text-slate-900">
-                            Registered Visitors ({visitorsList.length})
-                        </div>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Search visitor..."
-                                className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-                                value={visitorSearch}
-                                onChange={(e) => setVisitorSearch(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    <ul className="divide-y divide-slate-100">
-                        {visitorsList.filter(v =>
-                            v.name.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-                            v.email.toLowerCase().includes(visitorSearch.toLowerCase())
-                        ).length === 0 ? (
-                            <li className="p-6 text-slate-500 text-center">No visitors found.</li>
-                        ) : (
-                            visitorsList.filter(v =>
-                                v.name.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-                                v.email.toLowerCase().includes(visitorSearch.toLowerCase())
-                            ).map(vis => (
-                                <li key={vis.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center font-bold ${vis.is_checked_in ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-                                            <Users size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-slate-900">{vis.name}</p>
-                                            <p className="text-sm text-slate-500">{vis.email}</p>
-                                            <p className="text-xs text-slate-400 mt-1">QR: {vis.qr_code.substring(0, 8)}...</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <button
-                                            onClick={() => handleToggleCheckIn(vis.id)}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${vis.is_checked_in
-                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                                }`}
-                                        >
-                                            {vis.is_checked_in ? <Check size={14} /> : null}
-                                            {vis.is_checked_in ? 'Checked In' : 'Check In'}
-                                        </button>
-                                    </div>
-                                </li>
-                            )))}
-                    </ul>
-                </div>
-            )}
-
-            {/* Modal */}
             <ApprovalModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
