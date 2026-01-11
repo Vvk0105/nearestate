@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { Toaster } from 'react-hot-toast';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
-import { AuthProvider } from './context/AuthContext';
+import ScrollToTop from './components/ScrollToTop';
+import AuthProvider from './context/AuthContext';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
 import MinimalLayout from './layouts/MinimalLayout';
@@ -39,6 +40,7 @@ import PublicHome from './pages/PublicHome';
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
         <AuthProvider>
           <Toaster position="top-right" />

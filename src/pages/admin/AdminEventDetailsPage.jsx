@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Loader, CheckCircle, XCircle, Users, Store, MapPin, Calendar, ArrowLeft } from 'lucide-react';
+import { Loader, CheckCircle, XCircle, Users, Store, MapPin, Calendar, ArrowLeft, Info, ToggleLeft, ToggleRight, Search, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ApprovalModal } from './ApprovalModal';
 
@@ -14,6 +14,7 @@ export default function AdminEventDetailsPage() {
     const [activeTab, setActiveTab] = useState('overview');
     const [exhibitorsList, setExhibitorsList] = useState([]);
     const [visitorsList, setVisitorsList] = useState([]);
+    const [visitorSearch, setVisitorSearch] = useState("");
 
     // Modal State
     const [selectedReq, setSelectedReq] = useState(null);
@@ -39,6 +40,21 @@ export default function AdminEventDetailsPage() {
             console.error("Failed to fetch event admin details", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleToggleCheckIn = async (visId) => {
+        try {
+            const res = await apiClient.post(`exhibitions/admin/visitors/${visId}/toggle-checkin/`);
+            const updatedList = visitorsList.map(v =>
+                v.id === visId ? { ...v, is_checked_in: res.data.is_checked_in } : v
+            );
+            setVisitorsList(updatedList);
+            toast.success(`Visitor ${res.data.is_checked_in ? 'Checked In' : 'Checked Out'}`);
+            fetchData();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update status");
         }
     };
 
@@ -201,7 +217,35 @@ export default function AdminEventDetailsPage() {
                             </div>
                         </div>
 
-                        
+                        {/* Event Details Card */}
+                        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <Info size={20} className="text-blue-500" /> Event Details
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p className="text-sm text-slate-500 mb-1">Description</p>
+                                    <p className="text-slate-800 text-sm whitespace-pre-wrap">{event.description || 'No description provided.'}</p>
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-sm text-slate-500 mb-1">Venue & Location</p>
+                                        <p className="font-medium text-slate-900">{event.venue}</p>
+                                        <p className="text-slate-700">{event.city}, {event.state}, {event.country}</p>
+                                    </div>
+                                    <div className="flex gap-8">
+                                        <div>
+                                            <p className="text-sm text-slate-500 mb-1">Start Date</p>
+                                            <p className="font-medium text-slate-900">{new Date(event.start_date).toLocaleDateString()}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-slate-500 mb-1">End Date</p>
+                                            <p className="font-medium text-slate-900">{new Date(event.end_date).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
@@ -235,31 +279,57 @@ export default function AdminEventDetailsPage() {
 
             {activeTab === 'visitors' && (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100 font-bold text-slate-900">
-                        Registered Visitors
+                    <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="font-bold text-slate-900">
+                            Registered Visitors ({visitorsList.length})
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Search visitor..."
+                                className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+                                value={visitorSearch}
+                                onChange={(e) => setVisitorSearch(e.target.value)}
+                            />
+                        </div>
                     </div>
                     <ul className="divide-y divide-slate-100">
-                        {visitorsList.length === 0 ? <li className="p-6 text-slate-500 text-center">No visitors registered yet.</li> : visitorsList.map(vis => (
-                            <li key={vis.id} className="p-6 flex items-center justify-between hover:bg-slate-50">
-                                <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 font-bold">
-                                        <Users size={20} />
+                        {visitorsList.filter(v =>
+                            v.name.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                            v.email.toLowerCase().includes(visitorSearch.toLowerCase())
+                        ).length === 0 ? (
+                            <li className="p-6 text-slate-500 text-center">No visitors found.</li>
+                        ) : (
+                            visitorsList.filter(v =>
+                                v.name.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                v.email.toLowerCase().includes(visitorSearch.toLowerCase())
+                            ).map(vis => (
+                                <li key={vis.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center font-bold ${vis.is_checked_in ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                                            <Users size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-slate-900">{vis.name}</p>
+                                            <p className="text-sm text-slate-500">{vis.email}</p>
+                                            <p className="text-xs text-slate-400 mt-1">QR: {vis.qr_code.substring(0, 8)}...</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-slate-900">{vis.name}</p>
-                                        <p className="text-sm text-slate-500">{vis.email}</p>
-                                        <p className="text-xs text-slate-400 mt-1">Checked In:
-                                            <span className={`ml-1 font-bold ${vis.is_checked_in ? 'text-green-600' : 'text-slate-500'}`}>
-                                                {vis.is_checked_in ? 'Yes' : 'No'}
-                                            </span>
-                                        </p>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => handleToggleCheckIn(vis.id)}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${vis.is_checked_in
+                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                }`}
+                                        >
+                                            {vis.is_checked_in ? <Check size={14} /> : null}
+                                            {vis.is_checked_in ? 'Checked In' : 'Check In'}
+                                        </button>
                                     </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xs text-slate-400">QR: {vis.qr_code.substring(0, 8)}...</p>
-                                </div>
-                            </li>
-                        ))}
+                                </li>
+                            )))}
                     </ul>
                 </div>
             )}
