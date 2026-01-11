@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import ImageCarousel from '../../components/ImageCarousel';
 
 export default function EventDetailsPage() {
-    const API_BASE = import.meta.env.VITE_API_BASE_URL.replace('/api', ''); // Base URL for media
+    const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL; // Base URL for media
     const { id } = useParams();
     const { apiClient, user } = useAuth();
     const [event, setEvent] = useState(null);
@@ -142,7 +142,7 @@ export default function EventDetailsPage() {
                     <ImageCarousel
                         images={event.images.map((img) => ({
                             id: img.id,
-                            image: img.image.startsWith("http") ? img.image : `${API_BASE}${img.image}`,
+                            image: img.image.startsWith("http") ? img.image : `${MEDIA_BASE}${img.image}`,
                         }))}
                         height="h-full"
                         rounded="rounded-none"

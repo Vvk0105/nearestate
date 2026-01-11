@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import ImageCarousel from '../../components/ImageCarousel';
 
 export default function ManagePropertiesPage() {
-    const API_BASE = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
+    const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
     const { apiClient } = useAuth();
     const [properties, setProperties] = useState([]);
     const [exhibitions, setExhibitions] = useState([]);
@@ -244,7 +244,7 @@ export default function ManagePropertiesPage() {
                                         id: img.id,
                                         image: img.image.startsWith("http")
                                             ? img.image
-                                            : `${API_BASE}${img.image}`,
+                                            : `${MEDIA_BASE}${img.image}`,
                                     }))}
                                     height="h-full"
                                     rounded="rounded-none"

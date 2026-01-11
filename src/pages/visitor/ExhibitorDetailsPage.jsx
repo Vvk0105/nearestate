@@ -5,7 +5,7 @@ import { Loader, MapPin, Building, Phone } from 'lucide-react';
 import ImageCarousel from '../../components/ImageCarousel';
 
 export default function ExhibitorDetailsPage() {
-    const API_BASE = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
+    const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
     // ... no changes to logic ...
     const { eventId, exhibitorId } = useParams();
     const { apiClient } = useAuth();
@@ -73,7 +73,7 @@ export default function ExhibitorDetailsPage() {
                                             id: img.id,
                                             image: img.image.startsWith("http")
                                                 ? img.image
-                                                : `${API_BASE}${img.image}`,
+                                                : `${MEDIA_BASE}${img.image}`,
                                         }))}
                                         height="h-full"
                                         rounded="rounded-none"

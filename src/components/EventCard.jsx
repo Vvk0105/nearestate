@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import ImageCarousel from './ImageCarousel';
 
 export default function EventCard({ event, action }) {
-    const API_BASE = import.meta.env.VITE_API_BASE_URL.replace('/api', ''); // Base URL for media
+    const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
     const isUpcoming = new Date(event.start_date) > new Date();
     
     return (
@@ -15,7 +15,7 @@ export default function EventCard({ event, action }) {
                         id: img.id,
                         image: img.image.startsWith("http")
                             ? img.image
-                            : `${API_BASE}${img.image}`,
+                            : `${MEDIA_BASE}${img.image}`,
                         }))}
                         height="h-full"
                         rounded="rounded-none"
