@@ -138,7 +138,7 @@ export default function EventDetailsPage() {
         <div className="space-y-8 relative animate-fade-in-up pb-12">
             {/* Header/Banner Section with Carousel */}
             <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden shadow-2xl bg-slate-900 group">
-                {event.images && event.images.length > 0 ? (
+                {event.images ? (
                     <ImageCarousel
                         images={event.images.map((img) => ({
                             id: img.id,

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import ImageCarousel from './ImageCarousel';
 
 export default function EventCard({ event, action }) {
-    const API_BASE = 'http://127.0.0.1:8000/';
+    const API_BASE = import.meta.env.VITE_API_BASE_URL.replace('/api', ''); // Base URL for media
     const isUpcoming = new Date(event.start_date) > new Date();
     
     return (
