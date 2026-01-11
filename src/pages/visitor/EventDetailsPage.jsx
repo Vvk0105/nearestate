@@ -44,15 +44,16 @@ export default function EventDetailsPage() {
                 // Check registration/application status
                 if (user) {
                     if (user.role === 'VISITOR') {
-                        // Check visitor registration? 
-                        // Maybe fetch my events and check ID.
-                        // Or just handle on button click (backend returns 'already registered').
+                        const statusRes = await apiClient.get(
+                            `/exhibitions/visitor/register/${id}/`
+                        );
+                        setIsRegistered(statusRes.data.is_registered);
                     } else if (user.role === 'EXHIBITOR') {
                         const appsRes = await apiClient.get('/exhibitions/exhibitor/my-applications/');
                         const myApp = appsRes.data.find(a => a.exhibition.id === parseInt(id) || a.exhibition === parseInt(id));
                         if (myApp) {
                             setApplicationStatus(myApp.status);
-                            setIsRegistered(true); // Reusing this for "Applied" state visually
+                            setIsRegistered(true);
                         }
                     }
                 }

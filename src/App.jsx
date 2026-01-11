@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
+import MinimalLayout from './layouts/MinimalLayout';
 import AdminLayout from './layouts/AdminLayout'; // New
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -55,7 +56,13 @@ function App() {
               <Route path="scan" element={<AdminQRScanPage />} />
             </Route>
 
-            <Route path="/auth/select-role" element={<RoleSelectionPage />} />
+            {/* Minimal Layout Routes (No Nav) */}
+            <Route element={<MinimalLayout />}>
+              <Route path="/auth/select-role" element={<RoleSelectionPage />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/exhibitor/profile" element={<ExhibitorProfileForm />} />
+              </Route>
+            </Route>
 
             {/* Main Application Routes */}
             <Route element={<MainLayout />}>
@@ -70,7 +77,7 @@ function App() {
               {/* Protected User Routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/exhibitor/profile" element={<ExhibitorProfileForm />} />
+                {/* Exhibitor profile moved to MinimalLayout */}
               </Route>
 
               {/* Visitor Routes */}

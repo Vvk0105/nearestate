@@ -2,19 +2,47 @@ import { Fragment } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, User, Repeat, Home, Calendar, QrCode } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Menu, Transition } from '@headlessui/react';
 
 export default function MainLayout() {
-    const { user, logout, switchRole } = useAuth();
+    const { user, logout, switchRole, selectRole, apiClient } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
     const handleSwitchRole = async () => {
         if (!user) return;
         const targetRole = user.role === 'VISITOR' ? 'EXHIBITOR' : 'VISITOR';
-        await switchRole(targetRole);
-        if (targetRole === 'VISITOR') navigate('/visitor/home');
-        else navigate('/exhibitor/home');
+
+        let success = false;
+        // If user already has the role, just switch. Otherwise, select (add) logic.
+        if (user.roles && user.roles.includes(targetRole)) {
+            success = await switchRole(targetRole);
+        } else {
+            success = await selectRole(targetRole);
+        }
+
+        if (success) {
+            if (targetRole === 'VISITOR') {
+                navigate('/visitor/home');
+                toast.success("Switched to Visitor");
+            } else {
+                // Check if profile exists
+                try {
+                    const statusRes = await apiClient.get('/exhibitions/exhibitor/profile/status/');
+                    if (statusRes.data.exists) {
+                        navigate('/exhibitor/home');
+                        toast.success("Switched to Exhibitor");
+                    } else {
+                        navigate('/exhibitor/profile');
+                        toast.success("Please complete your exhibitor profile");
+                    }
+                } catch (err) {
+                    console.error("Profile check failed", err);
+                    navigate('/exhibitor/profile');
+                }
+            }
+        }
     };
 
     const isActive = (path) => location.pathname.startsWith(path);
@@ -150,7 +178,7 @@ export default function MainLayout() {
                 </div>
             </nav>
 
-            <main className="max-w-7xl w-full mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-1">
+            <main className="max-w-8xl w-full mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-1">
                 <Outlet />
             </main>
 

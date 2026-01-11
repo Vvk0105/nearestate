@@ -39,6 +39,18 @@ export const AuthProvider = ({ children }) => {
                 if (userData.active_role) {
                     userData.role = userData.active_role;
                 }
+
+                // Check Exhibitor Profile
+                if (userData.role === 'EXHIBITOR') {
+                    try {
+                        const profileRes = await apiClient.get('/exhibitions/exhibitor/profile/status/');
+                        userData.profileCompleted = profileRes.data.exists;
+                    } catch (e) {
+                        console.warn('Profile check failed', e);
+                        userData.profileCompleted = false;
+                    }
+                }
+
                 setUser(userData);
             } catch (error) {
                 console.error("Failed to fetch user", error);
@@ -71,10 +83,28 @@ export const AuthProvider = ({ children }) => {
     const handleRoleSwitch = async (newRole) => {
         try {
             await apiClient.post('/auth/switch-role/', { role: newRole });
-            setUser(prev => ({ ...prev, role: newRole }));
+            setUser(prev => ({ ...prev, role: newRole, active_role: newRole }));
             return true;
         } catch (error) {
             console.error("Switch role failed", error);
+            return false;
+        }
+    };
+
+    const handleSelectRole = async (role) => {
+        try {
+            const res = await apiClient.post('/auth/select-role/', { role });
+            // Update user state with new roles and active role
+            setUser(prev => ({
+                ...prev,
+                roles: res.data.roles,
+                unique_id: res.data.unique_id, // If backend returns it, otherwise ignore
+                active_role: res.data.active_role,
+                role: res.data.active_role
+            }));
+            return true;
+        } catch (error) {
+            console.error("Select role failed", error);
             return false;
         }
     };
@@ -87,7 +117,8 @@ export const AuthProvider = ({ children }) => {
         login: handleLogin,
         logout: handleLogout,
         apiClient,
-        switchRole: handleRoleSwitch
+        switchRole: handleRoleSwitch,
+        selectRole: handleSelectRole
     };
 
     return (
