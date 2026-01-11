@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import ImageCarousel from '../../components/ImageCarousel';
 
 export default function EventDetailsPage() {
-    const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL; // Base URL for media
+    const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
     const { id } = useParams();
     const { apiClient, user } = useAuth();
     const [event, setEvent] = useState(null);
@@ -131,7 +131,7 @@ export default function EventDetailsPage() {
     if (!event) return <div className="text-center p-12 font-medium text-slate-500">Event not found.</div>;
 
     const formattedMapImage = event.map_image
-        ? (event.map_image.startsWith('http') ? event.map_image : `${API_BASE}${event.map_image}`)
+        ? (event.map_image.startsWith('http') ? event.map_image : `${MEDIA_BASE}${event.map_image}`)
         : null;
 
     return (
