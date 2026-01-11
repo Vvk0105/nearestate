@@ -28,8 +28,8 @@ export default function MyEventsPage() {
 
     const now = new Date();
     const filteredRegistrations = registrations.filter(reg => {
-        const start = new Date(reg.exhibition?.start_date);
-        const end = new Date(reg.exhibition?.end_date);
+        const start = new Date(reg.start_date);
+        const end = new Date(reg.end_date);
 
         if (filter === 'upcoming') return start > now;
         if (filter === 'ongoing') return start <= now && end >= now;
@@ -40,7 +40,7 @@ export default function MyEventsPage() {
     if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 animate-fade-in-up">
             <h1 className="text-3xl font-bold text-slate-900">My Registrations</h1>
 
             {/* Filter Tabs */}
@@ -50,8 +50,8 @@ export default function MyEventsPage() {
                         key={f}
                         onClick={() => setFilter(f)}
                         className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${filter === f
-                                ? 'bg-blue-600 text-white shadow-md'
-                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                            ? 'bg-blue-600 text-white shadow-md'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                             }`}
                     >
                         {f}
@@ -61,23 +61,23 @@ export default function MyEventsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredRegistrations.map(reg => (
-                    <div key={reg.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-md transition-shadow">
+                    <div key={reg.event_id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-4">
-                            <h3 className="text-lg font-bold text-slate-900">{reg.exhibition?.name}</h3>
-                            <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${reg.exhibition?.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                            <h3 className="text-lg font-bold text-slate-900 line-clamp-1" title={reg.event_name}>{reg.event_name}</h3>
+                            <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${reg.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                                 }`}>
-                                {reg.exhibition?.is_active ? 'Active' : 'Archived'}
+                                {reg.is_active ? 'Active' : 'Archived'}
                             </span>
                         </div>
 
                         <div className="text-sm text-slate-600 space-y-2 mb-6 flex-1">
                             <div className="flex items-center gap-2">
                                 <Calendar size={16} className="text-blue-500" />
-                                <span>{new Date(reg.exhibition?.start_date).toLocaleDateString()}</span>
+                                <span>{new Date(reg.start_date).toLocaleDateString()}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <MapPin size={16} className="text-red-500" />
-                                <span>{reg.exhibition?.city}</span>
+                                <span>{reg.city}, {reg.venue}</span>
                             </div>
                         </div>
 
@@ -90,7 +90,7 @@ export default function MyEventsPage() {
                     </div>
                 ))}
                 {filteredRegistrations.length === 0 && (
-                    <div className="col-span-full text-center py-12 text-slate-500">
+                    <div className="col-span-full text-center py-12 text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-300">
                         No events found in this category.
                     </div>
                 )}
@@ -105,7 +105,7 @@ export default function MyEventsPage() {
                         onClick={e => e.stopPropagation()}
                     >
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-900">{selectedQr.exhibition?.name}</h2>
+                            <h2 className="text-2xl font-bold text-slate-900">{selectedQr.event_name}</h2>
                             <p className="text-slate-500 text-sm mt-1">Visitor Entry Pass</p>
                         </div>
 

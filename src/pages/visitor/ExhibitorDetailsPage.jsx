@@ -5,14 +5,14 @@ import { Loader, MapPin, Building, Phone } from 'lucide-react';
 import ImageCarousel from '../../components/ImageCarousel';
 
 export default function ExhibitorDetailsPage() {
-    const API_BASE = 'http://127.0.0.1:8000/';
+    const API_BASE = import.meta.env.VITE_API_BASE_URL.replace('/api', '');
     // ... no changes to logic ...
     const { eventId, exhibitorId } = useParams();
     const { apiClient } = useAuth();
     const [exhibitor, setExhibitor] = useState(null);
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     useEffect(() => {
         // ... same fetch logic ...
         const fetchData = async () => {
@@ -70,10 +70,10 @@ export default function ExhibitorDetailsPage() {
                                 {property.images && property.images.length > 0 ? (
                                     <ImageCarousel
                                         images={property.images.map((img, i) => ({
-                                        id: img.id,
-                                        image: img.image.startsWith("http")
-                                            ? img.image
-                                            : `${API_BASE}${img.image}`,
+                                            id: img.id,
+                                            image: img.image.startsWith("http")
+                                                ? img.image
+                                                : `${API_BASE}${img.image}`,
                                         }))}
                                         height="h-full"
                                         rounded="rounded-none"
