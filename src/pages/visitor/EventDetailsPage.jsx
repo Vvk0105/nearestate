@@ -203,9 +203,21 @@ export default function EventDetailsPage() {
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8">
                         {activeTab === 'details' && (
                             <div className="space-y-8">
-                                <div className="prose prose-slate max-w-none">
-                                    <h3 className="text-xl font-bold text-slate-900 mb-3">About the Event</h3>
-                                    <p className="leading-relaxed text-slate-600 whitespace-pre-line">{event.description}</p>
+                                <div className="flex w-full justify-between items-center rounded-2xl text-slate-900 prose prose-slate max-w-none">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-slate-900 mb-3">About the Event</h3>
+                                        <p className="leading-relaxed text-slate-600 whitespace-pre-line">{event.description}</p>
+                                    </div>
+                                    <div>
+                                        { user.role === 'EXHIBITOR' ? (
+                                            <>
+                                            <h3 className="text-xl font-bold text-slate-900 mb-3">Application Fee</h3>
+                                            <p className="text-sm text-slate-600 font-semibold "> Rs:{event.registration_fee}</p>
+                                            </>
+                                        ) : (
+                                            <h3 className="text-xl font-bold text-slate-900 mb-3">Free Register</h3>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Map Section */}

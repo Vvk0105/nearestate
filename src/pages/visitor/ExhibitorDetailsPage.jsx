@@ -58,6 +58,9 @@ export default function ExhibitorDetailsPage() {
                     <span className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full text-sm">
                         <Phone size={16} /> {exhibitor.contact_number}
                     </span>
+                    <span className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full text-sm">
+                        Booth: {exhibitor.booth_number}
+                    </span>
                 </div>
             </div>
 

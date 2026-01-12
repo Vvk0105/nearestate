@@ -69,7 +69,7 @@ export default function ManagePropertiesPage() {
     const handleDelete = async (id) => {
         if (!confirm("Are you sure you want to delete this property?")) return;
         try {
-            await apiClient.delete(`/exhibitions/exhibitor/property/${id}/`);
+            await apiClient.delete(`/exhibitions/exhibitor/property/${id}/delete/`);
             toast.success("Property deleted.");
             setProperties(properties.filter(p => p.id !== id));
         } catch (error) {
@@ -102,7 +102,7 @@ export default function ManagePropertiesPage() {
         data.append('location', addForm.location);
         data.append('price_from', addForm.price_from);
         data.append('price_to', addForm.price_to);
-        addForm.images.forEach((img) => data.append('uploaded_images', img));
+        addForm.images.forEach((img) => data.append('images', img));
 
         try {
             const res = await apiClient.post(`exhibitions/exhibitor/properties/${addForm.exhibition}/create/`, data, {
@@ -403,7 +403,7 @@ export default function ManagePropertiesPage() {
                                         return (
                                             <div key={img.id} className="relative aspect-video bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                                                 <img
-                                                    src={img.image.startsWith("http") ? img.image : `${API_BASE}${img.image}`}
+                                                    src={img.image.startsWith("http") ? img.image : `${MEDIA_BASE}${img.image}`}
                                                     alt="Prop" className="w-full h-full object-cover"
                                                 />
                                                 <button onClick={() => removeEditExistingImage(img.id)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600">
