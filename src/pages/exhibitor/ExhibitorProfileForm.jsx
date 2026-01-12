@@ -56,7 +56,7 @@ export default function ExhibitorProfileForm() {
                         name="company_name"
                         label={
                             <span className="flex items-center gap-2">
-                                <BuildingOutlined /> Company Name
+                                <SolutionOutlined /> Company Name
                             </span>
                         }
                         rules={[
