@@ -355,9 +355,10 @@ export default function AdminEditEventPage() {
                                 {existingImages.map((img) => (
                                     <div key={img.id} className="relative">
                                         <Image
-                                            src={img.image.startsWith('http') ? img.image : `${import.meta.env.VITE_MEDIA_BASE_URL}${img.image}`}
+                                            src={img.image?.startsWith('http') ? img.image : `${import.meta.env.VITE_MEDIA_BASE_URL}${img.image || ''}`}
                                             alt="Gallery"
                                             style={{ width: 100, height: 100, objectFit: 'cover' }}
+                                            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
                                         />
                                         <Button
                                             danger

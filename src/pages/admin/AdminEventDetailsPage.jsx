@@ -298,7 +298,7 @@ export default function AdminEventDetailsPage() {
                             <Card title="Booth Availability">
                                 <Progress
                                     percent={Math.round((event.available_booths / event.booth_capacity) * 100)}
-                                    status="active"
+                                    strokeLinecap="square"
                                     format={() => `${event.available_booths} / ${event.booth_capacity}`}
                                 />
                             </Card>
@@ -307,7 +307,7 @@ export default function AdminEventDetailsPage() {
                             <Card title="Visitor Passes">
                                 <Progress
                                     percent={Math.round((event.available_visitors / event.visitor_capacity) * 100)}
-                                    status="active"
+                                    strokeLinecap="square"
                                     strokeColor="#52c41a"
                                     format={() => `${event.available_visitors} left`}
                                 />
