@@ -135,6 +135,8 @@ export default function EventDetailsPage() {
         : null;
 
     return (
+        <>
+        
         <div className="space-y-8 relative animate-fade-in-up pb-12">
             {/* Header/Banner Section with Carousel */}
             <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden shadow-2xl bg-slate-900 group">
@@ -358,7 +360,9 @@ export default function EventDetailsPage() {
                 </div>
             </div>
 
-            {/* Apply Modal */}
+            
+        </div>
+        {/* Apply Modal */}
             {showApplyModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-0 overflow-hidden animate-in fade-in zoom-in duration-200">
@@ -421,6 +425,6 @@ export default function EventDetailsPage() {
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 }
