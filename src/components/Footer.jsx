@@ -4,8 +4,8 @@ import { Facebook, Instagram, Linkedin, Mail, Phone, Clock, MapPin } from 'lucid
 export default function Footer() {
     return (
         <footer className="bg-slate-900 text-white pt-16 pb-8 border-t border-slate-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+            <div className="mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-[20rem] mb-12 ml-12">
                     {/* Brand & Social */}
                     <div className="space-y-6">
                         <Link to="/" className="flex items-center gap-2">
@@ -17,13 +17,13 @@ export default function Footer() {
                             Connecting real estate professionals and enthusiasts through local exhibitions across Australian towns and cities.
                         </p>
                         <div className="flex gap-4">
-                            <a href="#" className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-700 transition-colors text-white">
+                            <a href="https://www.facebook.com/NearEstatecom" className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-700 transition-colors text-white">
                                 <Facebook size={20} />
                             </a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-pink-600 flex items-center justify-center hover:bg-pink-700 transition-colors text-white">
+                            <a href="https://www.instagram.com/nearestate/" className="w-10 h-10 rounded-full bg-pink-600 flex items-center justify-center hover:bg-pink-700 transition-colors text-white">
                                 <Instagram size={20} />
                             </a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-blue-800 flex items-center justify-center hover:bg-blue-900 transition-colors text-white">
+                            <a href="https://www.linkedin.com/company/nearestate-com/" className="w-10 h-10 rounded-full bg-blue-800 flex items-center justify-center hover:bg-blue-900 transition-colors text-white">
                                 <Linkedin size={20} />
                             </a>
                         </div>

@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Loader, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Modal } from 'antd';
 
 export default function MyApplicationsPage() {
+    const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
+    const [previewImage, setPreviewImage] = useState(null);
+    const [previewVisible, setPreviewVisible] = useState(false);
     const { apiClient } = useAuth();
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -40,7 +44,9 @@ export default function MyApplicationsPage() {
                                     <p className="text-sm text-slate-600 mt-1">Booth: <strong>{app?.booth_number}</strong></p>
                                 )}
                                 {app.badge ? (
-                                <a href={app?.badge} target="_blank" rel="noreferrer" className="text-purple-500 underline text-sm">Badge</a>
+                                    <div className="cursor-pointer" onClick={() => { setPreviewImage(`${MEDIA_BASE}${app.badge}`); setPreviewVisible(true); }}>
+                                        <p className="text-sm text-slate-600 mt-1">Badge <span className="text-purple-500">Preview</span></p>
+                                    </div>
                                 ): (
                                     <span>No Badge</span>
                                 )}
@@ -66,6 +72,19 @@ export default function MyApplicationsPage() {
                     </div>
                 )}
             </div>
+
+            <Modal
+                open={previewVisible}
+                footer={null}
+                onCancel={() => setPreviewVisible(false)}
+                width={600}
+            >
+                <img
+                    src={previewImage}
+                    alt="Transaction Screenshot"
+                    style={{ width: '100%', borderRadius: 8 }}
+                />
+            </Modal>
         </div>
     );
 }

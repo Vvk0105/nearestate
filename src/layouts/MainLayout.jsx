@@ -52,13 +52,6 @@ export default function MainLayout() {
 
     const handleProfileClick = () => {
         if (user.role === 'EXHIBITOR') {
-            // Check if they want to edit user details or company details?
-            // User requested "My Profile" (in navbar) to be for USERNAME/EMAIL edit.
-            // Exhibitor Dashboard "Edit Company Details" is for COMPANY info.
-            // So "My Profile" in navbar should ALWAYS be for User Profile Modal?
-            // User said: "My Profile (ProfilePage)... i need as a model too".
-            // Let's make "My Profile" in navbar open UserProfileModal for EVERYONE.
-            // And Exhibitor Dashboard has the separate "Edit Company Details" button.
             setIsProfileModalOpen(true);
         } else {
             setIsProfileModalOpen(true);
@@ -70,7 +63,7 @@ export default function MainLayout() {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
             <nav className="bg-white border-b border-slate-200 sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className=" mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
                         <div className="flex items-center gap-8">
                             <Link to="/" className="flex-shrink-0 flex items-center">

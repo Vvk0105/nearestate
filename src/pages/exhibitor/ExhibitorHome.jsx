@@ -94,6 +94,7 @@ export default function ExhibitorHome() {
     const activeEvents = events.filter(e => e.is_active && new Date(e.end_date) >= new Date());
 
     return (
+        <>
         <div className="space-y-8 animate-fade-in-up">
             {/* Dashboard Header & Profile Card */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -181,6 +182,7 @@ export default function ExhibitorHome() {
                 </div>
             </div>
 
+        </div>
             {/* EDIT PROFILE MODAL */}
             {showProfileModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -249,6 +251,6 @@ export default function ExhibitorHome() {
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 }

@@ -206,6 +206,7 @@ export default function ManagePropertiesPage() {
         : properties;
 
     return (
+        <>
         <div className="space-y-8 relative animate-fade-in-up">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-2xl font-bold text-slate-900">My Properties</h1>
@@ -277,7 +278,7 @@ export default function ManagePropertiesPage() {
                     </div>
                 )}
             </div>
-
+        </div>
             {/* ADD PROPERTY MODAL */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -441,6 +442,6 @@ export default function ManagePropertiesPage() {
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 }
