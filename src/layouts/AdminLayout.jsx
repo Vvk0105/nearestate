@@ -1,80 +1,116 @@
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Home, Calendar, Users, BarChart3, Settings } from 'lucide-react';
+import { Layout, Menu, Dropdown, Avatar, Button } from 'antd';
+import {
+    DashboardOutlined,
+    CalendarOutlined,
+    LogoutOutlined,
+    UserOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined
+} from '@ant-design/icons';
+
+const { Header, Sider, Content } = Layout;
 
 export default function AdminLayout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const [collapsed, setCollapsed] = useState(false);
 
-    // Basic protection - if not admin, kick out. 
-    // Ideally user.role === 'ADMIN' or user.is_staff. 
-    // For now assuming role check is handled by ProtectedRoute or backend.
+    const menuItems = [
+        {
+            key: '/admin/dashboard',
+            icon: <DashboardOutlined />,
+            label: 'Dashboard',
+            onClick: () => navigate('/admin/dashboard')
+        },
+        {
+            key: '/admin/events',
+            icon: <CalendarOutlined />,
+            label: 'Events',
+            onClick: () => navigate('/admin/events')
+        }
+    ];
 
-    // Actually, Admin might be a separate user model or just a role. 
-    // Django 'is_staff' usually. 
-    // Let's assume we check `user.is_staff` or specific Admin Role.
-    // The user said "start admin dashboard login using admin/login".
+    const userMenuItems = [
+        {
+            key: 'logout',
+            icon: <LogoutOutlined />,
+            label: 'Logout',
+            onClick: () => {
+                logout();
+                navigate('/admin/login');
+            }
+        }
+    ];
 
-    const isActive = (path) => location.pathname.startsWith(path);
+    const selectedKey = menuItems.find(item =>
+        location.pathname.startsWith(item.key)
+    )?.key || '/admin/dashboard';
 
     return (
-        <div className="min-h-screen bg-slate-100 flex">
-            {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
-                <div className="p-6 border-b border-slate-800">
-                    <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                        NearEstate Admin
-                    </span>
+        <Layout style={{ minHeight: '100vh' }}>
+            <Sider
+                collapsible
+                collapsed={collapsed}
+                onCollapse={setCollapsed}
+                breakpoint="lg"
+                theme="dark"
+                style={{
+                    overflow: 'auto',
+                    height: '100vh',
+                    position: 'fixed',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                }}
+            >
+                <div className="p-4 text-center border-b border-gray-700">
+                    <h1 className="text-white font-bold text-lg">
+                        {collapsed ? 'NE' : 'NearEstate Admin'}
+                    </h1>
                 </div>
+                <Menu
+                    theme="dark"
+                    mode="inline"
+                    selectedKeys={[selectedKey]}
+                    items={menuItems}
+                    style={{ marginTop: 16 }}
+                />
+            </Sider>
 
-                <nav className="flex-1 p-4 space-y-2">
-                    <Link
-                        to="/admin/dashboard"
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/dashboard') ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-                    >
-                        <BarChart3 size={20} /> Dashboard
-                    </Link>
-                    <Link
-                        to="/admin/events"
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/events') ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-                    >
-                        <Calendar size={20} /> Events
-                    </Link>
-                    {/* Placeholder for future Exhibitor management */}
-                    {/* 
-                    <Link
-                        to="/admin/exhibitors"
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/exhibitors') ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-                    >
-                        <Users size={20} /> Exhibitors
-                    </Link> 
-                    */}
-                </nav>
+            <Layout style={{ marginLeft: collapsed ? 80 : 200, transition: 'all 0.2s' }}>
+                <Header style={{
+                    padding: '0 24px',
+                    background: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 1px 4px rgba(0,21,41,.08)'
+                }}>
+                    <Button
+                        type="text"
+                        icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                        onClick={() => setCollapsed(!collapsed)}
+                        style={{ fontSize: '16px', width: 64, height: 64 }}
+                    />
 
-                <div className="p-4 border-t border-slate-800">
-                    <button
-                        onClick={() => {
-                            logout();
-                            navigate('/admin/login'); // Admin logout goes to admin login
-                        }}
-                        className="flex items-center gap-3 px-4 py-3 w-full text-left text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors"
-                    >
-                        <LogOut size={20} /> Logout
-                    </button>
-                    <div className="px-4 py-2 text-xs text-slate-600 mt-2">
-                        Logged in as {user?.email}
+                    <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+                        <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span className="text-sm text-gray-600">{user?.email}</span>
+                            <Avatar icon={<UserOutlined />} />
+                        </div>
+                    </Dropdown>
+                </Header>
+
+                <Content style={{ margin: '24px 16px', overflow: 'initial' }}>
+                    <div style={{ padding: 24, background: '#f0f2f5', minHeight: 'calc(100vh - 112px)' }}>
+                        <Outlet />
                     </div>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 overflow-auto">
-                {/* Mobile Header (TODO if needed) */}
-                <div className="p-8">
-                    <Outlet />
-                </div>
-            </main>
-        </div>
+                </Content>
+            </Layout>
+        </Layout>
     );
 }

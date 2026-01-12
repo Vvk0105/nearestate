@@ -30,7 +30,7 @@ import AddPropertyForm from './pages/exhibitor/AddPropertyForm';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminEventsPage from './pages/admin/AdminEventsPage';
 import AdminEventDetailsPage from './pages/admin/AdminEventDetailsPage';
-import AdminEventForm from './pages/admin/AdminEventForm';
+import AdminCreateEventPage from './pages/admin/AdminCreateEventPage';
 import AdminEditEventPage from './pages/admin/AdminEditEventPage';
 import AdminQRScanPage from './pages/admin/AdminQRScanPage';
 
@@ -52,7 +52,7 @@ function App() {
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="events" element={<AdminEventsPage />} />
-              <Route path="events/new" element={<AdminEventForm />} />
+              <Route path="events/new" element={<AdminCreateEventPage />} />
               <Route path="events/:id" element={<AdminEventDetailsPage />} />
               <Route path="events/:id/edit" element={<AdminEditEventPage />} />
               <Route path="scan" element={<AdminQRScanPage />} />

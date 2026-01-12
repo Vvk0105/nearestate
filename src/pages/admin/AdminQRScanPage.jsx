@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useAuth } from '../../context/AuthContext';
-import { Loader, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Card, Button, Spin, Result } from 'antd';
+import { CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { message } from 'antd';
 
 export default function AdminQRScanPage() {
     const { apiClient } = useAuth();
     const [scanResult, setScanResult] = useState(null);
-    const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
     const [scannerActive, setScannerActive] = useState(true);
 
     useEffect(() => {
-        // Initialize scanner only if active and not loading result
         let scanner;
         if (scannerActive && !loading) {
             scanner = new Html5QrcodeScanner(
@@ -36,24 +35,23 @@ export default function AdminQRScanPage() {
     };
 
     const onScanFailure = (error) => {
-        // console.warn(`Code scan error = ${error}`);
+        // Ignore scan errors
     };
 
     const handleScan = async (qrCode) => {
         if (loading) return;
         setLoading(true);
-        setScannerActive(false); // Stop scanning while processing
+        setScannerActive(false);
 
         try {
-            const res = await apiClient.post('/exhibitions/admin/qr-scan/', { qr_code: qrCode });
+            const res = await apiClient.post('/exhibitions/admin/qr/scan/', { qr_code: qrCode });
             setScanResult({ success: true, ...res.data });
-            toast.success("Check-in Successful!");
+            message.success("Check-in Successful!");
         } catch (err) {
             console.error(err);
             const msg = err.response?.data?.error || "Scan Failed";
-            setError(msg);
             setScanResult({ success: false, message: msg });
-            toast.error(msg);
+            message.error(msg);
         } finally {
             setLoading(false);
         }
@@ -61,57 +59,62 @@ export default function AdminQRScanPage() {
 
     const resetScanner = () => {
         setScanResult(null);
-        setError(null);
         setScannerActive(true);
     };
 
     return (
         <div className="max-w-md mx-auto p-4 space-y-6">
-            <h1 className="text-2xl font-bold text-center text-slate-800">QR Check-In Scanner</h1>
+            <h1 className="text-2xl font-bold text-center">QR Check-In Scanner</h1>
 
             {!scanResult && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-4">
+                <Card>
                     <div id="reader" className="w-full"></div>
-                    <p className="text-center text-sm text-slate-500 mt-2">Point camera at Visitor QR Code</p>
-                </div>
+                    <p className="text-center text-sm text-gray-500 mt-2">Point camera at Visitor QR Code</p>
+                </Card>
             )}
 
             {loading && (
                 <div className="flex justify-center py-8">
-                    <Loader className="animate-spin text-blue-600 h-12 w-12" />
+                    <Spin size="large" />
                 </div>
             )}
 
             {scanResult && (
-                <div className={`p-6 rounded-xl text-center shadow-lg ${scanResult.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                <Card>
                     {scanResult.success ? (
-                        <>
-                            <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-                            <h2 className="text-xl font-bold text-green-800">Access Granted</h2>
-                            <p className="text-green-700 mt-2">{scanResult.visitor}</p>
-                            <p className="text-sm text-green-600 font-medium">{scanResult.exhibition}</p>
-                        </>
+                        <Result
+                            status="success"
+                            icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                            title="Access Granted"
+                            subTitle={
+                                <>
+                                    <p>{scanResult.visitor}</p>
+                                    <p className="text-sm">{scanResult.exhibition}</p>
+                                </>
+                            }
+                            extra={
+                                <Button type="primary" size="large" onClick={resetScanner}>
+                                    Scan Next
+                                </Button>
+                            }
+                        />
                     ) : (
-                        <>
-                            {scanResult.message === 'Already checked in' ? (
-                                <AlertTriangle className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
-                            ) : (
-                                <XCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
-                            )}
-                            <h2 className={`text-xl font-bold ${scanResult.message === 'Already checked in' ? 'text-yellow-800' : 'text-red-800'}`}>
-                                {scanResult.message === 'Already checked in' ? 'Already Checked In' : 'Access Denied'}
-                            </h2>
-                            <p className="text-slate-600 mt-2">{scanResult.message}</p>
-                        </>
+                        <Result
+                            status={scanResult.message === 'Already checked in' ? 'warning' : 'error'}
+                            icon={scanResult.message === 'Already checked in' ?
+                                <ExclamationCircleOutlined style={{ color: '#faad14' }} /> :
+                                <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+                            }
+                            title={scanResult.message === 'Already checked in' ? 'Already Checked In' : 'Access Denied'}
+                            subTitle={scanResult.message}
+                            extra={
+                                <Button type="primary" size="large" onClick={resetScanner}>
+                                    Scan Next
+                                </Button>
+                            }
+                        />
                     )}
-
-                    <button
-                        onClick={resetScanner}
-                        className="mt-6 w-full py-3 px-4 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-all"
-                    >
-                        Scan Next
-                    </button>
-                </div>
+                </Card>
             )}
         </div>
     );

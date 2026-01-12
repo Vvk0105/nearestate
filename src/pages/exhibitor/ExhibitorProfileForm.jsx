@@ -1,140 +1,139 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Building2, Phone, MapPin, Briefcase, ArrowRight, CheckCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Form, Input, Select, Button, Card, message } from 'antd';
+import { BuildingOutlined, PhoneOutlined, EnvironmentOutlined, BriefcaseOutlined } from '@ant-design/icons';
+
+const { Option } = Select;
 
 export default function ExhibitorProfileForm() {
     const { apiClient } = useAuth();
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        company_name: '',
-        council_area: '',
-        business_type: 'DEVELOPER', // Default
-        contact_number: ''
-    });
     const [loading, setLoading] = useState(false);
+    const [form] = Form.useForm();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async (values) => {
         setLoading(true);
         try {
-            await apiClient.post('/exhibitions/exhibitor/profile/', formData);
-            toast.success("Profile setup complete! Welcome aboard.");
-            // Slight delay to allow toast to be visible
+            await apiClient.post('/exhibitions/exhibitor/profile/', values);
+            message.success("Profile setup complete! Welcome aboard.");
             setTimeout(() => {
                 navigate('/exhibitor/home');
             }, 1000);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to save profile. Please check your inputs.");
+            const errorMsg = error.response?.data?.company_name?.[0] ||
+                error.response?.data?.contact_number?.[0] ||
+                "Failed to save profile. Please check your inputs.";
+            message.error(errorMsg);
+        } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="w-full max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8 animate-fade-in-up">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-10 text-white text-center">
-                    <div className="mx-auto bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mb-4 backdrop-blur-sm">
-                        <Building2 className="h-8 w-8 text-white" />
+        <div className="w-full max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <Card
+                className="shadow-xl"
+                title={
+                    <div className="text-center py-4">
+                        <BuildingOutlined className="text-4xl text-blue-500 mb-2" />
+                        <h2 className="text-2xl font-bold">Setup Exhibitor Profile</h2>
+                        <p className="text-gray-500 mt-2">Tell us about your business to get started</p>
                     </div>
-                    <h2 className="text-3xl font-bold tracking-tight">Setup Exhibitor Profile</h2>
-                    <p className="mt-2 text-blue-100 opacity-90">
-                        Tell us a bit about your business to get started.
-                    </p>
-                </div>
+                }
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSubmit}
+                    initialValues={{ business_type: 'DEVELOPER' }}
+                    size="large"
+                >
+                    <Form.Item
+                        name="company_name"
+                        label={
+                            <span className="flex items-center gap-2">
+                                <BuildingOutlined /> Company Name
+                            </span>
+                        }
+                        rules={[
+                            { required: true, message: 'Please enter company name' },
+                            { min: 2, message: 'Company name must be at least 2 characters' },
+                            { max: 200, message: 'Company name cannot exceed 200 characters' }
+                        ]}
+                    >
+                        <Input placeholder="e.g. Acme Properties Ltd." />
+                    </Form.Item>
 
-                <div className="px-8 py-10">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="col-span-1 md:col-span-2">
-                                <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                                    <Building2 size={16} className="text-slate-400" /> Company Name
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="e.g. Acme Properties Ltd."
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                    value={formData.company_name}
-                                    onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                                />
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Form.Item
+                            name="council_area"
+                            label={
+                                <span className="flex items-center gap-2">
+                                    <EnvironmentOutlined /> Council Area
+                                </span>
+                            }
+                            rules={[
+                                { required: true, message: 'Please enter council area' },
+                                { max: 100, message: 'Council area cannot exceed 100 characters' }
+                            ]}
+                        >
+                            <Input placeholder="e.g. Sydney CBD" />
+                        </Form.Item>
 
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                                    <MapPin size={16} className="text-slate-400" /> Council Area
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="e.g. Sydney CBD"
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                    value={formData.council_area}
-                                    onChange={(e) => setFormData({ ...formData, council_area: e.target.value })}
-                                />
-                            </div>
+                        <Form.Item
+                            name="contact_number"
+                            label={
+                                <span className="flex items-center gap-2">
+                                    <PhoneOutlined /> Contact Number
+                                </span>
+                            }
+                            rules={[
+                                { required: true, message: 'Please enter contact number' },
+                                {
+                                    pattern: /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/,
+                                    message: 'Please enter a valid phone number (8-15 digits)'
+                                }
+                            ]}
+                        >
+                            <Input placeholder="+61 400 000 000" />
+                        </Form.Item>
+                    </div>
 
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                                    <Phone size={16} className="text-slate-400" /> Contact Number
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="+61 400 000 000"
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                    value={formData.contact_number}
-                                    onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
-                                />
-                            </div>
+                    <Form.Item
+                        name="business_type"
+                        label={
+                            <span className="flex items-center gap-2">
+                                <BriefcaseOutlined /> Business Type
+                            </span>
+                        }
+                        rules={[{ required: true, message: 'Please select business type' }]}
+                    >
+                        <Select>
+                            <Option value="DEVELOPER">Real Estate Developer</Option>
+                            <Option value="BROKER">Real Estate Agent / Broker</Option>
+                            <Option value="LOAN">Mortgage / Loan Provider</Option>
+                        </Select>
+                    </Form.Item>
 
-                            <div className="col-span-1 md:col-span-2">
-                                <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                                    <Briefcase size={16} className="text-slate-400" /> Business Type
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all appearance-none cursor-pointer"
-                                        value={formData.business_type}
-                                        onChange={(e) => setFormData({ ...formData, business_type: e.target.value })}
-                                    >
-                                        <option value="DEVELOPER">Real Estate Developer</option>
-                                        <option value="BROKER">Real Estate Agent / Broker</option>
-                                        <option value="LOAN">Mortgage / Loan Provider</option>
-                                    </select>
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="pt-6">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full flex items-center justify-center gap-2 py-4 px-6 border border-transparent rounded-xl shadow-lg 
-                                 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 
-                                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all transform active:scale-[0.98]"
-                            >
-                                {loading ? (
-                                    <>Processing...</>
-                                ) : (
-                                    <>Complete Setup <ArrowRight size={20} /></>
-                                )}
-                            </button>
-                            <p className="text-center text-xs text-slate-400 mt-4">
-                                Your information will be securely stored and visible to event organizers.
-                            </p>
-                        </div>
-
-                    </form>
-                </div>
-            </div>
+                    <Form.Item className="mt-6">
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={loading}
+                            block
+                            size="large"
+                            className="h-12"
+                        >
+                            {loading ? 'Processing...' : 'Complete Setup'}
+                        </Button>
+                        <p className="text-center text-xs text-gray-400 mt-4">
+                            Your information will be securely stored and visible to event organizers.
+                        </p>
+                    </Form.Item>
+                </Form>
+            </Card>
         </div>
     );
 }

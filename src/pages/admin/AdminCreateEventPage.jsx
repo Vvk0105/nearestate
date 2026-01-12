@@ -1,64 +1,19 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Form, Input, DatePicker, InputNumber, Switch, Button, Upload, Card, message, Divider, Spin, Image } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, UploadOutlined, PictureOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Form, Input, DatePicker, InputNumber, Switch, Button, Upload, Card, message, Divider } from 'antd';
+import { ArrowLeftOutlined, SaveOutlined, UploadOutlined, PictureOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { TextArea } = Input;
 
-export default function AdminEditEventPage() {
-    const { id } = useParams();
+export default function AdminCreateEventPage() {
     const { apiClient } = useAuth();
     const navigate = useNavigate();
     const [form] = Form.useForm();
-
-    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-
-    // Existing Data
-    const [existingImages, setExistingImages] = useState([]);
-    const [existingMapImage, setExistingMapImage] = useState(null);
-    const [removedImageIds, setRemovedImageIds] = useState([]);
-    const [removeMapImage, setRemoveMapImage] = useState(false);
-
-    // New Data
-    const [newGalleryFiles, setNewGalleryFiles] = useState([]);
-    const [newMapFile, setNewMapFile] = useState(null);
-
-    useEffect(() => {
-        fetchEvent();
-    }, [id]);
-
-    const fetchEvent = async () => {
-        try {
-            const res = await apiClient.get(`/exhibitions/public/exhibitions/${id}/`);
-            const data = res.data;
-
-            form.setFieldsValue({
-                name: data.name,
-                description: data.description,
-                start_date: data.start_date ? dayjs(data.start_date) : null,
-                end_date: data.end_date ? dayjs(data.end_date) : null,
-                venue: data.venue,
-                city: data.city,
-                state: data.state,
-                country: data.country,
-                booth_capacity: data.booth_capacity,
-                visitor_capacity: data.visitor_capacity,
-                is_active: data.is_active
-            });
-
-            setExistingImages(data.images || []);
-            setExistingMapImage(data.map_image);
-        } catch (error) {
-            console.error("Failed to load event", error);
-            message.error("Failed to load event");
-            navigate('/admin/events');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [galleryFileList, setGalleryFileList] = useState([]);
+    const [mapFileList, setMapFileList] = useState([]);
 
     const handleSubmit = async (values) => {
         setSaving(true);
@@ -76,36 +31,27 @@ export default function AdminEditEventPage() {
             formData.append('country', values.country);
             formData.append('booth_capacity', values.booth_capacity);
             formData.append('visitor_capacity', values.visitor_capacity);
-            formData.append('is_active', values.is_active);
+            formData.append('is_active', values.is_active || false);
 
             // Map image
-            if (newMapFile) {
-                formData.append('map_image', newMapFile);
-            }
-            if (removeMapImage) {
-                formData.append('remove_map_image', 'true');
+            if (mapFileList.length > 0) {
+                formData.append('map_image', mapFileList[0].originFileObj);
             }
 
             // Gallery images
-            newGalleryFiles.forEach(file => {
-                formData.append('images', file);
+            galleryFileList.forEach(file => {
+                formData.append('images', file.originFileObj);
             });
 
-            if (removedImageIds.length > 0) {
-                formData.append('remove_image_ids', removedImageIds.join(','));
-            }
+            await apiClient.post('/exhibitions/admin/exhibitions/create/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
 
-            await apiClient.put(
-                `/exhibitions/admin/exhibitions/${id}/update/`,
-                formData,
-                { headers: { 'Content-Type': 'multipart/form-data' } }
-            );
-
-            message.success('Event updated successfully!');
-            navigate(`/admin/events/${id}`);
+            message.success('Event created successfully!');
+            navigate('/admin/events');
         } catch (error) {
             console.error(error);
-            message.error(error.response?.data?.message || 'Failed to update event');
+            message.error(error.response?.data?.message || 'Failed to create event');
         } finally {
             setSaving(false);
         }
@@ -126,46 +72,27 @@ export default function AdminEditEventPage() {
             const isImage = file.type.startsWith('image/');
             if (!isImage) {
                 message.error('You can only upload image files!');
-                return Upload.LIST_IGNORE;
             }
             const isLt5M = file.size / 1024 / 1024 < 5;
             if (!isLt5M) {
                 message.error('Image must be smaller than 5MB!');
-                return Upload.LIST_IGNORE;
             }
             return false; // Prevent auto upload
-        }
+        },
+        maxCount: 10
     };
-
-    const handleRemoveExistingImage = (imgId) => {
-        setExistingImages(existingImages.filter(img => img.id !== imgId));
-        setRemovedImageIds([...removedImageIds, imgId]);
-    };
-
-    const handleRemoveMapImage = () => {
-        setExistingMapImage(null);
-        setRemoveMapImage(true);
-        setNewMapFile(null);
-    };
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center p-12">
-                <Spin size="large" />
-            </div>
-        );
-    }
 
     return (
         <div className="max-w-4xl mx-auto">
             <div className="mb-6 flex items-center justify-between">
-                <Link to={`/admin/events/${id}`}>
-                    <Button icon={<ArrowLeftOutlined />}>
-                        Back to Event Details
-                    </Button>
-                </Link>
-                <h1 className="text-2xl font-bold">Edit Event</h1>
-                <div style={{ width: 150 }} />
+                <Button
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate('/admin/events')}
+                >
+                    Back to Events
+                </Button>
+                <h1 className="text-2xl font-bold">Create New Event</h1>
+                <div style={{ width: 100 }} />
             </div>
 
             <Card>
@@ -173,6 +100,7 @@ export default function AdminEditEventPage() {
                     form={form}
                     layout="vertical"
                     onFinish={handleSubmit}
+                    initialValues={{ is_active: true }}
                 >
                     <Divider orientation="left">Basic Details</Divider>
 
@@ -300,94 +228,36 @@ export default function AdminEditEventPage() {
 
                     <Divider orientation="left">Images</Divider>
 
-                    {/* Map/Banner Image */}
-                    <div className="mb-6">
-                        <label className="block mb-2 font-medium">Map/Banner Image</label>
-
-                        {existingMapImage && !removeMapImage && !newMapFile ? (
-                            <div className="relative inline-block">
-                                <Image
-                                    src={existingMapImage.startsWith('http') ? existingMapImage : `${import.meta.env.VITE_MEDIA_BASE_URL}${existingMapImage}`}
-                                    alt="Map"
-                                    style={{ maxWidth: 300, maxHeight: 200, objectFit: 'cover' }}
-                                />
-                                <Button
-                                    danger
-                                    type="primary"
-                                    icon={<DeleteOutlined />}
-                                    size="small"
-                                    onClick={handleRemoveMapImage}
-                                    style={{ position: 'absolute', top: 8, right: 8 }}
-                                >
-                                    Remove
-                                </Button>
-                            </div>
-                        ) : (
-                            <Upload
-                                {...uploadProps}
-                                listType="picture-card"
-                                maxCount={1}
-                                onChange={({ fileList }) => {
-                                    if (fileList.length > 0) {
-                                        setNewMapFile(fileList[0].originFileObj);
-                                        setRemoveMapImage(false);
-                                    } else {
-                                        setNewMapFile(null);
-                                    }
-                                }}
-                            >
-                                <div>
-                                    <PictureOutlined />
-                                    <div style={{ marginTop: 8 }}>Upload New Banner</div>
-                                </div>
-                            </Upload>
-                        )}
-                        {removeMapImage && !newMapFile && (
-                            <p className="text-red-500 text-sm mt-2">Map image will be removed</p>
-                        )}
-                    </div>
-
-                    {/* Existing Gallery Images */}
-                    {existingImages.length > 0 && (
-                        <div className="mb-6">
-                            <label className="block mb-2 font-medium">Current Gallery Images</label>
-                            <div className="flex flex-wrap gap-4">
-                                {existingImages.map((img) => (
-                                    <div key={img.id} className="relative">
-                                        <Image
-                                            src={img.image.startsWith('http') ? img.image : `${import.meta.env.VITE_MEDIA_BASE_URL}${img.image}`}
-                                            alt="Gallery"
-                                            style={{ width: 100, height: 100, objectFit: 'cover' }}
-                                        />
-                                        <Button
-                                            danger
-                                            type="primary"
-                                            icon={<DeleteOutlined />}
-                                            size="small"
-                                            onClick={() => handleRemoveExistingImage(img.id)}
-                                            style={{ position: 'absolute', top: 4, right: 4 }}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* New Gallery Images */}
-                    <Form.Item label="Add New Gallery Images">
+                    <Form.Item label="Map/Banner Image">
                         <Upload
                             {...uploadProps}
                             listType="picture-card"
-                            multiple
-                            onChange={({ fileList }) => {
-                                setNewGalleryFiles(fileList.map(f => f.originFileObj));
-                            }}
-                            maxCount={10}
+                            fileList={mapFileList}
+                            onChange={({ fileList }) => setMapFileList(fileList)}
+                            maxCount={1}
                         >
-                            <div>
-                                <UploadOutlined />
-                                <div style={{ marginTop: 8 }}>Upload</div>
-                            </div>
+                            {mapFileList.length < 1 && (
+                                <div>
+                                    <PictureOutlined />
+                                    <div style={{ marginTop: 8 }}>Upload Banner</div>
+                                </div>
+                            )}
+                        </Upload>
+                    </Form.Item>
+
+                    <Form.Item label="Gallery Images">
+                        <Upload
+                            {...uploadProps}
+                            listType="picture-card"
+                            fileList={galleryFileList}
+                            onChange={({ fileList }) => setGalleryFileList(fileList)}
+                        >
+                            {galleryFileList.length < 10 && (
+                                <div>
+                                    <UploadOutlined />
+                                    <div style={{ marginTop: 8 }}>Upload</div>
+                                </div>
+                            )}
                         </Upload>
                     </Form.Item>
 
@@ -398,7 +268,7 @@ export default function AdminEditEventPage() {
                     <Divider />
 
                     <div className="flex gap-4">
-                        <Button onClick={() => navigate(`/admin/events/${id}`)} size="large" block>
+                        <Button onClick={() => navigate('/admin/events')} size="large" block>
                             Cancel
                         </Button>
                         <Button
@@ -409,7 +279,7 @@ export default function AdminEditEventPage() {
                             size="large"
                             block
                         >
-                            Save Changes
+                            Create Event
                         </Button>
                     </div>
                 </Form>
