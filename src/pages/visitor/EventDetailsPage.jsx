@@ -407,16 +407,6 @@ export default function EventDetailsPage() {
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Preferred Booth No. (Optional)</label>
-                                    <input
-                                        type="number"
-                                        className="block w-full border border-slate-300 rounded-lg shadow-sm py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                        value={boothNumber}
-                                        onChange={(e) => setBoothNumber(e.target.value)}
-                                        placeholder="e.g. 42"
-                                    />
-                                </div>
 
                                 <div className="flex gap-3 pt-4">
                                     <button type="button" onClick={() => setShowApplyModal(false)} className="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl shadow-sm text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 transition-colors">
