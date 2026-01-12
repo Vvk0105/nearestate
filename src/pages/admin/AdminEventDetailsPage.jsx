@@ -14,6 +14,10 @@ import { ApprovalModal } from './ApprovalModal';
 const { TabPane } = Tabs;
 
 export default function AdminEventDetailsPage() {
+    const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [previewImage, setPreviewImage] = useState(null);
+
     const { id } = useParams();
     const { apiClient } = useAuth();
     const [event, setEvent] = useState(null);
@@ -189,6 +193,22 @@ export default function AdminEventDetailsPage() {
             )
         },
         { title: 'Transaction ID', dataIndex: 'transaction_id', key: 'transaction_id' },
+        {
+            title: 'Payment Screenshot',
+            dataIndex: 'payment_screenshot',
+            key: 'payment_screenshot',
+            render: (_, record) => (
+                <Button
+                    type="link"
+                    onClick={() => {
+                        setPreviewImage(`${MEDIA_BASE}${record.payment_screenshot}`);
+                        setPreviewVisible(true);
+                    }}
+                >
+                    Transaction Details
+                </Button>
+            )
+        },
         {
             title: 'Actions', key: 'actions', render: (_, record) => (
                 <Space>
@@ -408,6 +428,19 @@ export default function AdminEventDetailsPage() {
                 onConfirm={handleConfirmApproval}
                 req={selectedReq}
             />
+
+            <Modal
+                open={previewVisible}
+                footer={null}
+                onCancel={() => setPreviewVisible(false)}
+                width={600}
+            >
+                <img
+                    src={previewImage}
+                    alt="Transaction Screenshot"
+                    style={{ width: '100%', borderRadius: 8 }}
+                />
+            </Modal>
         </div>
     );
 }
