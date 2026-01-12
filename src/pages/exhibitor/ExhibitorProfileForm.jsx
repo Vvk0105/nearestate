@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Form, Input, Select, Button, Card, message } from 'antd';
-import { BuildingOutlined, PhoneOutlined, EnvironmentOutlined, BriefcaseOutlined } from '@ant-design/icons';
+import { PhoneOutlined, EnvironmentOutlined, SolutionOutlined } from '@ant-design/icons';
+import { BankOutlined } from '@ant-design/icons';
+
 
 const { Option } = Select;
 
@@ -37,7 +39,7 @@ export default function ExhibitorProfileForm() {
                 className="shadow-xl"
                 title={
                     <div className="text-center py-4">
-                        <BuildingOutlined className="text-4xl text-blue-500 mb-2" />
+                        <BankOutlined className="text-4xl text-blue-500 mb-2" />
                         <h2 className="text-2xl font-bold">Setup Exhibitor Profile</h2>
                         <p className="text-gray-500 mt-2">Tell us about your business to get started</p>
                     </div>
@@ -105,7 +107,7 @@ export default function ExhibitorProfileForm() {
                         name="business_type"
                         label={
                             <span className="flex items-center gap-2">
-                                <BriefcaseOutlined /> Business Type
+                                <SolutionOutlined /> Business Type
                             </span>
                         }
                         rules={[{ required: true, message: 'Please select business type' }]}
