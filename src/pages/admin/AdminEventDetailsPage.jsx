@@ -201,10 +201,8 @@ export default function AdminEventDetailsPage() {
                 <Button
                     type="link"
                     onClick={() => {
-                        setPreviewImage(`${MEDIA_BASE}${record.payment_screenshot}`);
+                        setPreviewImage(record.payment_screenshot);
                         setPreviewVisible(true);
-                        console.log("MEDIA_BASE =", MEDIA_BASE);
-                        console.log("payment_screenshot =", record.payment_screenshot);
                     }}
                 >
                     Transaction Details
