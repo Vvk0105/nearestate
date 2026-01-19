@@ -183,8 +183,8 @@ export default function AdminEventDetailsPage() {
 
     // Columns
     const requestColumns = [
-        { title: 'Company', dataIndex: 'company', key: 'company', render: text => <strong>{text}</strong> },
-        { title: 'Email', dataIndex: 'email', key: 'email' },
+        { title: 'Company', dataIndex: ['exhibitor_profile', 'company_name'], key: 'company_name', render: text => <strong>{text}</strong> },
+        { title: 'Email', dataIndex: ['user', 'email'], key: 'email' },
         {
             title: 'Status', dataIndex: 'status', key: 'status', render: status => (
                 <Tag color={status === 'APPROVED' ? 'green' : status === 'REJECTED' ? 'red' : 'gold'}>
