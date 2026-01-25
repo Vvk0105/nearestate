@@ -21,7 +21,8 @@ export default function LoginPage() {
             setStep('otp');
             message.success('OTP sent to your email!');
         } catch (error) {
-            message.error('Failed to send OTP. Please try again.');
+            const errorMessage = error.response?.data?.error || 'Failed to send OTP. Please try again.';
+            message.error(errorMessage);
             console.error(error);
         } finally {
             setLoading(false);
@@ -35,13 +36,14 @@ export default function LoginPage() {
                 email: emailValue,
                 otp: values.otp
             });
-            const { access, user } = res.data;
-            login(access, user);
+            const { access, refresh, user } = res.data;
+            login(access, user, refresh);
             message.success('Login successful!');
             navigateUser(user);
         } catch (error) {
             console.error("Login verification failed:", error);
-            message.error('Invalid OTP or Login Failed. Please try again.');
+            const errorMessage = error.response?.data?.error || 'Invalid OTP or Login Failed. Please try again.';
+            message.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -58,15 +60,16 @@ export default function LoginPage() {
                         token: response.credential,
                     });
 
-                    const { access, user } = res.data;
+                    const { access, refresh, user } = res.data;
 
-                    login(access, user);
+                    login(access, user, refresh);
                     message.success("Google login successful");
 
                     navigateUser(user);
                 } catch (err) {
                     console.error(err);
-                    message.error("Google login failed");
+                    const errorMessage = err.response?.data?.error || "Google login failed";
+                    message.error(errorMessage);
                 }
             },
         });

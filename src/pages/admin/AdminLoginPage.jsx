@@ -14,19 +14,20 @@ export default function AdminLoginPage() {
         setLoading(true);
         try {
             const res = await apiClient.post('/auth/admin/login/', values);
-            const { access, user } = res.data;
+            const { access, refresh, user } = res.data;
 
             if (!user?.role === 'ADMIN' && !user?.is_superuser) {
                 message.error("Access Denied. Admins only.");
                 return;
             }
 
-            login(access, user);
+            login(access, user, refresh);
             navigate('/admin/dashboard');
             message.success("Welcome Admin!");
         } catch (error) {
             console.error(error);
-            message.error(error.response?.data?.message || "Admin Login Failed. Check credentials.");
+            const errorMessage = error.response?.data?.error || "Admin Login Failed. Check credentials.";
+            message.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -68,10 +69,10 @@ export default function AdminLoginPage() {
                     <Form.Item
                         name="password"
                         label="Password"
-                        // rules={[
-                        //     { required: true, message: 'Please enter your password' },
-                        //     { min: 6, message: 'Password must be at least 6 characters' }
-                        // ]}
+                    // rules={[
+                    //     { required: true, message: 'Please enter your password' },
+                    //     { min: 6, message: 'Password must be at least 6 characters' }
+                    // ]}
                     >
                         <Input.Password
                             prefix={<LockOutlined className="text-gray-400" />}

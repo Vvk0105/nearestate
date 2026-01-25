@@ -10,6 +10,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(localStorage.getItem('token'));
+    const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken'));
     const [loading, setLoading] = useState(true);
 
     // Initialize axios client base URL
@@ -19,13 +20,58 @@ export const AuthProvider = ({ children }) => {
             'Content-Type': 'application/json',
         },
     });
-    // Interceptor to add token
+
+    // Request interceptor to add token
     apiClient.interceptors.request.use((config) => {
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
     });
+
+    // Response interceptor for automatic token refresh
+    apiClient.interceptors.response.use(
+        (response) => response,
+        async (error) => {
+            const originalRequest = error.config;
+
+            // If error is 401 and we haven't tried to refresh yet
+            if (error.response?.status === 401 && !originalRequest._retry) {
+                originalRequest._retry = true;
+
+                try {
+                    // Try to refresh the token
+                    const refreshTokenValue = localStorage.getItem('refreshToken');
+
+                    if (!refreshTokenValue) {
+                        throw new Error('No refresh token available');
+                    }
+
+                    const response = await axios.post(
+                        `${import.meta.env.VITE_API_BASE_URL}/auth/token/refresh/`,
+                        { refresh: refreshTokenValue }
+                    );
+
+                    const { access } = response.data;
+
+                    // Update the token
+                    setToken(access);
+                    localStorage.setItem('token', access);
+
+                    // Retry the original request with new token
+                    originalRequest.headers.Authorization = `Bearer ${access}`;
+                    return apiClient(originalRequest);
+                } catch (refreshError) {
+                    // Refresh token is invalid or expired
+                    console.error('Token refresh failed:', refreshError);
+                    handleLogout();
+                    return Promise.reject(refreshError);
+                }
+            }
+
+            return Promise.reject(error);
+        }
+    );
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -63,20 +109,28 @@ export const AuthProvider = ({ children }) => {
         fetchUser();
     }, [token]);
 
-    const handleLogin = (newToken, userData) => {
+    const handleLogin = (newToken, userData, newRefreshToken) => {
         setToken(newToken);
+        setRefreshToken(newRefreshToken);
+
         // Ensure role is consistent
         if (userData?.active_role) {
             userData.role = userData.active_role;
         }
         setUser(userData);
+
         localStorage.setItem('token', newToken);
+        if (newRefreshToken) {
+            localStorage.setItem('refreshToken', newRefreshToken);
+        }
     };
 
     const handleLogout = () => {
         setToken(null);
+        setRefreshToken(null);
         setUser(null);
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         googleLogout();
     };
 
@@ -113,6 +167,7 @@ export const AuthProvider = ({ children }) => {
         user,
         setUser,
         token,
+        refreshToken,
         loading,
         login: handleLogin,
         logout: handleLogout,
