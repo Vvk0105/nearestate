@@ -31,10 +31,22 @@ export default function VisitorHome() {
         );
     }
 
-    const now = new Date();
-    
-    const upcoming = events.filter(e => new Date(e.start_date) > now);
-    const ongoing = events.filter(e => new Date(e.start_date) <= now && new Date(e.end_date) >= now);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcoming = events.filter(e => {
+        const startDate = new Date(e.start_date);
+        startDate.setHours(0, 0, 0, 0);
+        return startDate > today;
+    });
+
+    const ongoing = events.filter(e => {
+        const startDate = new Date(e.start_date);
+        const endDate = new Date(e.end_date);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+        return startDate <= today && endDate >= today;
+    });
 
     return (
         <div className="space-y-12 pb-12">
