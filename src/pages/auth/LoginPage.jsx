@@ -91,10 +91,17 @@ export default function LoginPage() {
 
         if (!role) {
             navigate('/auth/select-role');
+        } else if (role === 'VISITOR') {
+            navigate('/visitor/home');
+        } else if (role === 'EXHIBITOR') {
+            // Check if profile is completed
+            if (user?.profile_completed) {
+                navigate('/exhibitor/home');
+            } else {
+                navigate('/exhibitor/profile');
+            }
         } else {
-            if (role === 'VISITOR') navigate('/visitor/home');
-            else if (role === 'EXHIBITOR') navigate('/exhibitor/home');
-            else navigate('/auth/select-role');
+            navigate('/auth/select-role');
         }
     };
 

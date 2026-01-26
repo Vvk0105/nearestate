@@ -9,7 +9,7 @@ import { BankOutlined } from '@ant-design/icons';
 const { Option } = Select;
 
 export default function ExhibitorProfileForm() {
-    const { apiClient } = useAuth();
+    const { apiClient, setUser } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
@@ -18,6 +18,11 @@ export default function ExhibitorProfileForm() {
         setLoading(true);
         try {
             await apiClient.post('/exhibitions/exhibitor/profile/', values);
+
+            // Update user state to reflect profile completion
+            const userResponse = await apiClient.get('/auth/me/');
+            setUser(userResponse.data);
+
             message.success("Profile setup complete! Welcome aboard.");
             setTimeout(() => {
                 navigate('/exhibitor/home');

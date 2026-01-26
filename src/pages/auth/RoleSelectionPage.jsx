@@ -4,13 +4,13 @@ import { User, Store, ArrowRight, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function RoleSelectionPage() {
-    const { apiClient, selectRole } = useAuth();
+    const { selectRole } = useAuth();
     const navigate = useNavigate();
 
     const handleSelectRole = async (role) => {
         try {
-            const success = await selectRole(role);
-            if (!success) {
+            const response = await selectRole(role);
+            if (!response) {
                 toast.error("Failed to update role. Please try again.");
                 return;
             }
@@ -18,22 +18,14 @@ export default function RoleSelectionPage() {
             if (role === 'VISITOR') {
                 navigate('/visitor/home');
                 toast.success("Welcome, Visitor!");
-            } else {
-                try {
-                    const statusRes = await apiClient.get('/exhibitions/exhibitor/profile/status/');
-                    // Add delay for better UX transition
-                    setTimeout(() => {
-                        if (statusRes.data.exists) {
-                            navigate('/exhibitor/home');
-                            toast.success("Welcome back to your Dashboard!");
-                        } else {
-                            navigate('/exhibitor/profile');
-                            toast.success("Please complete your exhibitor profile.");
-                        }
-                    }, 500);
-                } catch (err) {
-                    console.error("Profile status check failed", err);
+            } else if (role === 'EXHIBITOR') {
+                // Use profile_completed from backend response
+                if (response.profile_completed) {
+                    navigate('/exhibitor/home');
+                    toast.success("Welcome back to your Dashboard!");
+                } else {
                     navigate('/exhibitor/profile');
+                    toast.success("Please complete your exhibitor profile.");
                 }
             }
         } catch (error) {

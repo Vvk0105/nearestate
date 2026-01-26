@@ -9,7 +9,7 @@ import UserProfileModal from '../components/UserProfileModal';
 import { useState } from 'react';
 
 export default function MainLayout() {
-    const { user, logout, switchRole, selectRole, apiClient } = useAuth();
+    const { user, logout, switchRole, selectRole } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -17,32 +17,26 @@ export default function MainLayout() {
         if (!user) return;
         const targetRole = user.role === 'VISITOR' ? 'EXHIBITOR' : 'VISITOR';
 
-        let success = false;
+        let response = null;
         // If user already has the role, just switch. Otherwise, select (add) logic.
         if (user.roles && user.roles.includes(targetRole)) {
-            success = await switchRole(targetRole);
+            response = await switchRole(targetRole);
         } else {
-            success = await selectRole(targetRole);
+            response = await selectRole(targetRole);
         }
 
-        if (success) {
+        if (response) {
             if (targetRole === 'VISITOR') {
                 navigate('/visitor/home');
                 toast.success("Switched to Visitor");
             } else {
-                // Check if profile exists
-                try {
-                    const statusRes = await apiClient.get('/exhibitions/exhibitor/profile/status/');
-                    if (statusRes.data.exists) {
-                        navigate('/exhibitor/home');
-                        toast.success("Switched to Exhibitor");
-                    } else {
-                        navigate('/exhibitor/profile');
-                        toast.success("Please complete your exhibitor profile");
-                    }
-                } catch (err) {
-                    console.error("Profile check failed", err);
+                // Check profile_completed from response
+                if (response.profile_completed) {
+                    navigate('/exhibitor/home');
+                    toast.success("Switched to Exhibitor");
+                } else {
                     navigate('/exhibitor/profile');
+                    toast.success("Please complete your exhibitor profile");
                 }
             }
         }

@@ -82,20 +82,14 @@ export const AuthProvider = ({ children }) => {
             try {
                 const response = await apiClient.get('/auth/me/');
                 const userData = response.data;
+
+                // Use active_role from backend
                 if (userData.active_role) {
                     userData.role = userData.active_role;
                 }
 
-                // Check Exhibitor Profile
-                if (userData.role === 'EXHIBITOR') {
-                    try {
-                        const profileRes = await apiClient.get('/exhibitions/exhibitor/profile/status/');
-                        userData.profileCompleted = profileRes.data.exists;
-                    } catch (e) {
-                        console.warn('Profile check failed', e);
-                        userData.profileCompleted = false;
-                    }
-                }
+                // Profile completion is now tracked in User model
+                // No need for separate API call
 
                 setUser(userData);
             } catch (error) {
@@ -125,23 +119,40 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const handleLogout = () => {
-        setToken(null);
-        setRefreshToken(null);
-        setUser(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        googleLogout();
+    const handleLogout = async () => {
+        try {
+            // Call logout API to blacklist refresh token
+            const refreshTokenValue = localStorage.getItem('refreshToken');
+            if (refreshTokenValue) {
+                await apiClient.post('/auth/logout/', { refresh: refreshTokenValue });
+            }
+        } catch (error) {
+            console.error('Logout API failed:', error);
+            // Continue with local logout even if API fails
+        } finally {
+            // Always clear local state
+            setToken(null);
+            setRefreshToken(null);
+            setUser(null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            googleLogout();
+        }
     };
 
     const handleRoleSwitch = async (newRole) => {
         try {
-            await apiClient.post('/auth/switch-role/', { role: newRole });
-            setUser(prev => ({ ...prev, role: newRole, active_role: newRole }));
-            return true;
+            const res = await apiClient.post('/auth/switch-role/', { role: newRole });
+            setUser(prev => ({
+                ...prev,
+                role: newRole,
+                active_role: newRole,
+                profile_completed: res.data.profile_completed
+            }));
+            return res.data; // Return full response
         } catch (error) {
             console.error("Switch role failed", error);
-            return false;
+            return null;
         }
     };
 
@@ -152,14 +163,14 @@ export const AuthProvider = ({ children }) => {
             setUser(prev => ({
                 ...prev,
                 roles: res.data.roles,
-                unique_id: res.data.unique_id, // If backend returns it, otherwise ignore
                 active_role: res.data.active_role,
-                role: res.data.active_role
+                role: res.data.active_role,
+                profile_completed: res.data.profile_completed // Use from backend
             }));
-            return true;
+            return res.data; // Return full data for navigation logic
         } catch (error) {
             console.error("Select role failed", error);
-            return false;
+            return null;
         }
     };
 
