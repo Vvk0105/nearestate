@@ -264,16 +264,56 @@ export default function ExhibitorHome() {
                             </button>
                         </div>
                         <form onSubmit={handleProfileUpdate} className="p-6 space-y-4">
-                            <input
-                                value={editProfileForm.company_name}
-                                onChange={e =>
-                                    setEditProfileForm({
-                                        ...editProfileForm,
-                                        company_name: e.target.value
-                                    })
-                                }
-                                className="w-full border p-2 rounded"
-                            />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <label className="block text-sm font-medium text-slate-700">Company Name</label>
+                                <input
+                                    value={editProfileForm.company_name}
+                                    onChange={e =>
+                                        setEditProfileForm({
+                                            ...editProfileForm,
+                                            company_name: e.target.value
+                                        })
+                                    }
+                                    className="w-full border p-2 rounded"
+                                />
+                                <label className="block text-sm font-medium text-slate-700">Council Area</label>
+                                <input
+                                    value={editProfileForm.council_area}
+                                    onChange={e =>
+                                        setEditProfileForm({
+                                            ...editProfileForm,
+                                            council_area: e.target.value
+                                        })
+                                    }
+                                    className="w-full border p-2 rounded"
+                                />
+                                <label className="block text-sm font-medium text-slate-700">Business Type</label>
+                                <select
+                                    value={editProfileForm.business_type}
+                                    onChange={e =>
+                                        setEditProfileForm({
+                                            ...editProfileForm,
+                                            business_type: e.target.value
+                                        })
+                                    }
+                                    className="w-full border p-2 rounded">
+                                    <option value="DEVELOPER">Developer</option>
+                                    <option value="PUBLISHER">Publisher</option>
+                                    <option value="ADVERTISER">Advertiser</option>
+                                </select>
+                                <label className="block text-sm font-medium text-slate-700">Contact Number</label>
+                                <input
+                                    type="tel"
+                                    value={editProfileForm.contact_number}
+                                    onChange={e =>
+                                        setEditProfileForm({
+                                            ...editProfileForm,
+                                            contact_number: e.target.value
+                                        })
+                                    }
+                                    className="w-full border p-2 rounded"
+                                />
+                            </div>
                             <button
                                 disabled={savingProfile}
                                 className="w-full bg-blue-600 text-white py-2 rounded"
