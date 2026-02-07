@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { Table, Button, Input, Tag, Card, Row, Col, message } from 'antd';
+import { Table, Button, Input, Tag, Card, Row, Col, message, Modal } from 'antd';
 import { PlusOutlined, SearchOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
 
 export default function AdminEventsPage() {
@@ -47,6 +47,25 @@ export default function AdminEventsPage() {
         fetchEvents(1, pagination.pageSize, search);
     };
 
+    const handleDelete = (event) => {
+        Modal.confirm({
+            title: 'Delete Event',
+            content: `Are you sure you want to delete "${event.name}"? This action cannot be undone.`,
+            okText: 'Delete',
+            okType: 'danger',
+            cancelText: 'Cancel',
+            onOk: async () => {
+                try {
+                    await apiClient.delete(`/exhibitions/admin/exhibitions/${event.id}/delete/`);
+                    message.success('Event deleted successfully');
+                    fetchEvents(pagination.current, pagination.pageSize, search);
+                } catch (error) {
+                    message.error(error.response?.data?.message || 'Failed to delete event');
+                }
+            }
+        });
+    };
+
     const columns = [
         {
             title: 'Event Name',
@@ -88,9 +107,18 @@ export default function AdminEventsPage() {
             title: 'Actions',
             key: 'actions',
             render: (_, record) => (
-                <Link to={`/admin/events/${record.id}`}>
-                    <Button type="link" icon={<EyeOutlined />}>View Details</Button>
-                </Link>
+                <div className="flex gap-2">
+                    <Link to={`/admin/events/${record.id}`}>
+                        <Button type="link" icon={<EyeOutlined />}>View Details</Button>
+                    </Link>
+                    <Button
+                        type="link"
+                        danger
+                        onClick={() => handleDelete(record)}
+                    >
+                        Delete
+                    </Button>
+                </div>
             )
         }
     ];

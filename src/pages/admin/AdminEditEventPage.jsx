@@ -46,6 +46,7 @@ export default function AdminEditEventPage() {
                 country: data.country,
                 booth_capacity: data.booth_capacity,
                 visitor_capacity: data.visitor_capacity,
+                registration_fee: data.registration_fee,
                 is_active: data.is_active
             });
 
@@ -76,6 +77,9 @@ export default function AdminEditEventPage() {
             formData.append('country', values.country);
             formData.append('booth_capacity', values.booth_capacity);
             formData.append('visitor_capacity', values.visitor_capacity);
+            if (values.registration_fee !== undefined && values.registration_fee !== null) {
+                formData.append('registration_fee', values.registration_fee);
+            }
             formData.append('is_active', values.is_active);
 
             // Map image
@@ -297,6 +301,21 @@ export default function AdminEditEventPage() {
                             <InputNumber min={1} style={{ width: '100%' }} placeholder="Enter visitor capacity" />
                         </Form.Item>
                     </div>
+
+                    <Form.Item
+                        label="Registration Fee"
+                        name="registration_fee"
+                        rules={[
+                            { type: 'number', min: 0, message: 'Fee must be 0 or greater' }
+                        ]}
+                    >
+                        <InputNumber
+                            min={0}
+                            style={{ width: '100%' }}
+                            placeholder="Enter registration fee (optional)"
+                            prefix="₹"
+                        />
+                    </Form.Item>
 
                     <Divider orientation="left">Images</Divider>
 

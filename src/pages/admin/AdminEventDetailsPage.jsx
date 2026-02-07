@@ -318,6 +318,28 @@ export default function AdminEventDetailsPage() {
                                 <p>{event.description}</p>
                             </Card>
                         </Col>
+                        <Col span={24}>
+                            <Card title="Assigned Booth Numbers">
+                                {exhibitors.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {exhibitors.map((exhibitor) => (
+                                            <Tag key={exhibitor.id} color="blue" className="text-base px-3 py-1">
+                                                Booth #{exhibitor.booth_number} - {exhibitor.company_name}
+                                            </Tag>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-400">No booths assigned yet</p>
+                                )}
+                            </Card>
+                        </Col>
+                        {event.registration_fee && (
+                            <Col span={24}>
+                                <Card title="Registration Fee">
+                                    <p className="text-lg font-semibold">₹{event.registration_fee}</p>
+                                </Card>
+                            </Col>
+                        )}
                     </Row>
                 </TabPane>
 
