@@ -4,13 +4,16 @@ import { Loader, QrCode as QrIcon, Calendar, CheckCircle, MapPin } from 'lucide-
 import QRCode from 'react-qr-code';
 
 export default function MyEventsPage() {
-    const { apiClient } = useAuth();
+    const { apiClient, loading: authLoading } = useAuth();
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all'); // all, upcoming, ongoing, completed
     const [selectedQr, setSelectedQr] = useState(null); // For modal
 
     useEffect(() => {
+        // Wait for auth to complete before fetching data
+        if (authLoading) return;
+
         const fetchRegistrations = async () => {
             try {
                 // API: visitor/my-registrations/ (Needs to be implemented in backend if not exists, but urls main listing says yes)
@@ -24,7 +27,8 @@ export default function MyEventsPage() {
             }
         };
         fetchRegistrations();
-    }, [apiClient]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authLoading]);
 
     const now = new Date();
     const filteredRegistrations = registrations.filter(reg => {

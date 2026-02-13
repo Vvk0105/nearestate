@@ -6,7 +6,7 @@ import ImageCarousel from '../../components/ImageCarousel';
 
 export default function ManagePropertiesPage() {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
-    const { apiClient } = useAuth();
+    const { apiClient, loading: authLoading } = useAuth();
     const [properties, setProperties] = useState([]);
     const [exhibitions, setExhibitions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -38,6 +38,9 @@ export default function ManagePropertiesPage() {
     const editFileInputRef = useRef(null);
 
     useEffect(() => {
+        // Wait for auth to complete before fetching data
+        if (authLoading) return;
+
         const fetchData = async () => {
             try {
                 const [propsRes, appsRes] = await Promise.all([
@@ -64,7 +67,8 @@ export default function ManagePropertiesPage() {
             }
         };
         fetchData();
-    }, [apiClient]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authLoading]);
 
     const handleDelete = async (id) => {
         if (!confirm("Are you sure you want to delete this property?")) return;
@@ -207,78 +211,78 @@ export default function ManagePropertiesPage() {
 
     return (
         <>
-        <div className="space-y-8 relative animate-fade-in-up">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 className="text-2xl font-bold text-slate-900">My Properties</h1>
+            <div className="space-y-8 relative animate-fade-in-up">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <h1 className="text-2xl font-bold text-slate-900">My Properties</h1>
 
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <div className="relative">
-                        <select
-                            className="appearance-none bg-white border border-slate-300 text-slate-700 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm"
-                            value={selectedExhibitionId}
-                            onChange={(e) => setSelectedExhibitionId(e.target.value)}
-                        >
-                            <option value="">All Exhibitions</option>
-                            {exhibitions.map(ex => (
-                                <option key={ex.id} value={ex.id}>{ex.name}</option>
-                            ))}
-                        </select>
-                        <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                    </div>
-
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
-                    >
-                        <Plus size={18} /> Add Property
-                    </button>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProperties.map(property => (
-                    <div key={property.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-                        <div className="h-48 bg-slate-100 relative group">
-                            {property.images && property.images.length > 0 ? (
-                                <ImageCarousel
-                                    images={property.images.map((img) => ({
-                                        id: img.id,
-                                        image: img.image.startsWith("http")
-                                            ? img.image
-                                            : `${MEDIA_BASE}${img.image}`,
-                                    }))}
-                                    height="h-full"
-                                    rounded="rounded-none"
-                                />
-                            ) : (
-                                <div className="flex items-center justify-center h-full text-slate-400 font-bold">NO IMAGE</div>
-                            )}
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                        <div className="relative">
+                            <select
+                                className="appearance-none bg-white border border-slate-300 text-slate-700 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm"
+                                value={selectedExhibitionId}
+                                onChange={(e) => setSelectedExhibitionId(e.target.value)}
+                            >
+                                <option value="">All Exhibitions</option>
+                                {exhibitions.map(ex => (
+                                    <option key={ex.id} value={ex.id}>{ex.name}</option>
+                                ))}
+                            </select>
+                            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
-                        <div className="p-4 flex-1 flex flex-col">
-                            <h3 className="text-lg font-bold text-slate-900 line-clamp-1">{property.title}</h3>
-                            <p className="text-slate-500 text-sm flex items-center gap-1 mb-2">
-                                <MapPin size={14} /> {property.location}
-                            </p>
-                            <p className="text-blue-600 font-bold mb-4">₹{property.price_from} - ₹{property.price_to}</p>
 
-                            <div className="flex gap-2 mt-auto">
-                                <button onClick={() => startEdit(property)} className="flex-1 py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 flex items-center justify-center gap-1 text-sm font-medium transition-colors">
-                                    <Edit size={16} /> Edit
-                                </button>
-                                <button onClick={() => handleDelete(property.id)} className="flex-1 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 flex items-center justify-center gap-1 text-sm font-medium transition-colors">
-                                    <Trash2 size={16} /> Delete
-                                </button>
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
+                        >
+                            <Plus size={18} /> Add Property
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredProperties.map(property => (
+                        <div key={property.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                            <div className="h-48 bg-slate-100 relative group">
+                                {property.images && property.images.length > 0 ? (
+                                    <ImageCarousel
+                                        images={property.images.map((img) => ({
+                                            id: img.id,
+                                            image: img.image.startsWith("http")
+                                                ? img.image
+                                                : `${MEDIA_BASE}${img.image}`,
+                                        }))}
+                                        height="h-full"
+                                        rounded="rounded-none"
+                                    />
+                                ) : (
+                                    <div className="flex items-center justify-center h-full text-slate-400 font-bold">NO IMAGE</div>
+                                )}
+                            </div>
+                            <div className="p-4 flex-1 flex flex-col">
+                                <h3 className="text-lg font-bold text-slate-900 line-clamp-1">{property.title}</h3>
+                                <p className="text-slate-500 text-sm flex items-center gap-1 mb-2">
+                                    <MapPin size={14} /> {property.location}
+                                </p>
+                                <p className="text-blue-600 font-bold mb-4">₹{property.price_from} - ₹{property.price_to}</p>
+
+                                <div className="flex gap-2 mt-auto">
+                                    <button onClick={() => startEdit(property)} className="flex-1 py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 flex items-center justify-center gap-1 text-sm font-medium transition-colors">
+                                        <Edit size={16} /> Edit
+                                    </button>
+                                    <button onClick={() => handleDelete(property.id)} className="flex-1 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 flex items-center justify-center gap-1 text-sm font-medium transition-colors">
+                                        <Trash2 size={16} /> Delete
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
-                {filteredProperties.length === 0 && (
-                    <div className="col-span-full text-center py-16 text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-                        {selectedExhibitionId ? "No properties match this filter." : "No properties listed yet."}
-                    </div>
-                )}
+                    ))}
+                    {filteredProperties.length === 0 && (
+                        <div className="col-span-full text-center py-16 text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                            {selectedExhibitionId ? "No properties match this filter." : "No properties listed yet."}
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
             {/* ADD PROPERTY MODAL */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">

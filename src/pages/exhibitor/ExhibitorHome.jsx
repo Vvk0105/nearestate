@@ -15,7 +15,7 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export default function ExhibitorHome() {
-    const { apiClient } = useAuth();
+    const { apiClient, loading: authLoading } = useAuth();
     const [events, setEvents] = useState([]);
     const [myApplications, setMyApplications] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -27,6 +27,9 @@ export default function ExhibitorHome() {
     const [savingProfile, setSavingProfile] = useState(false);
 
     useEffect(() => {
+        // Wait for auth to complete before fetching data
+        if (authLoading) return;
+
         const fetchData = async () => {
             try {
                 const [eventsRes, appsRes, profileRes] = await Promise.all([
@@ -42,7 +45,7 @@ export default function ExhibitorHome() {
                     try {
                         const detailRes = await apiClient.get('/exhibitions/exhibitor/profile/');
                         setProfile(detailRes.data);
-                    } catch {}
+                    } catch { }
                 }
             } catch (error) {
                 console.error("Failed to fetch data", error);
@@ -52,7 +55,8 @@ export default function ExhibitorHome() {
         };
 
         fetchData();
-    }, [apiClient]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [authLoading]);
 
     const getApplicationStatus = (eventId) => {
         const app = myApplications.find(
