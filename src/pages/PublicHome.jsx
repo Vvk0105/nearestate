@@ -51,7 +51,8 @@ export default function PublicHome() {
         };
 
         fetchEvents();
-    }, [user, navigate, apiClient]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, navigate]);
 
     if (user) return null;
 

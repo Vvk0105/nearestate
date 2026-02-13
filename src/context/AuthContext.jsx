@@ -79,8 +79,17 @@ export const AuthProvider = ({ children }) => {
                 setLoading(false);
                 return;
             }
+
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
             try {
-                const response = await apiClient.get('/auth/me/');
+                const response = await apiClient.get('/auth/me/', {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
                 const userData = response.data;
 
                 // Use active_role from backend
@@ -93,8 +102,18 @@ export const AuthProvider = ({ children }) => {
 
                 setUser(userData);
             } catch (error) {
-                console.error("Failed to fetch user", error);
-                handleLogout();
+                clearTimeout(timeoutId);
+
+                if (error.name === 'AbortError') {
+                    console.error('Auth check timed out - backend may be unreachable');
+                } else {
+                    console.error("Failed to fetch user", error);
+                }
+
+                // Clear user state but don't force logout - let user retry
+                setUser(null);
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
             } finally {
                 setLoading(false);
             }
@@ -189,7 +208,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 };

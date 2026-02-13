@@ -55,21 +55,21 @@ export default function AdminEventDetailsPage() {
         fetchRequests();
     }, [id]);
 
+    // Fetch exhibitors when pagination or search changes
     useEffect(() => {
         if (event) {
             fetchExhibitors(exhibitorsPagination.current, exhibitorsPagination.pageSize, exhibitorsSearch);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [exhibitorsPagination, exhibitorsSearch, event]);
+
+    // Fetch visitors when pagination or search changes
+    useEffect(() => {
+        if (event) {
             fetchVisitors(visitorsPagination.current, visitorsPagination.pageSize, visitorsSearch);
         }
-    }, [event]); // Fetch lists after event loaded or on pagination/search change (handled by effect on pagination/search? No, called manually or via table change)
-
-    // Actually, typical pattern is to fetch in useEffect dependent on pagination/search state
-    useEffect(() => {
-        fetchExhibitors(exhibitorsPagination.current, exhibitorsPagination.pageSize, exhibitorsSearch);
-    }, [exhibitorsPagination, exhibitorsSearch]);
-
-    useEffect(() => {
-        fetchVisitors(visitorsPagination.current, visitorsPagination.pageSize, visitorsSearch);
-    }, [visitorsPagination, visitorsSearch]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [visitorsPagination, visitorsSearch, event]);
 
 
     const fetchEventDetails = async () => {

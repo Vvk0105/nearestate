@@ -21,7 +21,8 @@ export default function VisitorHome() {
         };
 
         fetchEvents();
-    }, [apiClient]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     if (loading) {
         return (
