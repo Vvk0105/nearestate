@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Layout, Menu, Dropdown, Avatar, Button } from 'antd';
@@ -14,10 +14,34 @@ import {
 const { Header, Sider, Content } = Layout;
 
 export default function AdminLayout() {
-    const { user, logout } = useAuth();
+    const { user, loading, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [collapsed, setCollapsed] = useState(false);
+
+    useEffect(() => {
+        if (!loading) {
+            if (!user || user.active_role !== 'ADMIN') {
+                navigate('/admin/login');
+            }
+        }
+    }, [user, loading, navigate]);
+
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user || user.active_role !== 'ADMIN') {
+        return null;
+    }
+
 
     const menuItems = [
         {
