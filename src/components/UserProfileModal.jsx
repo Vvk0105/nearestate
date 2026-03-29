@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { X, User, Mail, Save, Loader } from 'lucide-react';
+import { X, User, Mail, Save, Loader, Trash2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function UserProfileModal({ isOpen, onClose }) {
-    const { user, apiClient, refreshUser } = useAuth(); // Assuming refreshUser exists or we need to implement it to update context
+    const { user, apiClient, refreshUser, logout } = useAuth(); // Assuming refreshUser exists or we need to implement it to update context
     const [formData, setFormData] = useState({
         username: '',
         email: ''
     });
     const [loading, setLoading] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     useEffect(() => {
         if (user && isOpen) {
@@ -26,14 +28,6 @@ export default function UserProfileModal({ isOpen, onClose }) {
         e.preventDefault();
         setLoading(true);
         try {
-            // Assuming endpoint to update user details exists, often /auth/user/ or similar. 
-            // If not, we might need to create it. 
-            // Based on context, let's assume standard Django User update is not exposed by default in simplejwt.
-            // We usually need a specific view. 
-            // Let's assume we might need to add one, but for now I'll try to patch to a likely endpoint or prompt user if missing.
-            // Actually, let's CHECK if we have a user update endpoint. 
-            // If not, I'll have to add it to backend in next step. For now I'll write the frontend code targeting '/accounts/profile/' (common convention) or similar.
-
             // Using existing UpdateProfileView at accounts/profile/update/
             await apiClient.put('/auth/profile/update/', { username: formData.username });
             toast.success("Profile updated!");
@@ -41,11 +35,23 @@ export default function UserProfileModal({ isOpen, onClose }) {
             onClose();
         } catch (error) {
             console.error(error);
-            // toast.error("Failed to update. Backend support might be missing for User edit.");
-            // Actually, I should probably add backend support for this if not exists.
             toast.error("Failed to update profile.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        setDeleteLoading(true);
+        try {
+            await apiClient.delete('/auth/account/delete/');
+            toast.success("Account deleted successfully.");
+            onClose();
+            if (logout) await logout();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to delete account.");
+            setDeleteLoading(false);
         }
     };
 
@@ -98,6 +104,51 @@ export default function UserProfileModal({ isOpen, onClose }) {
                         </button>
                     </div>
                 </form>
+
+                {/* DANGER ZONE */}
+                <div className="px-6 py-4 bg-red-50/50 border-t border-red-100">
+                    {!showDeleteConfirm ? (
+                        <div className="flex items-center justify-between">
+                            <div className="text-sm">
+                                <h4 className="font-bold text-red-800">Danger Zone</h4>
+                                <p className="text-red-600 text-xs">Permanently delete your account and data.</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteConfirm(true)}
+                                className="px-4 py-2 bg-red-100 text-red-700 font-semibold rounded-lg hover:bg-red-200 transition-colors text-sm flex items-center gap-2"
+                            >
+                                <Trash2 size={16} /> Delete Account
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                            <div className="flex gap-2 items-start text-red-800">
+                                <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+                                <div className="text-sm">
+                                    <p className="font-bold">Are you absolutely sure?</p>
+                                    <p className="text-red-700 text-xs mt-1">This action cannot be undone. All your data will be permanently removed.</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    disabled={deleteLoading}
+                                    className="flex-1 py-2 bg-white border border-red-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors text-sm"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteAccount}
+                                    disabled={deleteLoading}
+                                    className="flex-1 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-70 flex justify-center items-center gap-2 text-sm"
+                                >
+                                    {deleteLoading ? <Loader className="animate-spin" size={16} /> : 'Yes, Delete My Account'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

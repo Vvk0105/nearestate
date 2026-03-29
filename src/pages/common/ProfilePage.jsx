@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Loader, Save, User } from 'lucide-react';
+import { Loader, Save, User, Trash2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
-    const { apiClient, user, setUser } = useAuth();
+    const { apiClient, user, setUser, logout } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [formData, setFormData] = useState({
         username: '',
         email: ''
@@ -37,6 +39,19 @@ export default function ProfilePage() {
             toast.error("Failed to update profile.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        setDeleteLoading(true);
+        try {
+            await apiClient.delete('/auth/account/delete/');
+            toast.success("Account deleted successfully.");
+            if (logout) await logout();
+        } catch (error) {
+            console.error("Delete account failed", error);
+            toast.error("Failed to delete account.");
+            setDeleteLoading(false);
         }
     };
 
@@ -89,6 +104,56 @@ export default function ProfilePage() {
                         </button>
                     </div>
                 </form>
+            </div>
+
+            {/* DANGER ZONE */}
+            <div className="bg-white rounded-xl shadow border border-red-200 p-8 overflow-hidden relative">
+                <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+                
+                {!showDeleteConfirm ? (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-xl font-bold text-red-700 flex items-center gap-2">
+                                <AlertTriangle size={24} /> Danger Zone
+                            </h2>
+                            <p className="text-slate-600 mt-1">
+                                Permanently delete your account and all associated data. This action is irreversible.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="px-6 py-2.5 bg-red-50 text-red-700 font-bold rounded-lg hover:bg-red-100 transition-colors border border-red-200 flex items-center justify-center gap-2 shrink-0"
+                        >
+                            <Trash2 size={20} /> Delete My Account
+                        </button>
+                    </div>
+                ) : (
+                    <div className="animate-in fade-in slide-in-from-top-2">
+                        <h2 className="text-xl font-bold text-red-700 flex items-center gap-2 mb-2">
+                            <AlertTriangle size={24} /> Are you absolutely sure?
+                        </h2>
+                        <p className="text-slate-700 mb-6">
+                            This action cannot be undone. All your bookings, history, and profile data will be permanently removed.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={deleteLoading}
+                                className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={deleteLoading}
+                                className="px-6 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-70 flex justify-center items-center gap-2"
+                            >
+                                {deleteLoading ? <Loader className="animate-spin" size={20} /> : 'Yes, Permanently Delete My Account'}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
