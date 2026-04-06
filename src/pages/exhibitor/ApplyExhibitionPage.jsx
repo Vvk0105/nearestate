@@ -12,11 +12,9 @@ export default function ApplyExhibitionPage() {
     useEffect(() => {
         const fetchExhibitions = async () => {
             try {
-                // Need public list of exhibitions to apply
                 const res = await apiClient.get('/exhibitions/public/exhibitions/');
-                // Filter only upcoming/active?
-                // "Active" is good.
-                const active = res.data.filter(e => e.is_active && new Date(e.end_date) >= new Date());
+                const eventsData = res.data.data || res.data;
+                const active = eventsData.filter(e => e.is_active && new Date(e.end_date) >= new Date());
                 setExhibitions(active);
             } catch (error) {
                 console.error("Fetch exhibitions failed", error);

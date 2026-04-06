@@ -22,7 +22,8 @@ export default function PublicHome() {
         const fetchEvents = async () => {
             try {
                 const res = await apiClient.get('/exhibitions/public/exhibitions/');
-                const events = res.data.filter(e => e.is_active);
+                const eventsData = res.data.data || res.data;
+                const events = eventsData.filter(e => e.is_active);
 
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);

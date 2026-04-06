@@ -12,7 +12,7 @@ export default function VisitorHome() {
         const fetchEvents = async () => {
             try {
                 const res = await apiClient.get('/exhibitions/public/exhibitions/');
-                setEvents(res.data);
+                setEvents(res.data.data || res.data);
             } catch (error) {
                 console.error("Failed to fetch events", error);
             } finally {

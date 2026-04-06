@@ -38,7 +38,7 @@ export default function ExhibitorHome() {
                     apiClient.get('/exhibitions/exhibitor/profile/status/')
                 ]);
 
-                setEvents(eventsRes.data);
+                setEvents(eventsRes.data.data || eventsRes.data);
                 setMyApplications(appsRes.data);
 
                 if (profileRes.data.exists) {
