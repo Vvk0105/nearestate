@@ -14,14 +14,18 @@ export default function AdminLoginPage() {
         setLoading(true);
         try {
             const res = await apiClient.post('/auth/admin/login/', values);
-            const { access, refresh, user } = res.data;
+            const { access, refresh, user, role } = res.data;
 
-            if (!user?.role === 'ADMIN' && !user?.is_superuser) {
+            if (role !== 'ADMIN' && !user?.is_superuser) {
                 message.error("Access Denied. Admins only.");
+                setLoading(false);
                 return;
             }
 
-            login(access, user, refresh);
+            const userData = { ...user, active_role: role || (user?.is_superuser ? 'ADMIN' : undefined) };
+            
+            login(access, userData, refresh);
+            console.log("LOGIN SUCCESS - REDIRECTING");
             navigate('/admin/dashboard');
             message.success("Welcome Admin!");
         } catch (error) {
