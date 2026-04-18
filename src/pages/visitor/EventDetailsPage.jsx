@@ -29,8 +29,10 @@ export default function EventDetailsPage() {
     const isVisitor = user?.role === 'VISITOR';
 
     // Resolve base path for exhibitor tab links
-    const roleBasePath =
-        user?.role === 'EXHIBITOR' ? '/exhibitor' : '/events';
+    // Public guests & visitors use /events/:id/exhibitors/:exhibitorId
+    // Exhibitors use /exhibitor/events/:id/exhibitors/:exhibitorId
+    const exhibitorLinkBase =
+        user?.role === 'EXHIBITOR' ? '/exhibitor/events' : '/events';
 
     const fetchData = useCallback(async () => {
         try {
@@ -132,6 +134,8 @@ export default function EventDetailsPage() {
 
     if (loading) return <div className="flex justify-center p-12 min-h-screen items-center"><Loader className="animate-spin text-blue-600 w-10 h-10" /></div>;
     if (!event) return <div className="text-center p-12 font-medium text-slate-500">Event not found.</div>;
+
+    const isPastEvent = event.end_date && new Date(event.end_date) < new Date();
 
     const formattedMapImage = event.map_image
         ? (event.map_image.startsWith('http') ? event.map_image : `${MEDIA_BASE}${event.map_image}`)
@@ -258,7 +262,7 @@ export default function EventDetailsPage() {
                                 {exhibitors.map(exhibitor => (
                                     <Link
                                         key={exhibitor.id}
-                                        to={`${roleBasePath}/events/${id}/exhibitors/${exhibitor.id}`}
+                                        to={`${exhibitorLinkBase}/${id}/exhibitors/${exhibitor.id}`}
                                         className="group block"
                                     >
                                         <div className="bg-white rounded-xl border border-slate-200 p-5 hover:border-blue-500 hover:shadow-lg transition-all duration-300 h-full">
@@ -329,7 +333,11 @@ export default function EventDetailsPage() {
                                 - Logged-in: show full registration/apply button
                                 This satisfies Guideline 5.1.1(v): browsing is unrestricted,
                                 login is only required at the point of registration. */}
-                            {!user ? (
+                            {isPastEvent ? (
+                                <div className="w-full py-4 rounded-xl font-bold bg-slate-200 text-slate-500 cursor-not-allowed flex items-center justify-center gap-2 select-none">
+                                    <X size={20} /> Event Has Ended
+                                </div>
+                            ) : !user ? (
                                 <Link
                                     to={`/auth/login?next=/events/${id}`}
                                     className="flex items-center justify-center gap-2 w-full py-4 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-lg transition-all transform hover:-translate-y-0.5"
