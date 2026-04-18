@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Loader, Plus, Trash2, Edit, MapPin, X, Save, Upload, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ImageCarousel from '../../components/ImageCarousel';
+import FullPageLoader from '../../components/FullPageLoader';
 
 export default function ManagePropertiesPage() {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
@@ -203,7 +204,7 @@ export default function ManagePropertiesPage() {
         }
     };
 
-    if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
+    if (loading) return <FullPageLoader message="Loading your properties..." />;
 
     const filteredProperties = selectedExhibitionId
         ? properties.filter(p => p.exhibition === parseInt(selectedExhibitionId) || p.exhibition?.id === parseInt(selectedExhibitionId))

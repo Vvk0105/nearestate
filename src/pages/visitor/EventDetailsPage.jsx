@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { publicApiClient } from '../../context/AuthContext';
-import { MapPin, Calendar, Store, Loader, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn } from 'lucide-react';
+import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ImageCarousel from '../../components/ImageCarousel';
+import FullPageLoader from '../../components/FullPageLoader';
 
 export default function EventDetailsPage() {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
@@ -132,7 +133,7 @@ export default function EventDetailsPage() {
         }
     };
 
-    if (loading) return <div className="flex justify-center p-12 min-h-screen items-center"><Loader className="animate-spin text-blue-600 w-10 h-10" /></div>;
+    if (loading) return <FullPageLoader message="Loading event details..." />;
     if (!event) return <div className="text-center p-12 font-medium text-slate-500">Event not found.</div>;
 
     const isPastEvent = event.end_date && new Date(event.end_date) < new Date();

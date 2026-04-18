@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { publicApiClient } from '../../context/AuthContext';
-import { Loader, MapPin, Building, Phone } from 'lucide-react';
+import { MapPin, Building, Phone } from 'lucide-react';
 import ImageCarousel from '../../components/ImageCarousel';
+import FullPageLoader from '../../components/FullPageLoader';
 
 export default function ExhibitorDetailsPage() {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
@@ -40,11 +41,7 @@ export default function ExhibitorDetailsPage() {
         fetchData();
     }, [eventId, exhibitorId]);
 
-    if (loading) return (
-        <div className="flex justify-center p-12">
-            <Loader className="animate-spin text-blue-600" />
-        </div>
-    );
+    if (loading) return <FullPageLoader message="Loading exhibitor details..." />;
 
     if (!exhibitor) return (
         <div className="text-center p-12 text-slate-500 font-medium">

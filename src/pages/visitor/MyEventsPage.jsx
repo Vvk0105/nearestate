@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Loader, QrCode as QrIcon, Calendar, CheckCircle, MapPin } from 'lucide-react';
+import { QrCode as QrIcon, Calendar, MapPin } from 'lucide-react';
 import QRCode from 'react-qr-code';
+import FullPageLoader from '../../components/FullPageLoader';
 
 export default function MyEventsPage() {
     const { apiClient, loading: authLoading } = useAuth();
@@ -41,7 +42,7 @@ export default function MyEventsPage() {
         return true;
     });
 
-    if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
+    if (loading) return <FullPageLoader message="Loading your events..." />;
 
     return (
         <div className="space-y-8 animate-fade-in-up">

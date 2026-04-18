@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader, CalendarDays, Zap, Clock, LayoutGrid } from 'lucide-react';
+import { CalendarDays, Zap, Clock, LayoutGrid } from 'lucide-react';
 import { publicApiClient } from '../context/AuthContext';
 import { useAuth } from '../context/AuthContext';
 import EventCard from '../components/EventCard';
+import FullPageLoader from '../components/FullPageLoader';
 
 const FILTERS = [
     { key: 'all',      label: 'All Events',  icon: LayoutGrid,  color: 'text-slate-600',  activeBg: 'bg-slate-900 text-white',      dot: 'bg-slate-400' },
@@ -44,13 +45,7 @@ export default function PublicEventsPage() {
         fetchEvents();
     }, []);
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-64">
-                <Loader className="animate-spin text-blue-600" size={32} />
-            </div>
-        );
-    }
+    if (loading) return <FullPageLoader message="Loading exhibitions..." />;
 
     // Classify every event
     const classified = events.map(e => ({ ...e, _status: classifyEvent(e) }));

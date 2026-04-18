@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Loader, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Modal } from 'antd';
+import FullPageLoader from '../../components/FullPageLoader';
 
 export default function MyApplicationsPage() {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
@@ -25,7 +26,7 @@ export default function MyApplicationsPage() {
         fetchApps();
     }, [apiClient]);
 
-    if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
+    if (loading) return <FullPageLoader message="Loading your applications..." />;
 
     return (
         <div className="space-y-8">

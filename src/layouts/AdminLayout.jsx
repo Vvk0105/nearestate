@@ -10,6 +10,7 @@ import {
     MenuFoldOutlined,
     MenuUnfoldOutlined
 } from '@ant-design/icons';
+import FullPageLoader from '../components/FullPageLoader';
 
 const { Header, Sider, Content } = Layout;
 
@@ -27,16 +28,7 @@ export default function AdminLayout() {
         }
     }, [user, loading, navigate]);
 
-    if (loading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <FullPageLoader message="Loading admin panel..." />;
 
     if (!user || user.active_role !== 'ADMIN') {
         return null;

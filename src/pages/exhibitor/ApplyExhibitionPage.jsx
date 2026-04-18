@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Loader, Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import FullPageLoader from '../../components/FullPageLoader';
 
 export default function ApplyExhibitionPage() {
     const { apiClient } = useAuth();
@@ -40,7 +41,7 @@ export default function ApplyExhibitionPage() {
         navigate(`/exhibitor/apply/${exhibitionId}`);
     };
 
-    if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin text-blue-600" /></div>;
+    if (loading) return <FullPageLoader message="Loading exhibitions..." />;
 
     return (
         <div className="space-y-8">

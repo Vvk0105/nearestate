@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import EventCard from './EventCard';
+import FullPageLoader from './FullPageLoader';
 import {
     Loader, LayoutGrid, Zap, CalendarDays, Clock,
     MapPin, Calendar, ChevronLeft, ChevronRight,
-    ArrowRight, CheckCircle, X, Edit, Building2
+    ArrowRight, CheckCircle
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const FILTERS = [
@@ -160,23 +160,6 @@ function HeroBanner({ upcomingEvents, role, MEDIA_BASE }) {
     );
 }
 
-// ─── Full-Page Loader ─────────────────────────────────────────────────────────
-function FullPageLoader() {
-    return (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-6">
-                <div className="relative">
-                    <div className="h-20 w-20 rounded-full border-4 border-blue-100 animate-pulse" />
-                    <Loader className="absolute inset-0 m-auto animate-spin text-blue-600" size={36} />
-                </div>
-                <div className="text-center">
-                    <p className="text-xl font-bold text-slate-800">Loading Exhibitions...</p>
-                    <p className="text-slate-500 text-sm mt-1">Please wait while we fetch the latest events.</p>
-                </div>
-            </div>
-        </div>
-    );
-}
 
 // ─── Main Exported Component ──────────────────────────────────────────────────
 /**
