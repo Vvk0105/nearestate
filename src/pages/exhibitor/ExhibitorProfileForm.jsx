@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Form, Input, Select, Button, Card, message } from 'antd';
-import { PhoneOutlined, EnvironmentOutlined, SolutionOutlined } from '@ant-design/icons';
+import { PhoneOutlined, EnvironmentOutlined, SolutionOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { BankOutlined } from '@ant-design/icons';
-
 
 const { Option } = Select;
 
 export default function ExhibitorProfileForm() {
-    const { apiClient, setUser } = useAuth();
+    const { apiClient, setUser, user, switchRole, selectRole } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [switching, setSwitching] = useState(false);
     const [form] = Form.useForm();
 
     const handleSubmit = async (values) => {
@@ -35,6 +35,30 @@ export default function ExhibitorProfileForm() {
             message.error(errorMsg);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSwitchToVisitor = async () => {
+        setSwitching(true);
+        try {
+            const targetRole = 'VISITOR';
+            let response = null;
+            
+            if (user?.roles && user.roles.includes(targetRole)) {
+                response = await switchRole(targetRole);
+            } else {
+                response = await selectRole(targetRole);
+            }
+
+            if (response) {
+                message.success("Switched to Visitor mode.");
+                navigate('/visitor/home');
+            }
+        } catch (error) {
+            console.error(error);
+            message.error("Failed to switch role.");
+        } finally {
+            setSwitching(false);
         }
     };
 
@@ -124,18 +148,31 @@ export default function ExhibitorProfileForm() {
                         </Select>
                     </Form.Item>
 
-                    <Form.Item className="mt-6">
+                    <Form.Item className="mt-6 mb-0">
                         <Button
                             type="primary"
                             htmlType="submit"
                             loading={loading}
+                            disabled={switching}
                             block
                             size="large"
-                            className="h-12"
+                            className="h-12 bg-blue-600 hover:bg-blue-700 font-semibold"
                         >
                             {loading ? 'Processing...' : 'Complete Setup'}
                         </Button>
-                        <p className="text-center text-xs text-gray-400 mt-4">
+                        <Button
+                            type="default"
+                            onClick={handleSwitchToVisitor}
+                            loading={switching}
+                            disabled={loading}
+                            block
+                            size="large"
+                            className="h-12 mt-3 font-medium text-slate-600 hover:text-slate-800"
+                            icon={<ArrowLeftOutlined />}
+                        >
+                            Wait, I am a Visitor
+                        </Button>
+                        <p className="text-center text-xs text-gray-400 mt-5">
                             Your information will be securely stored and visible to event organizers.
                         </p>
                     </Form.Item>
