@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Form, Input, Button, Card, Divider, message } from 'antd';
 import { MailOutlined, LockOutlined } from '@ant-design/icons';
@@ -10,6 +10,7 @@ export default function LoginPage() {
     const [emailValue, setEmailValue] = useState('');
     const { login, apiClient } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [emailForm] = Form.useForm();
     const [otpForm] = Form.useForm();
 
@@ -85,16 +86,24 @@ export default function LoginPage() {
     }, []);
 
     const navigateUser = (user) => {
+        // ✅ Handle ?next= redirect — used when guest clicks "Login to Register" on
+        // event detail page. After login, send them back to the event (Apple 5.1.1v).
+        const params = new URLSearchParams(location.search);
+        const nextPath = params.get('next');
+
         let role = user?.role;
         if (user?.active_role) role = user.active_role;
         else if (Array.isArray(role)) role = role[0];
 
         if (!role) {
-            navigate('/auth/select-role');
+            // New user — must select role first; after that they can return to next
+            navigate('/auth/select-role', { state: { next: nextPath } });
+        } else if (nextPath) {
+            // Existing user with role — go straight back to where they came from
+            navigate(nextPath);
         } else if (role === 'VISITOR') {
             navigate('/visitor/home');
         } else if (role === 'EXHIBITOR') {
-            // Check if profile is completed
             if (user?.profile_completed) {
                 navigate('/exhibitor/home');
             } else {

@@ -2,7 +2,7 @@ import { Calendar, MapPin, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ImageCarousel from './ImageCarousel';
 
-export default function EventCard({ event, action }) {
+export default function EventCard({ event, action, linkOverride }) {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
     const isUpcoming = new Date(event.start_date) > new Date();
     
@@ -57,7 +57,7 @@ export default function EventCard({ event, action }) {
                     action
                 ) : (
                     <Link
-                        to={`/visitor/events/${event.id}`}
+                        to={linkOverride || `/visitor/events/${event.id}`}
                         className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900"
                     >
                         View Details <ArrowRight size={16} />

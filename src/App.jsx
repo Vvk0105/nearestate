@@ -7,19 +7,25 @@ import AuthProvider from './context/AuthContext';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
 import MinimalLayout from './layouts/MinimalLayout';
-import AdminLayout from './layouts/AdminLayout'; // New
+import AdminLayout from './layouts/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import LoginPage from './pages/auth/LoginPage';
-import AdminLoginPage from './pages/admin/AdminLoginPage'; // New
+import AdminLoginPage from './pages/admin/AdminLoginPage';
 import RoleSelectionPage from './pages/auth/RoleSelectionPage';
 import ExhibitorProfileForm from './pages/exhibitor/ExhibitorProfileForm';
 
-import VisitorHome from './pages/visitor/VisitorHome';
+// Public (guest-accessible) pages
+import PublicHome from './pages/PublicHome';
+import PublicEventsPage from './pages/PublicEventsPage';
 import EventDetailsPage from './pages/visitor/EventDetailsPage';
 import ExhibitorDetailsPage from './pages/visitor/ExhibitorDetailsPage';
+
+// Visitor-only pages (require login)
+import VisitorHome from './pages/visitor/VisitorHome';
 import MyEventsPage from './pages/visitor/MyEventsPage';
 
+// Exhibitor-only pages
 import ExhibitorHome from './pages/exhibitor/ExhibitorHome';
 import ApplyExhibitionPage from './pages/exhibitor/ApplyExhibitionPage';
 import ApplicationFormPage from './pages/exhibitor/ApplicationFormPage';
@@ -27,6 +33,7 @@ import MyApplicationsPage from './pages/exhibitor/MyApplicationsPage';
 import ManagePropertiesPage from './pages/exhibitor/ManagePropertiesPage';
 import AddPropertyForm from './pages/exhibitor/AddPropertyForm';
 
+// Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminEventsPage from './pages/admin/AdminEventsPage';
 import AdminEventDetailsPage from './pages/admin/AdminEventDetailsPage';
@@ -35,7 +42,6 @@ import AdminEditEventPage from './pages/admin/AdminEditEventPage';
 import AdminQRScanPage from './pages/admin/AdminQRScanPage';
 
 import ProfilePage from './pages/common/ProfilePage';
-import PublicHome from './pages/PublicHome';
 
 function App() {
   return (
@@ -45,9 +51,8 @@ function App() {
         <AuthProvider>
           <Toaster position="top-right" />
           <Routes>
-            {/* Admin Routes */}
+            {/* ─── Admin Routes ─── */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
-
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
@@ -58,7 +63,7 @@ function App() {
               <Route path="scan" element={<AdminQRScanPage />} />
             </Route>
 
-            {/* Minimal Layout Routes (No Nav) */}
+            {/* ─── Minimal Layout (No Nav) ─── */}
             <Route element={<MinimalLayout />}>
               <Route path="/auth/select-role" element={<RoleSelectionPage />} />
               <Route element={<ProtectedRoute />}>
@@ -66,31 +71,37 @@ function App() {
               </Route>
             </Route>
 
-            {/* Main Application Routes */}
+            {/* ─── Main Application Layout ─── */}
             <Route element={<MainLayout />}>
-              {/* Public Routes */}
-              <Route path="/" element={<PublicHome />} />
 
-              {/* Auth Routes */}
+              {/* ══ PUBLIC ROUTES — no login required ══
+                  Apple Guideline 5.1.1(v): browsing is public;
+                  login is only required at the point of registration/booking. */}
+              <Route path="/" element={<PublicHome />} />
+              <Route path="/events" element={<PublicEventsPage />} />
+              <Route path="/events/:id" element={<EventDetailsPage />} />
+              <Route path="/events/:id/exhibitors/:exhibitorId" element={<ExhibitorDetailsPage />} />
+
+              {/* ─── Auth Routes ─── */}
               <Route element={<AuthLayout />}>
                 <Route path="/auth/login" element={<LoginPage />} />
               </Route>
 
-              {/* Protected User Routes */}
+              {/* ─── Protected (any logged-in user) ─── */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/profile" element={<ProfilePage />} />
-                {/* Exhibitor profile moved to MinimalLayout */}
               </Route>
 
-              {/* Visitor Routes */}
+              {/* ─── Visitor-only routes ─── */}
               <Route element={<ProtectedRoute allowedRoles={['VISITOR']} />}>
                 <Route path="/visitor/home" element={<VisitorHome />} />
+                {/* Keep old event URLs working for existing deep-links & role-based nav */}
                 <Route path="/visitor/events/:id" element={<EventDetailsPage />} />
                 <Route path="/visitor/events/:eventId/exhibitors/:exhibitorId" element={<ExhibitorDetailsPage />} />
                 <Route path="/visitor/my-events" element={<MyEventsPage />} />
               </Route>
 
-              {/* Exhibitor Routes */}
+              {/* ─── Exhibitor-only routes ─── */}
               <Route element={<ProtectedRoute allowedRoles={['EXHIBITOR']} requireProfile={true} />}>
                 <Route path="/exhibitor/home" element={<ExhibitorHome />} />
                 <Route path="/exhibitor/events/:id" element={<EventDetailsPage />} />
@@ -101,6 +112,7 @@ function App() {
                 <Route path="/exhibitor/properties" element={<ManagePropertiesPage />} />
                 <Route path="/exhibitor/properties/new" element={<AddPropertyForm />} />
               </Route>
+
             </Route>
           </Routes>
         </AuthProvider>

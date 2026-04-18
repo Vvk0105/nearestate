@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { MapPin, Calendar, Store, Loader, CheckCircle, Upload, X, Info, Map as MapIcon, Users } from 'lucide-react';
+import { publicApiClient } from '../../context/AuthContext';
+import { MapPin, Calendar, Store, Loader, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ImageCarousel from '../../components/ImageCarousel';
 
 export default function EventDetailsPage() {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
     const { id } = useParams();
+    const location = useLocation();
     const { apiClient, user } = useAuth();
     const [event, setEvent] = useState(null);
     const [exhibitors, setExhibitors] = useState([]);
@@ -20,27 +22,28 @@ export default function EventDetailsPage() {
     const [showApplyModal, setShowApplyModal] = useState(false);
     const [applyFile, setApplyFile] = useState(null);
     const [transactionId, setTransactionId] = useState('');
-    const [boothNumber, setBoothNumber] = useState('');
     const [submittingApp, setSubmittingApp] = useState(false);
     const [applicationStatus, setApplicationStatus] = useState(null);
 
     const isExhibitor = user?.role === 'EXHIBITOR';
+    const isVisitor = user?.role === 'VISITOR';
 
+    // Resolve base path for exhibitor tab links
     const roleBasePath =
-        user?.role === "EXHIBITOR"
-            ? "/exhibitor"
-            : "/visitor";
+        user?.role === 'EXHIBITOR' ? '/exhibitor' : '/events';
 
     const fetchData = useCallback(async () => {
         try {
+            // ✅ Use publicApiClient for event data — no auth token needed.
+            // This allows guests to view event details without logging in (Apple 5.1.1v).
             const [eventRes, exhibitorRes] = await Promise.all([
-                apiClient.get(`/exhibitions/public/exhibitions/${id}/`),
-                apiClient.get(`/exhibitions/public/exhibitions/${id}/exhibitors/`)
+                publicApiClient.get(`/exhibitions/public/exhibitions/${id}/`),
+                publicApiClient.get(`/exhibitions/public/exhibitions/${id}/exhibitors/`),
             ]);
             setEvent(eventRes.data);
             setExhibitors(exhibitorRes.data);
 
-            // Check registration/application status
+            // Fetch user-specific status only when logged in
             if (user) {
                 if (user.role === 'VISITOR') {
                     const statusRes = await apiClient.get(
@@ -57,8 +60,8 @@ export default function EventDetailsPage() {
                 }
             }
         } catch (error) {
-            console.error("Failed to fetch event details", error);
-            toast.error("Failed to load event details.");
+            console.error('Failed to fetch event details', error);
+            toast.error('Failed to load event details.');
         } finally {
             setLoading(false);
         }
@@ -70,7 +73,8 @@ export default function EventDetailsPage() {
 
     const handleRegister = async () => {
         if (!user) {
-            toast.error("Please login to register.");
+            // Guest — redirect to login, preserving intended destination
+            toast('Please log in to register for this event.', { icon: '🔐' });
             return;
         }
         if (isExhibitor) {
@@ -81,16 +85,16 @@ export default function EventDetailsPage() {
         setRegistering(true);
         try {
             await apiClient.post(`/exhibitions/visitor/register/${id}/`);
-            toast.success("Successfully registered! Check My Events for QR Code.");
+            toast.success('Successfully registered! Check My Events for QR Code.');
             setIsRegistered(true);
-            fetchData(); // Refresh to update capacity
+            fetchData();
         } catch (error) {
             console.error(error);
-            if (error.response?.data?.message === "Already registered") {
-                toast("You are already registered.", { icon: 'ℹ️' });
+            if (error.response?.data?.message === 'Already registered') {
+                toast('You are already registered.', { icon: 'ℹ️' });
                 setIsRegistered(true);
             } else {
-                toast.error(error.response?.data?.error || "Registration failed. Please try again.");
+                toast.error(error.response?.data?.error || 'Registration failed. Please try again.');
             }
         } finally {
             setRegistering(false);
@@ -100,7 +104,7 @@ export default function EventDetailsPage() {
     const handleApplySubmit = async (e) => {
         e.preventDefault();
         if (!applyFile) {
-            toast.error("Please upload payment screenshot.");
+            toast.error('Please upload payment screenshot.');
             return;
         }
         setSubmittingApp(true);
@@ -108,20 +112,19 @@ export default function EventDetailsPage() {
         const formData = new FormData();
         formData.append('payment_screenshot', applyFile);
         formData.append('transaction_id', transactionId);
-        if (boothNumber) formData.append('booth_number', boothNumber);
 
         try {
             await apiClient.post(`/exhibitions/exhibitor/apply/${id}/`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
-            toast.success("Application submitted successfully!");
+            toast.success('Application submitted successfully!');
             setApplicationStatus('PENDING');
-            setIsRegistered(true); // Mark as applied
+            setIsRegistered(true);
             setShowApplyModal(false);
-            fetchData(); // Refresh to update capacity
+            fetchData();
         } catch (error) {
             console.error(error);
-            toast.error(error.response?.data?.error || "Application failed.");
+            toast.error(error.response?.data?.error || 'Application failed.');
         } finally {
             setSubmittingApp(false);
         }
@@ -136,7 +139,6 @@ export default function EventDetailsPage() {
 
     return (
         <>
-        
         <div className="space-y-8 relative animate-fade-in-up pb-12">
             {/* Header/Banner Section with Carousel */}
             <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden shadow-2xl bg-slate-900 group">
@@ -144,7 +146,7 @@ export default function EventDetailsPage() {
                     <ImageCarousel
                         images={event.images.map((img) => ({
                             id: img.id,
-                            image: img.image.startsWith("http") ? img.image : `${MEDIA_BASE}${img.image}`,
+                            image: img.image.startsWith('http') ? img.image : `${MEDIA_BASE}${img.image}`,
                         }))}
                         height="h-full"
                         rounded="rounded-none"
@@ -211,10 +213,11 @@ export default function EventDetailsPage() {
                                         <p className="leading-relaxed text-slate-600 whitespace-pre-line">{event.description}</p>
                                     </div>
                                     <div>
-                                        { user.role === 'EXHIBITOR' ? (
+                                        {/* ✅ Null-safe: only access user.role when user is defined */}
+                                        {isExhibitor ? (
                                             <>
                                             <h3 className="text-xl font-bold text-slate-900 mb-3">Application Fee</h3>
-                                            <p className="text-sm text-slate-600 font-semibold "> Rs:{event.registration_fee}</p>
+                                            <p className="text-sm text-slate-600 font-semibold"> Rs:{event.registration_fee}</p>
                                             </>
                                         ) : (
                                             <h3 className="text-xl font-bold text-slate-900 mb-3">Free Register</h3>
@@ -288,7 +291,6 @@ export default function EventDetailsPage() {
                 {/* Right Column: Status & Action Card */}
                 <div className="lg:col-span-1">
                     <div className="sticky top-24 space-y-6">
-                        {/* Status Card */}
                         <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
                             <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                                 <Users size={20} className="text-indigo-500" /> Availability
@@ -304,7 +306,7 @@ export default function EventDetailsPage() {
                                         <div
                                             className="bg-indigo-500 h-2 rounded-full transition-all duration-1000"
                                             style={{ width: `${(event.available_booths / event.booth_capacity) * 100}%` }}
-                                        ></div>
+                                        />
                                     </div>
                                 </div>
 
@@ -317,114 +319,124 @@ export default function EventDetailsPage() {
                                         <div
                                             className="bg-emerald-500 h-2 rounded-full transition-all duration-1000"
                                             style={{ width: `${(event.available_visitors / event.visitor_capacity) * 100}%` }}
-                                        ></div>
+                                        />
                                     </div>
                                 </div>
                             </div>
 
+                            {/* ✅ APPLE COMPLIANCE:
+                                - Guest: show "Login to Register" link — no data collected, no account forced
+                                - Logged-in: show full registration/apply button
+                                This satisfies Guideline 5.1.1(v): browsing is unrestricted,
+                                login is only required at the point of registration. */}
                             {!user ? (
-                                <Link to="/auth/login" className="block w-full text-center py-3 rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-md hover:shadow-xl">
+                                <Link
+                                    to={`/auth/login?next=/events/${id}`}
+                                    className="flex items-center justify-center gap-2 w-full py-4 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-lg transition-all transform hover:-translate-y-0.5"
+                                >
+                                    <LogIn size={20} />
                                     Login to Register
                                 </Link>
                             ) : (
                                 <button
                                     onClick={handleRegister}
-                                    disabled={registering || (isExhibitor && Boolean(applicationStatus)) || (!isExhibitor && isRegistered)}
-                                    className={`w-full py-4 rounded-xl font-bold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 ${(isRegistered || applicationStatus) && !(applicationStatus === 'REJECTED')
-                                        ? 'bg-green-600 text-white cursor-default hover:shadow-md'
-                                        : (applicationStatus === 'REJECTED' ? 'bg-red-600 text-white cursor-default' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700')
-                                        }`}
+                                    disabled={registering || (isExhibitor && Boolean(applicationStatus)) || (isVisitor && isRegistered)}
+                                    className={`w-full py-4 rounded-xl font-bold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 ${
+                                        (isRegistered || applicationStatus) && applicationStatus !== 'REJECTED'
+                                            ? 'bg-green-600 text-white cursor-default hover:shadow-md'
+                                            : applicationStatus === 'REJECTED'
+                                                ? 'bg-red-600 text-white cursor-default'
+                                                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+                                    }`}
                                 >
                                     {isExhibitor ? (
                                         applicationStatus ? (
                                             <><CheckCircle size={20} /> Application {applicationStatus}</>
                                         ) : (
-                                            "Apply for Booth"
+                                            'Apply for Booth'
                                         )
                                     ) : (
                                         isRegistered ? (
-                                            <><CheckCircle size={20} /> You're Going!</>
+                                            <><CheckCircle size={20} /> You&apos;re Going!</>
                                         ) : (
                                             <>{registering ? 'Processing...' : 'Register for Event'}</>
                                         )
                                     )}
                                 </button>
                             )}
-                            {isRegistered && !isExhibitor && (
+                            {isRegistered && isVisitor && (
                                 <p className="text-center text-xs text-green-600 font-medium mt-3">
-                                    Check "My Events" for your QR Code
+                                    Check &quot;My Events&quot; for your QR Code
                                 </p>
                             )}
                         </div>
                     </div>
                 </div>
             </div>
-
-            
         </div>
-        {/* Apply Modal */}
-            {showApplyModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-0 overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                            <h3 className="text-lg font-bold text-slate-900">Exhibitor Application</h3>
-                            <button onClick={() => setShowApplyModal(false)} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 hover:bg-slate-100 transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
 
-                        <div className="p-6">
-                            <form onSubmit={handleApplySubmit} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Payment Screenshot</label>
-                                    <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer relative group">
-                                        <div className="space-y-1 text-center">
-                                            {applyFile ? (
+        {/* Apply Modal — Exhibitors only */}
+        {showApplyModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-0 overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                        <h3 className="text-lg font-bold text-slate-900">Exhibitor Application</h3>
+                        <button onClick={() => setShowApplyModal(false)} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 hover:bg-slate-100 transition-colors">
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <div className="p-6">
+                        <form onSubmit={handleApplySubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">Payment Screenshot</label>
+                                <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer relative group">
+                                    <div className="space-y-1 text-center">
+                                        {applyFile ? (
+                                            <div className="text-sm text-slate-600">
+                                                <p className="font-bold text-green-600 truncate max-w-[200px] mx-auto flex items-center justify-center gap-1">
+                                                    <CheckCircle size={14} /> {applyFile.name}
+                                                </p>
+                                                <button type="button" onClick={() => setApplyFile(null)} className="text-red-500 text-xs mt-2 hover:underline font-medium">Change File</button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Upload className="mx-auto h-12 w-12 text-slate-400 group-hover:text-blue-500 transition-colors" />
                                                 <div className="text-sm text-slate-600">
-                                                    <p className="font-bold text-green-600 truncate max-w-[200px] mx-auto flex items-center justify-center gap-1">
-                                                        <CheckCircle size={14} /> {applyFile.name}
-                                                    </p>
-                                                    <button type="button" onClick={() => setApplyFile(null)} className="text-red-500 text-xs mt-2 hover:underline font-medium">Change File</button>
+                                                    <span className="font-medium text-blue-600 hover:text-blue-500">Upload a file</span>
+                                                    <input id="file-upload" name="file-upload" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => setApplyFile(e.target.files[0])} accept="image/*" />
                                                 </div>
-                                            ) : (
-                                                <>
-                                                    <Upload className="mx-auto h-12 w-12 text-slate-400 group-hover:text-blue-500 transition-colors" />
-                                                    <div className="text-sm text-slate-600">
-                                                        <span className="font-medium text-blue-600 hover:text-blue-500">Upload a file</span>
-                                                        <input id="file-upload" name="file-upload" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => setApplyFile(e.target.files[0])} accept="image/*" />
-                                                    </div>
-                                                    <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 10MB</p>
-                                                </>
-                                            )}
-                                        </div>
+                                                <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 10MB</p>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
+                            </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Transaction ID</label>
-                                    <input
-                                        type="text"
-                                        className="block w-full border border-slate-300 rounded-lg shadow-sm py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                        value={transactionId}
-                                        onChange={(e) => setTransactionId(e.target.value)}
-                                        placeholder="Enter UPI/Bank Transaction ID"
-                                    />
-                                </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">Transaction ID</label>
+                                <input
+                                    type="text"
+                                    className="block w-full border border-slate-300 rounded-lg shadow-sm py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                    value={transactionId}
+                                    onChange={(e) => setTransactionId(e.target.value)}
+                                    placeholder="Enter UPI/Bank Transaction ID"
+                                />
+                            </div>
 
-
-                                <div className="flex gap-3 pt-4">
-                                    <button type="button" onClick={() => setShowApplyModal(false)} className="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl shadow-sm text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 transition-colors">
-                                        Cancel
-                                    </button>
-                                    <button type="submit" disabled={submittingApp} className="flex-1 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-70 disabled:shadow-none transition-all">
-                                        {submittingApp ? 'Submitting...' : 'Submit Application'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                            <div className="flex gap-3 pt-4">
+                                <button type="button" onClick={() => setShowApplyModal(false)} className="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl shadow-sm text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={submittingApp} className="flex-1 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-70 disabled:shadow-none transition-all">
+                                    {submittingApp ? 'Submitting...' : 'Submit Application'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            )}
+            </div>
+        )}
         </>
     );
 }

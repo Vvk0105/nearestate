@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { User, Store, ArrowRight, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 export default function RoleSelectionPage() {
     const { selectRole } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const nextPath = location.state?.next || null;
 
     const handleSelectRole = async (role) => {
         try {
@@ -16,8 +18,9 @@ export default function RoleSelectionPage() {
             }
 
             if (role === 'VISITOR') {
-                navigate('/visitor/home');
-                toast.success("Welcome, Visitor!");
+                // If user came via "Login to Register" flow, send them back to the event
+                navigate(nextPath || '/visitor/home');
+                toast.success('Welcome, Visitor!');
             } else if (role === 'EXHIBITOR') {
                 // Use profile_completed from backend response
                 if (response.profile_completed) {

@@ -4,6 +4,13 @@ import { googleLogout } from '@react-oauth/google';
 
 const AuthContext = createContext();
 
+// Public axios client — no auth token, used for guest-accessible endpoints
+// (exhibitions list, event details, exhibitor profiles, properties)
+export const publicApiClient = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL,
+    headers: { 'Content-Type': 'application/json' },
+});
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
 
