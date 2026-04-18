@@ -211,7 +211,7 @@ export default function EventDetailsPage() {
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8">
                         {activeTab === 'details' && (
                             <div className="space-y-8">
-                                <div className="flex w-full justify-between items-center rounded-2xl text-slate-900 prose prose-slate max-w-none">
+                                <div className="flex flex-col w-full justify-between items-start gap-5 rounded-2xl text-slate-900 prose prose-slate max-w-none">
                                     <div>
                                         <h3 className="text-xl font-bold text-slate-900 mb-3">About the Event</h3>
                                         <p className="leading-relaxed text-slate-600 whitespace-pre-line">{event.description}</p>
