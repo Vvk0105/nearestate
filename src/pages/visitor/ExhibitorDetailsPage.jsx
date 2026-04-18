@@ -6,7 +6,9 @@ import ImageCarousel from '../../components/ImageCarousel';
 
 export default function ExhibitorDetailsPage() {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
-    const { eventId, exhibitorId } = useParams();
+    // Public route uses :id, role-based routes use :eventId — read both and use whichever is defined
+    const { id, eventId: eventIdParam, exhibitorId } = useParams();
+    const eventId = eventIdParam ?? id;
     const [exhibitor, setExhibitor] = useState(null);
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
