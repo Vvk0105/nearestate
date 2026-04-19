@@ -40,6 +40,10 @@ export default function AdminEventDetailsPage() {
     const [visitorsLoading, setVisitorsLoading] = useState(false);
     const [visitorsPagination, setVisitorsPagination] = useState({ current: 1, pageSize: 10 });
     const [visitorsSearch, setVisitorsSearch] = useState("");
+    
+    // Debounced search terms
+    const [debouncedExhibitorsSearch, setDebouncedExhibitorsSearch] = useState("");
+    const [debouncedVisitorsSearch, setDebouncedVisitorsSearch] = useState("");
 
     // Details Drawer State
     const [drawerVisible, setDrawerVisible] = useState(false);
@@ -55,21 +59,32 @@ export default function AdminEventDetailsPage() {
         fetchRequests();
     }, [id]);
 
-    // Fetch exhibitors when pagination or search changes
+    // Debounce effects
     useEffect(() => {
-        if (event) {
-            fetchExhibitors(exhibitorsPagination.current, exhibitorsPagination.pageSize, exhibitorsSearch);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [exhibitorsPagination, exhibitorsSearch, event]);
+        const timer = setTimeout(() => setDebouncedExhibitorsSearch(exhibitorsSearch), 500);
+        return () => clearTimeout(timer);
+    }, [exhibitorsSearch]);
 
-    // Fetch visitors when pagination or search changes
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedVisitorsSearch(visitorsSearch), 500);
+        return () => clearTimeout(timer);
+    }, [visitorsSearch]);
+
+    // Fetch exhibitors when pagination or debounced search changes
     useEffect(() => {
         if (event) {
-            fetchVisitors(visitorsPagination.current, visitorsPagination.pageSize, visitorsSearch);
+            fetchExhibitors(exhibitorsPagination.current, exhibitorsPagination.pageSize, debouncedExhibitorsSearch);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [visitorsPagination, visitorsSearch, event]);
+    }, [exhibitorsPagination, debouncedExhibitorsSearch, event]);
+
+    // Fetch visitors when pagination or debounced search changes
+    useEffect(() => {
+        if (event) {
+            fetchVisitors(visitorsPagination.current, visitorsPagination.pageSize, debouncedVisitorsSearch);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [visitorsPagination, debouncedVisitorsSearch, event]);
 
 
     const fetchEventDetails = async () => {
