@@ -13,8 +13,19 @@ export default function PublicHome() {
     useEffect(() => {
         // Redirect logged-in users to their role-based home
         if (user) {
-            if (user.role === 'VISITOR') navigate('/visitor/home', { replace: true });
-            else if (user.role === 'EXHIBITOR') navigate('/exhibitor/home', { replace: true });
+            if (user.role === 'VISITOR' || user.active_role === 'VISITOR') {
+                navigate('/visitor/home', { replace: true });
+            } else if (user.role === 'EXHIBITOR' || user.active_role === 'EXHIBITOR') {
+                // Send directly to profile if not complete — avoids the /exhibitor/home → /exhibitor/profile bounce loop
+                if (user.profile_completed) {
+                    navigate('/exhibitor/home', { replace: true });
+                } else {
+                    navigate('/exhibitor/profile', { replace: true });
+                }
+            } else if (!user.active_role && !user.role) {
+                // Logged-in but no role selected yet → must pick a role
+                navigate('/auth/select-role', { replace: true });
+            }
             return;
         }
 

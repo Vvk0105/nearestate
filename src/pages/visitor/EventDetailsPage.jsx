@@ -26,14 +26,16 @@ export default function EventDetailsPage() {
     const [submittingApp, setSubmittingApp] = useState(false);
     const [applicationStatus, setApplicationStatus] = useState(null);
 
-    const isExhibitor = user?.role === 'EXHIBITOR';
-    const isVisitor = user?.role === 'VISITOR';
+    // Prefer active_role (set after switchRole/selectRole) over legacy role field
+    const activeRole = user?.active_role || user?.role;
+    const isExhibitor = activeRole === 'EXHIBITOR';
+    const isVisitor = activeRole === 'VISITOR';
 
     // Resolve base path for exhibitor tab links
     // Public guests & visitors use /events/:id/exhibitors/:exhibitorId
     // Exhibitors use /exhibitor/events/:id/exhibitors/:exhibitorId
     const exhibitorLinkBase =
-        user?.role === 'EXHIBITOR' ? '/exhibitor/events' : '/events';
+        activeRole === 'EXHIBITOR' ? '/exhibitor/events' : '/events';
 
     const fetchData = useCallback(async () => {
         try {
@@ -48,12 +50,13 @@ export default function EventDetailsPage() {
 
             // Fetch user-specific status only when logged in
             if (user) {
-                if (user.role === 'VISITOR') {
+                const currentRole = user.active_role || user.role;
+                if (currentRole === 'VISITOR') {
                     const statusRes = await apiClient.get(
                         `/exhibitions/visitor/register/${id}/`
                     );
                     setIsRegistered(statusRes.data.is_registered);
-                } else if (user.role === 'EXHIBITOR') {
+                } else if (currentRole === 'EXHIBITOR') {
                     const appsRes = await apiClient.get('/exhibitions/exhibitor/my-applications/');
                     const myApp = appsRes.data.find(a => a.exhibition_id === parseInt(id));
                     if (myApp) {
@@ -334,6 +337,27 @@ export default function EventDetailsPage() {
                                 - Logged-in: show full registration/apply button
                                 This satisfies Guideline 5.1.1(v): browsing is unrestricted,
                                 login is only required at the point of registration. */}
+                            {/* Role context message — shown above button when user is logged in */}
+                            {user && activeRole && (
+                                <div className={`mb-4 px-4 py-3 rounded-xl text-xs leading-relaxed border ${
+                                    isExhibitor
+                                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                                        : 'bg-teal-50 border-teal-200 text-teal-700'
+                                }`}>
+                                    <span className="font-semibold">
+                                        {isExhibitor ? '🏢' : '🎟️'} You are logged in as a{' '}
+                                        <span className="capitalize font-bold">{activeRole.toLowerCase()}</span>.
+                                    </span>
+                                    {' '}Want to {isExhibitor ? 'attend as a Visitor' : 'exhibit as an Exhibitor'}?{' '}
+                                    <Link
+                                        to="/profile"
+                                        className="underline font-semibold hover:opacity-80 transition-opacity"
+                                    >
+                                        Go to Profile to switch role.
+                                    </Link>
+                                </div>
+                            )}
+
                             {isPastEvent ? (
                                 <div className="w-full py-4 rounded-xl font-bold bg-slate-200 text-slate-500 cursor-not-allowed flex items-center justify-center gap-2 select-none">
                                     <X size={20} /> Event Has Ended

@@ -8,10 +8,9 @@ import { BankOutlined } from '@ant-design/icons';
 const { Option } = Select;
 
 export default function ExhibitorProfileForm() {
-    const { apiClient, setUser, user, switchRole, selectRole } = useAuth();
+    const { apiClient, setUser } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [switching, setSwitching] = useState(false);
     const [form] = Form.useForm();
 
     const handleSubmit = async (values) => {
@@ -38,28 +37,8 @@ export default function ExhibitorProfileForm() {
         }
     };
 
-    const handleSwitchToVisitor = async () => {
-        setSwitching(true);
-        try {
-            const targetRole = 'VISITOR';
-            let response = null;
-            
-            if (user?.roles && user.roles.includes(targetRole)) {
-                response = await switchRole(targetRole);
-            } else {
-                response = await selectRole(targetRole);
-            }
-
-            if (response) {
-                message.success("Switched to Visitor mode.");
-                navigate('/visitor/home');
-            }
-        } catch (error) {
-            console.error(error);
-            message.error("Failed to switch role.");
-        } finally {
-            setSwitching(false);
-        }
+    const handleBack = () => {
+        navigate('/auth/select-role');
     };
 
     return (
@@ -153,7 +132,6 @@ export default function ExhibitorProfileForm() {
                             type="primary"
                             htmlType="submit"
                             loading={loading}
-                            disabled={switching}
                             block
                             size="large"
                             className="h-12 bg-blue-600 hover:bg-blue-700 font-semibold"
@@ -162,15 +140,14 @@ export default function ExhibitorProfileForm() {
                         </Button>
                         <Button
                             type="default"
-                            onClick={handleSwitchToVisitor}
-                            loading={switching}
+                            onClick={handleBack}
                             disabled={loading}
                             block
                             size="large"
                             className="h-12 mt-3 font-medium text-slate-600 hover:text-slate-800"
                             icon={<ArrowLeftOutlined />}
                         >
-                            Wait, I am a Visitor
+                            Back to Role Selection
                         </Button>
                         <p className="text-center text-xs text-gray-400 mt-5">
                             Your information will be securely stored and visible to event organizers.

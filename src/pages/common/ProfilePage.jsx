@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Loader, Save, User, Trash2, AlertTriangle, Building2, Edit3 } from 'lucide-react';
+import { Loader, Save, User, Trash2, AlertTriangle, Building2, Edit3, ArrowLeftRight, Store, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
-    const { apiClient, user, setUser, logout } = useAuth();
+    const { apiClient, user, setUser, logout, switchRole, selectRole } = useAuth();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [switchLoading, setSwitchLoading] = useState(false);
     const [formData, setFormData] = useState({ username: '', email: '' });
 
     // Exhibitor company profile
@@ -96,6 +99,39 @@ export default function ProfilePage() {
         }
     };
 
+    const handleSwitchRole = async (targetRole) => {
+        if (switchLoading) return;
+        setSwitchLoading(targetRole);
+        try {
+            const alreadyHasRole = user?.roles?.includes(targetRole);
+            let response;
+            if (alreadyHasRole) {
+                response = await switchRole(targetRole);
+            } else {
+                response = await selectRole(targetRole);
+            }
+            if (!response) {
+                toast.error('Failed to switch role. Please try again.');
+                return;
+            }
+            toast.success(`Switched to ${targetRole.charAt(0) + targetRole.slice(1).toLowerCase()}!`);
+            if (targetRole === 'EXHIBITOR') {
+                if (response.profile_completed) {
+                    navigate('/exhibitor/home');
+                } else {
+                    navigate('/exhibitor/profile');
+                }
+            } else if (targetRole === 'VISITOR') {
+                navigate('/visitor/home');
+            }
+        } catch (err) {
+            console.error('Role switch failed', err);
+            toast.error('An error occurred while switching role.');
+        } finally {
+            setSwitchLoading(false);
+        }
+    };
+
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <h1 className="text-3xl font-bold text-slate-900">My Profile</h1>
@@ -147,6 +183,90 @@ export default function ProfilePage() {
                     </div>
                 </form>
             </div>
+
+            {/* ── Switch Role ── */}
+            {(() => {
+                const activeRole = user?.active_role || user?.role;
+                const otherRole = activeRole === 'VISITOR' ? 'EXHIBITOR' : 'VISITOR';
+                const alreadyHasOther = user?.roles?.includes(otherRole);
+                return (
+                    <div className="bg-white rounded-xl shadow border border-slate-200 p-8">
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="h-10 w-10 bg-violet-100 rounded-lg flex items-center justify-center text-violet-600">
+                                <ArrowLeftRight size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-900">Switch Role</h2>
+                                <p className="text-sm text-slate-500">Change how you interact with the platform</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Current role — greyed out */}
+                            <div className={`relative flex items-center gap-4 p-4 rounded-xl border-2 ${
+                                activeRole === 'VISITOR'
+                                    ? 'border-teal-500 bg-teal-50'
+                                    : 'border-indigo-500 bg-indigo-50'
+                            }`}>
+                                <div className={`h-11 w-11 rounded-full flex items-center justify-center shrink-0 ${
+                                    activeRole === 'VISITOR' ? 'bg-teal-100' : 'bg-indigo-100'
+                                }`}>
+                                    {activeRole === 'VISITOR'
+                                        ? <User size={22} className="text-teal-600" />
+                                        : <Store size={22} className="text-indigo-600" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className={`font-bold text-sm ${
+                                        activeRole === 'VISITOR' ? 'text-teal-800' : 'text-indigo-800'
+                                    }`}>{activeRole === 'VISITOR' ? 'Visitor' : 'Exhibitor'}</p>
+                                    <p className="text-xs text-slate-500 truncate">
+                                        {activeRole === 'VISITOR' ? 'Browse & attend events' : 'Showcase & apply for booths'}
+                                    </p>
+                                </div>
+                                <CheckCircle2 size={20} className={activeRole === 'VISITOR' ? 'text-teal-500 shrink-0' : 'text-indigo-500 shrink-0'} />
+                                <span className={`absolute -top-2.5 left-3 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                    activeRole === 'VISITOR' ? 'bg-teal-500 text-white' : 'bg-indigo-500 text-white'
+                                }`}>Active</span>
+                            </div>
+
+                            {/* Target role — clickable */}
+                            <button
+                                onClick={() => handleSwitchRole(otherRole)}
+                                disabled={!!switchLoading}
+                                className={`relative flex items-center gap-4 p-4 rounded-xl border-2 border-slate-200 bg-white
+                                    hover:border-violet-400 hover:bg-violet-50 hover:shadow-md
+                                    transition-all duration-200 text-left disabled:opacity-60 disabled:cursor-not-allowed`}
+                            >
+                                <div className="h-11 w-11 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                                    {otherRole === 'VISITOR'
+                                        ? <User size={22} className="text-slate-500" />
+                                        : <Store size={22} className="text-slate-500" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-sm text-slate-700">
+                                        {otherRole === 'VISITOR' ? 'Visitor' : 'Exhibitor'}
+                                    </p>
+                                    <p className="text-xs text-slate-400 truncate">
+                                        {otherRole === 'VISITOR' ? 'Browse & attend events' : 'Showcase & apply for booths'}
+                                    </p>
+                                    {!alreadyHasOther && (
+                                        <p className="text-[10px] text-violet-500 font-semibold mt-0.5">New role</p>
+                                    )}
+                                </div>
+                                {switchLoading === otherRole
+                                    ? <Loader size={18} className="animate-spin text-violet-500 shrink-0" />
+                                    : <ArrowLeftRight size={18} className="text-slate-400 shrink-0" />}
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-slate-400 mt-4">
+                            {alreadyHasOther
+                                ? 'You have used both roles before. Switching is instant.'
+                                : `Switching to ${otherRole === 'EXHIBITOR' ? 'Exhibitor' : 'Visitor'} will set up a new role for your account.`}
+                        </p>
+                    </div>
+                );
+            })()}
 
             {/* ── Company Details (Exhibitor only) ── */}
             {isExhibitor && (
