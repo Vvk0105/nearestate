@@ -47,6 +47,7 @@ export default function AdminEditEventPage() {
                 booth_capacity: data.booth_capacity,
                 visitor_capacity: data.visitor_capacity,
                 registration_fee: data.registration_fee,
+                payment_details: data.payment_details || '',
                 is_active: data.is_active
             });
 
@@ -80,6 +81,8 @@ export default function AdminEditEventPage() {
             if (values.registration_fee !== undefined && values.registration_fee !== null) {
                 formData.append('registration_fee', values.registration_fee);
             }
+            // Always send payment_details (empty string clears it server-side)
+            formData.append('payment_details', values.payment_details || '');
             formData.append('is_active', values.is_active);
 
             // Map image
@@ -314,6 +317,17 @@ export default function AdminEditEventPage() {
                             style={{ width: '100%' }}
                             placeholder="Enter registration fee (optional)"
                             prefix="₹"
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Payment Details"
+                        name="payment_details"
+                        tooltip="Free-text payment instructions for exhibitors (e.g. Account No, IFSC, IBAN, SWIFT). Leave blank to remove."
+                    >
+                        <TextArea
+                            rows={4}
+                            placeholder="e.g. Account No: 1234567890, Bank: State Bank, IFSC: SBIN0001234, SWIFT: SBININBB"
                         />
                     </Form.Item>
 

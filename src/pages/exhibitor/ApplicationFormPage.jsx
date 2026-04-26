@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { Upload, X } from 'lucide-react';
+import { useAuth, publicApiClient } from '../../context/AuthContext';
+import { Upload, X, CreditCard } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ApplicationFormPage() {
@@ -12,6 +12,19 @@ export default function ApplicationFormPage() {
     const [transactionId, setTransactionId] = useState('');
     const [boothNumber, setBoothNumber] = useState('');
     const [loading, setLoading] = useState(false);
+    const [event, setEvent] = useState(null);
+
+    useEffect(() => {
+        const fetchEvent = async () => {
+            try {
+                const res = await publicApiClient.get(`/exhibitions/public/exhibitions/${id}/`);
+                setEvent(res.data);
+            } catch (error) {
+                console.error("Failed to fetch event", error);
+            }
+        };
+        fetchEvent();
+    }, [id]);
 
     // Note: Booth number might be assigned by Admin, but if Exhibitor requests, maybe?
     // Model `ExhibitorApplication`: payment_screenshot, transaction_id, booth_number (blank=True)
@@ -50,6 +63,21 @@ export default function ApplicationFormPage() {
     return (
         <div className="max-w-xl mx-auto py-12 px-4">
             <h1 className="text-2xl font-bold text-slate-900 mb-6">Submit Application</h1>
+
+            {event?.payment_details && (
+                <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                        <CreditCard size={18} className="text-blue-600 flex-shrink-0" />
+                        <h4 className="font-bold text-blue-800 text-base">Payment Instructions</h4>
+                    </div>
+                    <pre className="text-sm text-blue-900 whitespace-pre-wrap font-sans leading-relaxed">
+                        {event.payment_details}
+                    </pre>
+                    <p className="text-xs text-blue-500 mt-3 font-medium">
+                        💡 Complete the payment, then upload your screenshot below.
+                    </p>
+                </div>
+            )}
 
             <div className="bg-white rounded-xl shadow border border-slate-200 p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">

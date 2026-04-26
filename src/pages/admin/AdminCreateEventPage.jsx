@@ -34,6 +34,9 @@ export default function AdminCreateEventPage() {
             if (values.registration_fee !== undefined && values.registration_fee !== null) {
                 formData.append('registration_fee', values.registration_fee);
             }
+            if (values.payment_details) {
+                formData.append('payment_details', values.payment_details);
+            }
             formData.append('is_active', values.is_active || false);
 
             // Map image
@@ -241,6 +244,17 @@ export default function AdminCreateEventPage() {
                             style={{ width: '100%' }}
                             placeholder="Enter registration fee (optional)"
                             prefix="₹"
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Payment Details"
+                        name="payment_details"
+                        tooltip="Free-text payment instructions for exhibitors (e.g. Account No, IFSC, IBAN, SWIFT). Leave blank if not required."
+                    >
+                        <TextArea
+                            rows={4}
+                            placeholder="e.g. Account No: 1234567890, Bank: State Bank, IFSC: SBIN0001234, SWIFT: SBININBB&#10;Or: IBAN: GB29NWBK60161331926819, Routing No: 021000021"
                         />
                     </Form.Item>
 

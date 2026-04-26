@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { publicApiClient } from '../../context/AuthContext';
-import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn } from 'lucide-react';
+import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ImageCarousel from '../../components/ImageCarousel';
 import FullPageLoader from '../../components/FullPageLoader';
@@ -230,6 +230,22 @@ export default function EventDetailsPage() {
                                         ) : (
                                             <h3 className="text-xl font-bold text-slate-900 mb-3">Free Register</h3>
                                         )}
+
+                                        {/* Payment Details — only shown to exhibitors */}
+                                        {isExhibitor && event.payment_details && (
+                                            <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-5">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <CreditCard size={18} className="text-blue-600 flex-shrink-0" />
+                                                    <h4 className="font-bold text-blue-800 text-base">Payment Instructions</h4>
+                                                </div>
+                                                <pre className="text-sm text-blue-900 whitespace-pre-wrap font-sans leading-relaxed">
+                                                    {event.payment_details}
+                                                </pre>
+                                                <p className="text-xs text-blue-500 mt-3 font-medium">
+                                                    💡 Complete the payment, then upload your screenshot when applying.
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -420,6 +436,17 @@ export default function EventDetailsPage() {
                     </div>
 
                     <div className="p-6">
+                        {event.payment_details && (
+                            <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <CreditCard size={16} className="text-blue-600 flex-shrink-0" />
+                                    <h4 className="font-bold text-blue-800 text-sm">Payment Instructions</h4>
+                                </div>
+                                <pre className="text-xs text-blue-900 whitespace-pre-wrap font-sans leading-relaxed">
+                                    {event.payment_details}
+                                </pre>
+                            </div>
+                        )}
                         <form onSubmit={handleApplySubmit} className="space-y-5">
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-2">Payment Screenshot</label>
