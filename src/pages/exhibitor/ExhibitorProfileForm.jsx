@@ -124,6 +124,33 @@ export default function ExhibitorProfileForm() {
                             <Option value="DEVELOPER">Real Estate Developer</Option>
                             <Option value="BROKER">Real Estate Agent / Broker</Option>
                             <Option value="LOAN">Mortgage / Loan Provider</Option>
+                            <Option value="PROPERTY_REAL_ESTATE">Property & Real Estate</Option>
+                            <Option value="BUILDERS_CONSTRUCTION">Builders & Construction</Option>
+                            <Option value="TRADES_CONTRACTORS">Trades & Contractors</Option>
+                            <Option value="ARCHITECTURE_DESIGN_ENGINEERING">Architecture, Design & Engineering</Option>
+                            <Option value="FINANCE_BANKING">Finance & Banking</Option>
+                            <Option value="LEGAL_COMPLIANCE">Legal & Compliance</Option>
+                            <Option value="INSPECTION_CERTIFICATION">Inspection & Certification</Option>
+                            <Option value="PROPERTY_SERVICES">Property Services</Option>
+                            <Option value="TECHNOLOGY_PROPTECH">Technology & PropTech</Option>
+                            <Option value="FURNITURE_FITOUT_LIFESTYLE">Furniture, Fitout & Lifestyle</Option>
+                            <Option value="GOVERNMENT_COMMUNITY">Government & Community</Option>
+                            <Option value="EDUCATION_MEDIA">Education & Media</Option>
+                            <Option value="TELECOM_INFRASTRUCTURE">Telecom & Infrastructure</Option>
+                            <Option value="RETAIL_MISCELLANEOUS">Retail & Miscellaneous</Option>
+                            <Option value="HOSPITALITY_CATERING">Hospitality & Catering</Option>
+                            <Option value="HEALTH_WELLNESS">Health & Wellness</Option>
+                            <Option value="SUSTAINABILITY_ENERGY">Sustainability & Energy</Option>
+                            <Option value="TRANSPORT_LOGISTICS">Transport & Logistics</Option>
+                            <Option value="RECRUITMENT_HR">Recruitment & HR</Option>
+                            <Option value="MARKETING_ADVERTISING">Marketing & Advertising</Option>
+                            <Option value="EVENTS_ENTERTAINMENT">Events & Entertainment</Option>
+                            <Option value="SECURITY_SAFETY">Security & Safety</Option>
+                            <Option value="MANUFACTURING_INDUSTRIAL">Manufacturing & Industrial</Option>
+                            <Option value="INVESTMENT_WEALTH_MANAGEMENT">Investment & Wealth Management</Option>
+                            <Option value="TRAINING_PROFESSIONAL_DEVELOPMENT">Training & Professional Development</Option>
+                            <Option value="HOME_LIVING">Home & Living</Option>
+                            <Option value="OTHER_BUSINESSES">Other Businesses</Option>
                         </Select>
                     </Form.Item>
 
