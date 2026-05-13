@@ -1,15 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     Table, Tabs, Button, Input, Tag, Drawer, Descriptions,
-    Space, Modal, message, Card, Row, Col, Progress, Spin
+    Space, Modal, message, Card, Row, Col, Progress, Spin,
+    Form, Select, Upload, Steps, Divider
 } from 'antd';
 import {
     ArrowLeftOutlined, EyeOutlined, CheckCircleOutlined,
-    CloseCircleOutlined, SearchOutlined, ReloadOutlined
+    CloseCircleOutlined, SearchOutlined, ReloadOutlined,
+    UserAddOutlined, ShopOutlined, UploadOutlined, CheckOutlined
 } from '@ant-design/icons';
 import { ApprovalModal } from './ApprovalModal';
+
 
 const { TabPane } = Tabs;
 
@@ -53,6 +56,23 @@ export default function AdminEventDetailsPage() {
     // Approval Modal State
     const [selectedReq, setSelectedReq] = useState(null);
     const [showModal, setShowModal] = useState(false);
+
+    // ── Add Exhibitor 3-step Modal State ──
+    const [showAddExhibitorModal, setShowAddExhibitorModal] = useState(false);
+    const [exhibitorStep, setExhibitorStep] = useState(0); // 0=email, 1=company/confirm, 2=booth+badge
+    const [exhibitorEmailForm] = Form.useForm();
+    const [exhibitorCompanyForm] = Form.useForm();
+    const [exhibitorFinalForm] = Form.useForm();
+    const [exhibitorLookup, setExhibitorLookup] = useState(null); // result from check endpoint
+    const [exhibitorEmail, setExhibitorEmail] = useState('');
+    const [exhibitorLookupLoading, setExhibitorLookupLoading] = useState(false);
+    const [addExhibitorLoading, setAddExhibitorLoading] = useState(false);
+    const [badgeFile, setBadgeFile] = useState(null);
+
+    // Add Visitor Modal State
+    const [showAddVisitorModal, setShowAddVisitorModal] = useState(false);
+    const [addVisitorLoading, setAddVisitorLoading] = useState(false);
+    const [addVisitorForm] = Form.useForm();
 
     useEffect(() => {
         fetchEventDetails();
@@ -196,7 +216,91 @@ export default function AdminEventDetailsPage() {
         setDrawerVisible(true);
     };
 
-    // Columns
+    // ── Step 1: look up the email ──
+    const handleExhibitorLookup = async (values) => {
+        setExhibitorLookupLoading(true);
+        try {
+            const res = await apiClient.get(
+                `/exhibitions/admin/exhibitions/${id}/check-exhibitor/`,
+                { params: { email: values.email } }
+            );
+            if (res.data.already_registered) {
+                message.error('This person is already registered as an exhibitor for this event.');
+                return;
+            }
+            setExhibitorEmail(values.email);
+            setExhibitorLookup(res.data);
+            setExhibitorStep(1);
+        } catch (err) {
+            message.error(err.response?.data?.error || 'Lookup failed');
+        } finally {
+            setExhibitorLookupLoading(false);
+        }
+    };
+
+    // ── Step 2: company details confirmed, go to step 3 ──
+    const handleExhibitorCompanyNext = () => setExhibitorStep(2);
+
+    // ── Step 3: final submit ──
+    const handleAddExhibitorFinal = async (values) => {
+        setAddExhibitorLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('email', exhibitorEmail);
+            formData.append('booth_number', values.booth_number);
+            if (badgeFile) formData.append('badge', badgeFile);
+
+            // Include company details from step 2 if user was new
+            if (!exhibitorLookup?.profile_exists) {
+                const companyVals = exhibitorCompanyForm.getFieldsValue();
+                if (companyVals.company_name) formData.append('company_name', companyVals.company_name);
+                if (companyVals.business_type) formData.append('business_type', companyVals.business_type);
+                if (companyVals.council_area) formData.append('council_area', companyVals.council_area);
+                if (companyVals.contact_number) formData.append('contact_number', companyVals.contact_number);
+            }
+
+            await apiClient.post(
+                `/exhibitions/admin/exhibitions/${id}/add-exhibitor/`,
+                formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+            message.success('Exhibitor added and approved! Confirmation email sent.');
+            closeAddExhibitorModal();
+            fetchExhibitors(1, exhibitorsPagination.pageSize, debouncedExhibitorsSearch);
+        } catch (error) {
+            message.error(error.response?.data?.error || 'Failed to add exhibitor');
+        } finally {
+            setAddExhibitorLoading(false);
+        }
+    };
+
+    const closeAddExhibitorModal = () => {
+        setShowAddExhibitorModal(false);
+        setExhibitorStep(0);
+        setExhibitorLookup(null);
+        setExhibitorEmail('');
+        setBadgeFile(null);
+        exhibitorEmailForm.resetFields();
+        exhibitorCompanyForm.resetFields();
+        exhibitorFinalForm.resetFields();
+    };
+
+    const handleAddVisitor = async (values) => {
+        setAddVisitorLoading(true);
+        try {
+            await apiClient.post(`/exhibitions/admin/exhibitions/${id}/add-visitor/`, values);
+            message.success('Visitor registered successfully! A QR pass has been emailed to them.');
+            setShowAddVisitorModal(false);
+            addVisitorForm.resetFields();
+            fetchVisitors(1, visitorsPagination.pageSize, debouncedVisitorsSearch);
+        } catch (error) {
+            message.error(error.response?.data?.error || 'Failed to add visitor');
+        } finally {
+            setAddVisitorLoading(false);
+        }
+    };
+
+
     const requestColumns = [
         { title: 'Company', dataIndex: ['exhibitor_profile', 'company_name'], key: 'company_name', render: text => <strong>{text}</strong> },
         { title: 'Email', dataIndex: ['user', 'email'], key: 'email' },
@@ -369,7 +473,7 @@ export default function AdminEventDetailsPage() {
                 </TabPane>
 
                 <TabPane tab="Exhibitors" key="3">
-                    <div className="mb-4 flex gap-2">
+                    <div className="mb-4 flex gap-2 flex-wrap">
                         <Input
                             placeholder="Search exhibitors..."
                             prefix={<SearchOutlined />}
@@ -378,6 +482,14 @@ export default function AdminEventDetailsPage() {
                             style={{ width: 300 }}
                         />
                         <Button icon={<ReloadOutlined />} onClick={() => fetchExhibitors(1, 10, "")}>Refresh</Button>
+                        <Button
+                            type="primary"
+                            icon={<ShopOutlined />}
+                            onClick={() => setShowAddExhibitorModal(true)}
+                            style={{ marginLeft: 'auto' }}
+                        >
+                            Add Exhibitor
+                        </Button>
                     </div>
                     <Table
                         columns={exhibitorColumns}
@@ -394,7 +506,7 @@ export default function AdminEventDetailsPage() {
                 </TabPane>
 
                 <TabPane tab="Visitors" key="4">
-                    <div className="mb-4 flex gap-2">
+                    <div className="mb-4 flex gap-2 flex-wrap">
                         <Input
                             placeholder="Search visitors..."
                             prefix={<SearchOutlined />}
@@ -403,6 +515,14 @@ export default function AdminEventDetailsPage() {
                             style={{ width: 300 }}
                         />
                         <Button icon={<ReloadOutlined />} onClick={() => fetchVisitors(1, 10, "")}>Refresh</Button>
+                        <Button
+                            type="primary"
+                            icon={<UserAddOutlined />}
+                            onClick={() => setShowAddVisitorModal(true)}
+                            style={{ marginLeft: 'auto' }}
+                        >
+                            Add Visitor
+                        </Button>
                     </div>
                     <Table
                         columns={visitorColumns}
@@ -477,6 +597,232 @@ export default function AdminEventDetailsPage() {
                     alt="Transaction Screenshot"
                     style={{ width: '100%', borderRadius: 8 }}
                 />
+            </Modal>
+
+            {/* ── Add Exhibitor Modal (3-step) ── */}
+            <Modal
+                title={
+                    <Space>
+                        <ShopOutlined style={{ color: '#1677ff' }} />
+                        <span>Add Exhibitor to Event</span>
+                    </Space>
+                }
+                open={showAddExhibitorModal}
+                onCancel={closeAddExhibitorModal}
+                footer={null}
+                width={520}
+                destroyOnClose
+            >
+                <Steps
+                    current={exhibitorStep}
+                    size="small"
+                    className="mb-6"
+                    items={[
+                        { title: 'Email' },
+                        { title: exhibitorLookup?.profile_exists ? 'Profile' : 'Company Details' },
+                        { title: 'Booth & Badge' },
+                    ]}
+                />
+
+                {/* ─ Step 0: Email lookup ─ */}
+                {exhibitorStep === 0 && (
+                    <Form form={exhibitorEmailForm} layout="vertical" onFinish={handleExhibitorLookup}>
+                        <Form.Item
+                            label="Exhibitor Email"
+                            name="email"
+                            rules={[{ required: true, type: 'email', message: 'Please enter a valid email' }]}
+                        >
+                            <Input placeholder="exhibitor@company.com" size="large" autoFocus />
+                        </Form.Item>
+                        <div className="flex justify-end gap-2 mt-1">
+                            <Button onClick={closeAddExhibitorModal}>Cancel</Button>
+                            <Button type="primary" htmlType="submit" loading={exhibitorLookupLoading}>
+                                Look Up →
+                            </Button>
+                        </div>
+                    </Form>
+                )}
+
+                {/* ─ Step 1: Company details (new user) OR read-only profile (existing) ─ */}
+                {exhibitorStep === 1 && exhibitorLookup && (
+                    <>
+                        {exhibitorLookup.profile_exists ? (
+                            /* Existing profile — show as read-only card */
+                            <>
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                    <p className="text-xs text-blue-500 font-semibold uppercase mb-2">Existing Profile Found</p>
+                                    <p className="text-sm mb-1"><strong>Company:</strong> {exhibitorLookup.profile.company_name}</p>
+                                    <p className="text-sm mb-1"><strong>Business Type:</strong> {exhibitorLookup.profile.business_type}</p>
+                                    <p className="text-sm mb-1"><strong>Council Area:</strong> {exhibitorLookup.profile.council_area}</p>
+                                    <p className="text-sm mb-0"><strong>Contact:</strong> {exhibitorLookup.profile.contact_number}</p>
+                                </div>
+                                <p className="text-gray-500 text-sm mb-4">
+                                    These existing company details will be used. Click <strong>Next</strong> to assign a booth.
+                                </p>
+                                <div className="flex justify-end gap-2">
+                                    <Button onClick={() => setExhibitorStep(0)}>← Back</Button>
+                                    <Button type="primary" onClick={handleExhibitorCompanyNext}>Next →</Button>
+                                </div>
+                            </>
+                        ) : (
+                            /* New user — fill in company details */
+                            <>
+                                <p className="text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded p-3 mb-4">
+                                    ⚠️ No existing profile found for <strong>{exhibitorEmail}</strong>. Please enter company details below.
+                                </p>
+                                <Form form={exhibitorCompanyForm} layout="vertical" onFinish={handleExhibitorCompanyNext}>
+                                    <Form.Item
+                                        label="Company Name"
+                                        name="company_name"
+                                        rules={[{ required: true, message: 'Company name is required' }]}
+                                    >
+                                        <Input placeholder="Acme Properties" />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="Business Type"
+                                        name="business_type"
+                                        rules={[{ required: true, message: 'Please select a business type' }]}
+                                    >
+                                        <Select placeholder="Select business type" showSearch optionFilterProp="children">
+                                            {[
+                                                ['DEVELOPER', 'Real Estate Developer'],
+                                                ['BROKER', 'Real Estate Agent / Broker'],
+                                                ['LOAN', 'Mortgage / Loan Provider'],
+                                                ['PROPERTY_REAL_ESTATE', 'Property & Real Estate'],
+                                                ['BUILDERS_CONSTRUCTION', 'Builders & Construction'],
+                                                ['TRADES_CONTRACTORS', 'Trades & Contractors'],
+                                                ['ARCHITECTURE_DESIGN_ENGINEERING', 'Architecture, Design & Engineering'],
+                                                ['FINANCE_BANKING', 'Finance & Banking'],
+                                                ['LEGAL_COMPLIANCE', 'Legal & Compliance'],
+                                                ['INSPECTION_CERTIFICATION', 'Inspection & Certification'],
+                                                ['PROPERTY_SERVICES', 'Property Services'],
+                                                ['TECHNOLOGY_PROPTECH', 'Technology & PropTech'],
+                                                ['FURNITURE_FITOUT_LIFESTYLE', 'Furniture, Fitout & Lifestyle'],
+                                                ['GOVERNMENT_COMMUNITY', 'Government & Community'],
+                                                ['EDUCATION_MEDIA', 'Education & Media'],
+                                                ['TELECOM_INFRASTRUCTURE', 'Telecom & Infrastructure'],
+                                                ['RETAIL_MISCELLANEOUS', 'Retail & Miscellaneous'],
+                                                ['HOSPITALITY_CATERING', 'Hospitality & Catering'],
+                                                ['HEALTH_WELLNESS', 'Health & Wellness'],
+                                                ['SUSTAINABILITY_ENERGY', 'Sustainability & Energy'],
+                                                ['TRANSPORT_LOGISTICS', 'Transport & Logistics'],
+                                                ['RECRUITMENT_HR', 'Recruitment & HR'],
+                                                ['MARKETING_ADVERTISING', 'Marketing & Advertising'],
+                                                ['EVENTS_ENTERTAINMENT', 'Events & Entertainment'],
+                                                ['SECURITY_SAFETY', 'Security & Safety'],
+                                                ['MANUFACTURING_INDUSTRIAL', 'Manufacturing & Industrial'],
+                                                ['INVESTMENT_WEALTH_MANAGEMENT', 'Investment & Wealth Management'],
+                                                ['TRAINING_PROFESSIONAL_DEVELOPMENT', 'Training & Professional Development'],
+                                                ['HOME_LIVING', 'Home & Living'],
+                                                ['OTHER_BUSINESSES', 'Other Businesses'],
+                                            ].map(([v, l]) => <Select.Option key={v} value={v}>{l}</Select.Option>)}
+                                        </Select>
+                                    </Form.Item>
+                                    <Form.Item label="Council / Local Area" name="council_area"
+                                        rules={[{ required: true, message: 'Council area is required' }]}>
+                                        <Input placeholder="e.g. City Centre" />
+                                    </Form.Item>
+                                    <Form.Item label="Contact Number" name="contact_number"
+                                        rules={[{ required: true, message: 'Contact number is required' }]}>
+                                        <Input placeholder="+61400000000" />
+                                    </Form.Item>
+                                    <div className="flex justify-end gap-2 mt-1">
+                                        <Button onClick={() => setExhibitorStep(0)}>← Back</Button>
+                                        <Button type="primary" htmlType="submit">Next →</Button>
+                                    </div>
+                                </Form>
+                            </>
+                        )}
+                    </>
+                )}
+
+                {/* ─ Step 2: Booth number + badge upload ─ */}
+                {exhibitorStep === 2 && (
+                    <Form form={exhibitorFinalForm} layout="vertical" onFinish={handleAddExhibitorFinal}>
+                        <div className="bg-gray-50 border rounded-lg p-3 mb-4 text-sm text-gray-600">
+                            Adding <strong>{exhibitorEmail}</strong> as exhibitor
+                            {exhibitorLookup?.profile?.company_name && (
+                                <> — <strong>{exhibitorLookup.profile.company_name}</strong></>
+                            )}
+                        </div>
+                        <Form.Item
+                            label="Booth Number"
+                            name="booth_number"
+                            rules={[{ required: true, message: 'Booth number is required' }]}
+                        >
+                            <Input type="number" min={1} placeholder="e.g. 12" size="large" />
+                        </Form.Item>
+
+                        <Form.Item label="Badge (optional — PDF or image)">
+                            <Upload
+                                beforeUpload={(file) => { setBadgeFile(file); return false; }}
+                                onRemove={() => setBadgeFile(null)}
+                                maxCount={1}
+                                accept=".pdf,image/*"
+                            >
+                                <Button icon={<UploadOutlined />}>Upload Badge</Button>
+                            </Upload>
+                            {badgeFile && (
+                                <p className="text-green-600 text-xs mt-1">✓ {badgeFile.name}</p>
+                            )}
+                        </Form.Item>
+
+                        <div className="flex justify-end gap-2 mt-1">
+                            <Button onClick={() => setExhibitorStep(1)}>← Back</Button>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={addExhibitorLoading}
+                                icon={<CheckOutlined />}
+                            >
+                                Add & Approve
+                            </Button>
+                        </div>
+                    </Form>
+                )}
+            </Modal>
+
+
+            {/* ── Add Visitor Modal ── */}
+            <Modal
+                title={
+                    <Space>
+                        <UserAddOutlined style={{ color: '#52c41a' }} />
+                        <span>Add Visitor to Event</span>
+                    </Space>
+                }
+                open={showAddVisitorModal}
+                onCancel={() => { setShowAddVisitorModal(false); addVisitorForm.resetFields(); }}
+                footer={null}
+                width={440}
+                destroyOnClose
+            >
+                <p className="text-gray-500 text-sm mb-4">
+                    The visitor will be registered and will receive a QR code entry pass by email.
+                    If the user already has an account, it will be reused.
+                </p>
+                <Form
+                    form={addVisitorForm}
+                    layout="vertical"
+                    onFinish={handleAddVisitor}
+                >
+                    <Form.Item
+                        label="Email"
+                        name="email"
+                        rules={[{ required: true, type: 'email', message: 'Please enter a valid email' }]}
+                    >
+                        <Input placeholder="visitor@example.com" />
+                    </Form.Item>
+
+                    <div className="flex justify-end gap-2 mt-2">
+                        <Button onClick={() => { setShowAddVisitorModal(false); addVisitorForm.resetFields(); }}>Cancel</Button>
+                        <Button type="primary" htmlType="submit" loading={addVisitorLoading} icon={<UserAddOutlined />}
+                            style={{ background: '#52c41a', borderColor: '#52c41a' }}
+                        >
+                            Register Visitor
+                        </Button>
+                    </div>
+                </Form>
             </Modal>
         </div>
     );
