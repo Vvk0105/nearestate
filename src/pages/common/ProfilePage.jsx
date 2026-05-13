@@ -321,9 +321,36 @@ export default function ProfilePage() {
                                         onChange={e => setCompanyForm({ ...companyForm, business_type: e.target.value })}
                                         className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm bg-white"
                                     >
-                                        <option value="DEVELOPER">Developer</option>
-                                        <option value="PUBLISHER">Publisher</option>
-                                        <option value="ADVERTISER">Advertiser</option>
+                                        <option value="DEVELOPER">Real Estate Developer</option>
+                                        <option value="BROKER">Real Estate Agent / Broker</option>
+                                        <option value="LOAN">Mortgage / Loan Provider</option>
+                                        <option value="PROPERTY_REAL_ESTATE">Property & Real Estate</option>
+                                        <option value="BUILDERS_CONSTRUCTION">Builders & Construction</option>
+                                        <option value="TRADES_CONTRACTORS">Trades & Contractors</option>
+                                        <option value="ARCHITECTURE_DESIGN_ENGINEERING">Architecture, Design & Engineering</option>
+                                        <option value="FINANCE_BANKING">Finance & Banking</option>
+                                        <option value="LEGAL_COMPLIANCE">Legal & Compliance</option>
+                                        <option value="INSPECTION_CERTIFICATION">Inspection & Certification</option>
+                                        <option value="PROPERTY_SERVICES">Property Services</option>
+                                        <option value="TECHNOLOGY_PROPTECH">Technology & PropTech</option>
+                                        <option value="FURNITURE_FITOUT_LIFESTYLE">Furniture, Fitout & Lifestyle</option>
+                                        <option value="GOVERNMENT_COMMUNITY">Government & Community</option>
+                                        <option value="EDUCATION_MEDIA">Education & Media</option>
+                                        <option value="TELECOM_INFRASTRUCTURE">Telecom & Infrastructure</option>
+                                        <option value="RETAIL_MISCELLANEOUS">Retail & Miscellaneous</option>
+                                        <option value="HOSPITALITY_CATERING">Hospitality & Catering</option>
+                                        <option value="HEALTH_WELLNESS">Health & Wellness</option>
+                                        <option value="SUSTAINABILITY_ENERGY">Sustainability & Energy</option>
+                                        <option value="TRANSPORT_LOGISTICS">Transport & Logistics</option>
+                                        <option value="RECRUITMENT_HR">Recruitment & HR</option>
+                                        <option value="MARKETING_ADVERTISING">Marketing & Advertising</option>
+                                        <option value="EVENTS_ENTERTAINMENT">Events & Entertainment</option>
+                                        <option value="SECURITY_SAFETY">Security & Safety</option>
+                                        <option value="MANUFACTURING_INDUSTRIAL">Manufacturing & Industrial</option>
+                                        <option value="INVESTMENT_WEALTH_MANAGEMENT">Investment & Wealth Management</option>
+                                        <option value="TRAINING_PROFESSIONAL_DEVELOPMENT">Training & Professional Development</option>
+                                        <option value="HOME_LIVING">Home & Living</option>
+                                        <option value="OTHER_BUSINESSES">Other Businesses</option>
                                     </select>
                                 </div>
                                 <div>
