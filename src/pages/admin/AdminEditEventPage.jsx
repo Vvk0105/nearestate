@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Form, Input, DatePicker, InputNumber, Switch, Button, Upload, Card, message, Divider, Spin, Image } from 'antd';
+import { Form, Input, DatePicker, InputNumber, Switch, Button, Upload, Card, message, Divider, Spin, Image, Select } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, UploadOutlined, PictureOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -47,6 +47,7 @@ export default function AdminEditEventPage() {
                 booth_capacity: data.booth_capacity,
                 visitor_capacity: data.visitor_capacity,
                 registration_fee: data.registration_fee,
+                currency_symbol: data.currency_symbol || '₹',
                 payment_details: data.payment_details || '',
                 is_active: data.is_active
             });
@@ -80,6 +81,7 @@ export default function AdminEditEventPage() {
             formData.append('visitor_capacity', values.visitor_capacity);
             if (values.registration_fee !== undefined && values.registration_fee !== null) {
                 formData.append('registration_fee', values.registration_fee);
+                formData.append('currency_symbol', values.currency_symbol || '₹');
             }
             // Always send payment_details (empty string clears it server-side)
             formData.append('payment_details', values.payment_details || '');
@@ -305,20 +307,38 @@ export default function AdminEditEventPage() {
                         </Form.Item>
                     </div>
 
-                    <Form.Item
-                        label="Registration Fee"
-                        name="registration_fee"
-                        rules={[
-                            { type: 'number', min: 0, message: 'Fee must be 0 or greater' }
-                        ]}
-                    >
-                        <InputNumber
-                            min={0}
-                            style={{ width: '100%' }}
-                            placeholder="Enter registration fee (optional)"
-                            prefix="₹"
-                        />
-                    </Form.Item>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <Form.Item
+                            label="Currency"
+                            name="currency_symbol"
+                            className="md:col-span-1"
+                        >
+                            <Select>
+                                <Select.Option value="₹">₹ (INR)</Select.Option>
+                                <Select.Option value="$">$ (USD)</Select.Option>
+                                <Select.Option value="€">€ (EUR)</Select.Option>
+                                <Select.Option value="£">£ (GBP)</Select.Option>
+                                <Select.Option value="¥">¥ (JPY)</Select.Option>
+                                <Select.Option value="A$">A$ (AUD)</Select.Option>
+                                <Select.Option value="C$">C$ (CAD)</Select.Option>
+                            </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Registration Fee"
+                            name="registration_fee"
+                            className="md:col-span-3"
+                            rules={[
+                                { type: 'number', min: 0, message: 'Fee must be 0 or greater' }
+                            ]}
+                        >
+                            <InputNumber
+                                min={0}
+                                style={{ width: '100%' }}
+                                placeholder="Enter registration fee (optional)"
+                            />
+                        </Form.Item>
+                    </div>
 
                     <Form.Item
                         label="Payment Details"

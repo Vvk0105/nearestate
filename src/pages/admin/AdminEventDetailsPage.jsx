@@ -455,7 +455,7 @@ export default function AdminEventDetailsPage() {
                         {event.registration_fee && (
                             <Col span={24}>
                                 <Card title="Registration Fee">
-                                    <p className="text-lg font-semibold">₹{event.registration_fee}</p>
+                                    <p className="text-lg font-semibold">{event.currency_symbol || '₹'}{event.registration_fee}</p>
                                 </Card>
                             </Col>
                         )}

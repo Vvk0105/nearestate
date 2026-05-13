@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Form, Input, DatePicker, InputNumber, Switch, Button, Upload, Card, message, Divider } from 'antd';
+import { Form, Input, DatePicker, InputNumber, Switch, Button, Upload, Card, message, Divider, Select } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, UploadOutlined, PictureOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -33,6 +33,7 @@ export default function AdminCreateEventPage() {
             formData.append('visitor_capacity', values.visitor_capacity);
             if (values.registration_fee !== undefined && values.registration_fee !== null) {
                 formData.append('registration_fee', values.registration_fee);
+                formData.append('currency_symbol', values.currency_symbol || '₹');
             }
             if (values.payment_details) {
                 formData.append('payment_details', values.payment_details);
@@ -232,20 +233,39 @@ export default function AdminCreateEventPage() {
                         </Form.Item>
                     </div>
 
-                    <Form.Item
-                        label="Registration Fee"
-                        name="registration_fee"
-                        rules={[
-                            { type: 'number', min: 0, message: 'Fee must be 0 or greater' }
-                        ]}
-                    >
-                        <InputNumber
-                            min={0}
-                            style={{ width: '100%' }}
-                            placeholder="Enter registration fee (optional)"
-                            prefix="₹"
-                        />
-                    </Form.Item>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <Form.Item
+                            label="Currency"
+                            name="currency_symbol"
+                            initialValue="₹"
+                            className="md:col-span-1"
+                        >
+                            <Select>
+                                <Select.Option value="₹">₹ (INR)</Select.Option>
+                                <Select.Option value="$">$ (USD)</Select.Option>
+                                <Select.Option value="€">€ (EUR)</Select.Option>
+                                <Select.Option value="£">£ (GBP)</Select.Option>
+                                <Select.Option value="¥">¥ (JPY)</Select.Option>
+                                <Select.Option value="A$">A$ (AUD)</Select.Option>
+                                <Select.Option value="C$">C$ (CAD)</Select.Option>
+                            </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Registration Fee"
+                            name="registration_fee"
+                            className="md:col-span-3"
+                            rules={[
+                                { type: 'number', min: 0, message: 'Fee must be 0 or greater' }
+                            ]}
+                        >
+                            <InputNumber
+                                min={0}
+                                style={{ width: '100%' }}
+                                placeholder="Enter registration fee (optional)"
+                            />
+                        </Form.Item>
+                    </div>
 
                     <Form.Item
                         label="Payment Details"

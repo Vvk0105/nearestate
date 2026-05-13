@@ -225,7 +225,7 @@ export default function EventDetailsPage() {
                                         {isExhibitor ? (
                                             <>
                                             <h3 className="text-xl font-bold text-slate-900 mb-3">Application Fee</h3>
-                                            <p className="text-sm text-slate-600 font-semibold"> Rs:{event.registration_fee}</p>
+                                            <p className="text-sm text-slate-600 font-semibold">{event.currency_symbol || '₹'}{event.registration_fee}</p>
                                             </>
                                         ) : (
                                             <h3 className="text-xl font-bold text-slate-900 mb-3">Free Register</h3>
