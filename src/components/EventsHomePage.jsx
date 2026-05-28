@@ -208,6 +208,17 @@ export default function EventsHomePage({
     };
 
     const renderAction = (event) => {
+
+        if (event._status === 'past') {
+            return (
+                <Link
+                    to={getEventLink(event.id)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl shadow-sm text-sm font-bold text-white bg-slate-500 hover:bg-slate-600 transition-colors"
+                >
+                    Event Highlights <ArrowRight size={15} />
+                </Link>
+            );
+        }
         if (role !== 'exhibitor') {
             return (
                 <Link
@@ -293,7 +304,8 @@ export default function EventsHomePage({
                                             key={event.id}
                                             event={event}
                                             linkOverride={getEventLink(event.id)}
-                                            action={role === 'exhibitor' ? renderAction(event) : undefined}
+                                            // action={role === 'exhibitor' ? renderAction(event) : undefined}
+                                            action={renderAction(event)}
                                         />
                                     ))}
                                 </div>
