@@ -109,6 +109,8 @@ export default function LoginPage() {
             } else {
                 navigate('/exhibitor/profile');
             }
+        } else if (role === 'ADMIN') {
+            navigate('/admin/dashboard');
         } else {
             navigate('/auth/select-role');
         }

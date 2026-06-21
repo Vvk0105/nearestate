@@ -22,7 +22,7 @@ export default function ProtectedRoute({ allowedRoles, requireProfile = false })
     }
 
     // Check role-specific access
-    if (allowedRoles && !allowedRoles.includes(user.active_role)) {
+    if (allowedRoles && !allowedRoles.includes(user.active_role) && user.active_role !== 'ADMIN') {
         // User doesn't have required role
         if (user.active_role === 'VISITOR') {
             return <Navigate to="/visitor/home" replace />;

@@ -22,6 +22,8 @@ export default function PublicHome() {
                 } else {
                     navigate('/exhibitor/profile', { replace: true });
                 }
+            } else if (user.role === 'ADMIN' || user.active_role === 'ADMIN') {
+                navigate('/admin/dashboard', { replace: true });
             } else if (!user.active_role && !user.role) {
                 // Logged-in but no role selected yet → must pick a role
                 navigate('/auth/select-role', { replace: true });

@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User, Repeat, Home, Calendar, QrCode } from 'lucide-react';
+import { LogOut, User, Repeat, Home, Calendar, QrCode, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Menu, Transition } from '@headlessui/react';
 import Footer from '../components/Footer';
@@ -67,7 +67,7 @@ export default function MainLayout() {
                             </Link>
 
                             {/* Desktop Nav */}
-                            {user && user.role === 'VISITOR' && (
+                            {user && (user.role === 'VISITOR' || user.role === 'ADMIN') && (
                                 <div className="hidden md:flex space-x-1">
                                     <Link
                                         to="/visitor/home"
@@ -84,13 +84,13 @@ export default function MainLayout() {
                                 </div>
                             )}
 
-                            {user && user.role === 'EXHIBITOR' && (
+                            {user && (user.role === 'EXHIBITOR' || user.role === 'ADMIN') && (
                                 <div className="hidden md:flex space-x-1">
                                     <Link
                                         to="/exhibitor/home"
                                         className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${isActive('/exhibitor/home') ? 'bg-slate-100 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
                                     >
-                                        <Home size={18} /> Dashboard
+                                        <Home size={18} /> Exhibitor Dashboard
                                     </Link>
                                     <Link
                                         to="/exhibitor/applications"
@@ -103,6 +103,17 @@ export default function MainLayout() {
                                         className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${isActive('/exhibitor/properties') ? 'bg-slate-100 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
                                     >
                                         <Home size={18} /> My Properties
+                                    </Link>
+                                </div>
+                            )}
+
+                            {user && user.role === 'ADMIN' && (
+                                <div className="hidden md:flex space-x-1">
+                                    <Link
+                                        to="/admin/dashboard"
+                                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50`}
+                                    >
+                                        <Shield size={18} className="text-blue-600" /> Admin Panel
                                     </Link>
                                 </div>
                             )}
@@ -151,17 +162,30 @@ export default function MainLayout() {
                                                 )}
                                             </Menu.Item>
 
-                                            <Menu.Item>
-                                                {({ active }) => (
-                                                    <button
-                                                        onClick={handleSwitchRole}
-                                                        className={`${active ? 'bg-slate-50' : ''} block w-full text-left px-4 py-2 text-sm text-slate-700 flex items-center gap-2`}
-                                                    >
-                                                        <Repeat size={16} />
-                                                        Switch to {user.role === 'VISITOR' ? 'Exhibitor' : 'Visitor'}
-                                                    </button>
-                                                )}
-                                            </Menu.Item>
+                                            {user.role === 'ADMIN' ? (
+                                                <Menu.Item>
+                                                    {({ active }) => (
+                                                        <button
+                                                            onClick={() => navigate('/admin/dashboard')}
+                                                            className={`${active ? 'bg-slate-50' : ''} block w-full text-left px-4 py-2 text-sm text-blue-600 flex items-center gap-2 font-semibold`}
+                                                        >
+                                                            <Shield size={16} /> Admin Panel
+                                                        </button>
+                                                    )}
+                                                </Menu.Item>
+                                            ) : (
+                                                <Menu.Item>
+                                                    {({ active }) => (
+                                                        <button
+                                                            onClick={handleSwitchRole}
+                                                            className={`${active ? 'bg-slate-50' : ''} block w-full text-left px-4 py-2 text-sm text-slate-700 flex items-center gap-2`}
+                                                        >
+                                                            <Repeat size={16} />
+                                                            Switch to {user.role === 'VISITOR' ? 'Exhibitor' : 'Visitor'}
+                                                        </button>
+                                                    )}
+                                                </Menu.Item>
+                                            )}
 
                                             <Menu.Item>
                                                 {({ active }) => (
