@@ -26,6 +26,8 @@ export default function AdminCreateEventPage() {
             formData.append('start_date', values.start_date.format('YYYY-MM-DD'));
             formData.append('end_date', values.end_date.format('YYYY-MM-DD'));
             formData.append('venue', values.venue);
+            if (values.venue_link) formData.append('venue_link', values.venue_link);
+            if (values.location_link) formData.append('location_link', values.location_link);
             formData.append('city', values.city);
             formData.append('state', values.state);
             formData.append('country', values.country);
@@ -204,6 +206,26 @@ export default function AdminCreateEventPage() {
                             ]}
                         >
                             <Input placeholder="Enter country" />
+                        </Form.Item>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Form.Item
+                            label="Venue Link (optional)"
+                            name="venue_link"
+                            tooltip="Link to the venue website or event registration page"
+                            rules={[{ type: 'url', message: 'Please enter a valid URL (include https://)' }]}
+                        >
+                            <Input placeholder="https://venuename.com" />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Location Link (optional)"
+                            name="location_link"
+                            tooltip="Google Maps or any map link for the venue location"
+                            rules={[{ type: 'url', message: 'Please enter a valid URL (include https://)' }]}
+                        >
+                            <Input placeholder="https://maps.google.com/..." />
                         </Form.Item>
                     </div>
 

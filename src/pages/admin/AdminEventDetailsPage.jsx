@@ -9,7 +9,7 @@ import {
 import {
     ArrowLeftOutlined, EyeOutlined, CheckCircleOutlined,
     CloseCircleOutlined, SearchOutlined, ReloadOutlined,
-    UserAddOutlined, ShopOutlined, UploadOutlined, CheckOutlined
+    UserAddOutlined, ShopOutlined, UploadOutlined, CheckOutlined, LinkOutlined, EnvironmentOutlined
 } from '@ant-design/icons';
 import { ApprovalModal } from './ApprovalModal';
 
@@ -68,6 +68,7 @@ export default function AdminEventDetailsPage() {
     const [exhibitorLookupLoading, setExhibitorLookupLoading] = useState(false);
     const [addExhibitorLoading, setAddExhibitorLoading] = useState(false);
     const [badgeFile, setBadgeFile] = useState(null);
+    const [savedCompanyDetails, setSavedCompanyDetails] = useState(null); // saved from step 1 form
 
     // Add Visitor Modal State
     const [showAddVisitorModal, setShowAddVisitorModal] = useState(false);
@@ -238,8 +239,12 @@ export default function AdminEventDetailsPage() {
         }
     };
 
-    // ── Step 2: company details confirmed, go to step 3 ──
-    const handleExhibitorCompanyNext = () => setExhibitorStep(2);
+    // ── Step 2: company details confirmed — save values to state then go to step 3 ──
+    const handleExhibitorCompanyNext = () => {
+        const vals = exhibitorCompanyForm.getFieldsValue();
+        setSavedCompanyDetails(vals);
+        setExhibitorStep(2);
+    };
 
     // ── Step 3: final submit ──
     const handleAddExhibitorFinal = async (values) => {
@@ -252,7 +257,7 @@ export default function AdminEventDetailsPage() {
 
             // Include company details from step 2 if user was new
             if (!exhibitorLookup?.profile_exists) {
-                const companyVals = exhibitorCompanyForm.getFieldsValue();
+                const companyVals = savedCompanyDetails || exhibitorCompanyForm.getFieldsValue();
                 if (companyVals.company_name) formData.append('company_name', companyVals.company_name);
                 if (companyVals.business_type) formData.append('business_type', companyVals.business_type);
                 if (companyVals.council_area) formData.append('council_area', companyVals.council_area);
@@ -280,6 +285,7 @@ export default function AdminEventDetailsPage() {
         setExhibitorLookup(null);
         setExhibitorEmail('');
         setBadgeFile(null);
+        setSavedCompanyDetails(null);
         exhibitorEmailForm.resetFields();
         exhibitorCompanyForm.resetFields();
         exhibitorFinalForm.resetFields();
@@ -459,6 +465,34 @@ export default function AdminEventDetailsPage() {
                                 </Card>
                             </Col>
                         )}
+                        <Col span={24}>
+                            <Card title="Event Links">
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <LinkOutlined className="text-blue-500" />
+                                        <span className="font-medium text-gray-600">Venue Link:</span>
+                                        {event.venue_link ? (
+                                            <a href={event.venue_link} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">
+                                                {event.venue_link}
+                                            </a>
+                                        ) : (
+                                            <span className="text-gray-400 italic">Nil</span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <EnvironmentOutlined className="text-green-500" />
+                                        <span className="font-medium text-gray-600">Location Link:</span>
+                                        {event.location_link ? (
+                                            <a href={event.location_link} target="_blank" rel="noreferrer" className="text-green-600 hover:underline break-all">
+                                                {event.location_link}
+                                            </a>
+                                        ) : (
+                                            <span className="text-gray-400 italic">Nil</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </Card>
+                        </Col>
                     </Row>
                 </TabPane>
 

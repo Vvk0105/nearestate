@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { publicApiClient } from '../../context/AuthContext';
-import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard } from 'lucide-react';
+import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ImageCarousel from '../../components/ImageCarousel';
 import FullPageLoader from '../../components/FullPageLoader';
@@ -248,6 +248,34 @@ export default function EventDetailsPage() {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Quick Links Section */}
+                                {(event.venue_link || event.location_link) && (
+                                    <div className="flex flex-wrap gap-3">
+                                        {event.venue_link && (
+                                            <a
+                                                href={event.venue_link}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm font-semibold hover:bg-blue-100 hover:border-blue-400 transition-all shadow-sm"
+                                            >
+                                                <ExternalLink size={15} />
+                                                Venue Website
+                                            </a>
+                                        )}
+                                        {event.location_link && (
+                                            <a
+                                                href={event.location_link}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold hover:bg-emerald-100 hover:border-emerald-400 transition-all shadow-sm"
+                                            >
+                                                <MapPin size={15} />
+                                                View on Map
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Map Section */}
                                 <div>
