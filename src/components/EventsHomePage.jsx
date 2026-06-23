@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import EventCard from './EventCard';
-import FullPageLoader from './FullPageLoader';
+import { EventGridSkeleton } from './Skeleton';
 import {
     Loader, LayoutGrid, Zap, CalendarDays, Clock,
     MapPin, Calendar, ChevronLeft, ChevronRight,
@@ -184,7 +184,7 @@ export default function EventsHomePage({
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
     const [activeFilter, setActiveFilter] = useState('all');
 
-    if (loading) return <FullPageLoader />;
+    if (loading) return <EventGridSkeleton count={6} />;
 
     const classified = events.map(e => ({ ...e, _status: classifyEvent(e) }));
     const counts = {
@@ -255,7 +255,7 @@ export default function EventsHomePage({
     };
 
     return (
-        <div className="space-y-10 pb-16">
+        <div className="space-y-10 pb-16 animate-fade-in">
 
             {/* ── Sliding Hero Banner ── */}
             <HeroBanner upcomingEvents={upcomingForBanner} role={role} MEDIA_BASE={MEDIA_BASE} />

@@ -5,7 +5,7 @@ import { publicApiClient } from '../../context/AuthContext';
 import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ImageCarousel from '../../components/ImageCarousel';
-import FullPageLoader from '../../components/FullPageLoader';
+import { EventDetailSkeleton } from '../../components/Skeleton';
 
 export default function EventDetailsPage() {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
@@ -136,7 +136,7 @@ export default function EventDetailsPage() {
         }
     };
 
-    if (loading) return <FullPageLoader message="Loading event details..." />;
+    if (loading) return <EventDetailSkeleton />;
     if (!event) return <div className="text-center p-12 font-medium text-slate-500">Event not found.</div>;
 
     const isPastEvent = event.end_date && new Date(event.end_date) < new Date();
@@ -149,7 +149,7 @@ export default function EventDetailsPage() {
         <>
         <div className="space-y-8 relative animate-fade-in-up pb-12">
             {/* Header/Banner Section with Carousel */}
-            <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden shadow-2xl bg-slate-900 group">
+            <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden shadow-2xl bg-slate-900 group animate-fade-in">
                 {event.images ? (
                     <ImageCarousel
                         images={event.images.map((img) => ({
@@ -195,7 +195,7 @@ export default function EventDetailsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                 {/* Left Column: Details & Tabs */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-6 animate-fade-in-up stagger-2">
                     {/* Tabs */}
                     <div className="flex space-x-2 border-b border-slate-200">
                         <button
@@ -341,7 +341,7 @@ export default function EventDetailsPage() {
                 </div>
 
                 {/* Right Column: Status & Action Card */}
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 animate-fade-in-up stagger-3">
                     <div className="sticky top-24 space-y-6">
                         <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
                             <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">

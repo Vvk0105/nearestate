@@ -28,7 +28,7 @@ export default function EventCard({ event, action, linkOverride }) {
     const { label, bg } = STATUS_STYLES[status];
 
     return (
-        <div className={`bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full ${status === 'past' ? 'opacity-80' : ''}`}>
+        <div className={`bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col h-full animate-fade-in-up ${status === 'past' ? 'opacity-80' : ''}`}>
             <div className="h-48 overflow-hidden bg-slate-100 relative">
                 {event.images ? (
                     <ImageCarousel

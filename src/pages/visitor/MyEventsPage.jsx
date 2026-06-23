@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { QrCode as QrIcon, Calendar, MapPin } from 'lucide-react';
 import QRCode from 'react-qr-code';
-import FullPageLoader from '../../components/FullPageLoader';
+import { ListSkeleton } from '../../components/Skeleton';
 
 export default function MyEventsPage() {
     const { apiClient, loading: authLoading } = useAuth();
@@ -42,7 +42,15 @@ export default function MyEventsPage() {
         return true;
     });
 
-    if (loading) return <FullPageLoader message="Loading your events..." />;
+    if (loading) return (
+        <div className="space-y-8">
+            <div className="skeleton-shimmer h-9 w-56 rounded-lg" />
+            <div className="flex gap-2">
+                {[60, 72, 64, 80].map((w, i) => <div key={i} className="skeleton-shimmer h-9 rounded-full" style={{ width: w }} />)}
+            </div>
+            <ListSkeleton count={3} />
+        </div>
+    );
 
     return (
         <div className="space-y-8 animate-fade-in-up">
@@ -65,8 +73,8 @@ export default function MyEventsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredRegistrations.map(reg => (
-                    <div key={reg.event_id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-md transition-shadow">
+                {filteredRegistrations.map((reg, idx) => (
+                    <div key={reg.event_id} className={`bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-in-up`} style={{ animationDelay: `${idx * 0.07}s` }}>
                         <div className="flex justify-between items-start mb-4">
                             <h3 className="text-lg font-bold text-slate-900 line-clamp-1" title={reg.event_name}>{reg.event_name}</h3>
                             <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${reg.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
