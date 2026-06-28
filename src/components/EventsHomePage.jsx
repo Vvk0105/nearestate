@@ -181,6 +181,7 @@ export default function EventsHomePage({
     profile = null,
     apiClient: propApiClient = null,
     onProfileSaved,
+    showHero = true,
 }) {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
     const [activeFilter, setActiveFilter] = useState('all');
@@ -189,20 +190,21 @@ export default function EventsHomePage({
     const activeApiClient = role === 'public' ? publicApiClient : (propApiClient || contextApiClient || publicApiClient);
 
     const [events, setEvents] = useState([]);
+    const [counts, setCounts] = useState({ all: 0, ongoing: 0, upcoming: 0, past: 0 });
     const [loadingEvents, setLoadingEvents] = useState(true);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const loadMoreRef = useRef(null);
 
-    // Initial load
+    // Initial/Filter load
     useEffect(() => {
         let isMounted = true;
         const fetchInitial = async () => {
             try {
                 setLoadingEvents(true);
                 const res = await activeApiClient.get('/exhibitions/public/exhibitions/', {
-                    params: { page: 1, limit: 10 }
+                    params: { page: 1, limit: 10, status: activeFilter }
                 });
                 if (isMounted) {
                     const data = res.data.data || [];
@@ -210,6 +212,9 @@ export default function EventsHomePage({
                     setEvents(data);
                     setHasMore(data.length < total);
                     setPage(1);
+                    if (res.data.counts) {
+                        setCounts(res.data.counts);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch homepage exhibitions", error);
@@ -221,7 +226,7 @@ export default function EventsHomePage({
         };
         fetchInitial();
         return () => { isMounted = false; };
-    }, [activeApiClient]);
+    }, [activeApiClient, activeFilter]);
 
     // Next page fetch
     const fetchNextPage = async () => {
@@ -230,7 +235,7 @@ export default function EventsHomePage({
         try {
             const nextPage = page + 1;
             const res = await activeApiClient.get('/exhibitions/public/exhibitions/', {
-                params: { page: nextPage, limit: 10 }
+                params: { page: nextPage, limit: 10, status: activeFilter }
             });
             const data = res.data.data || [];
             const total = res.data.total || (events.length + data.length);
@@ -242,6 +247,9 @@ export default function EventsHomePage({
                 return unique;
             });
             setPage(nextPage);
+            if (res.data.counts) {
+                setCounts(res.data.counts);
+            }
         } catch (error) {
             console.error("Failed to fetch homepage exhibitions page", error);
         } finally {
@@ -276,12 +284,6 @@ export default function EventsHomePage({
     if (loadingEvents || initialLoadingProp) return <EventGridSkeleton count={6} />;
 
     const classified = events.map(e => ({ ...e, _status: classifyEvent(e) }));
-    const counts = {
-        all:      classified.length,
-        ongoing:  classified.filter(e => e._status === 'ongoing').length,
-        upcoming: classified.filter(e => e._status === 'upcoming').length,
-        past:     classified.filter(e => e._status === 'past').length,
-    };
     const filtered = activeFilter === 'all' ? classified : classified.filter(e => e._status === activeFilter);
     const upcomingForBanner = classified.filter(e => e._status === 'upcoming');
 
@@ -347,7 +349,7 @@ export default function EventsHomePage({
         <div className="space-y-10 pb-16 animate-fade-in">
 
             {/* ── Sliding Hero Banner ── */}
-            <HeroBanner upcomingEvents={upcomingForBanner} role={role} MEDIA_BASE={MEDIA_BASE} />
+            {showHero && <HeroBanner upcomingEvents={upcomingForBanner} role={role} MEDIA_BASE={MEDIA_BASE} />}
 
             {/* ── Filter Pills ── */}
             <div className="flex flex-wrap gap-2">
@@ -385,7 +387,7 @@ export default function EventsHomePage({
                                 <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
                                     <span className={`w-1.5 h-8 ${bar} rounded-full`} />
                                     {label}
-                                    <span className="text-sm font-normal text-slate-400">({sectionEvents.length})</span>
+                                    <span className="text-sm font-normal text-slate-400">({counts[key]})</span>
                                 </h2>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                     {sectionEvents.map(event => (
