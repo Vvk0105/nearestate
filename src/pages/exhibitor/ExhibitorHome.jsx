@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 
 export default function ExhibitorHome() {
     const { apiClient, loading: authLoading } = useAuth();
-    const [events, setEvents] = useState([]);
     const [myApplications, setMyApplications] = useState([]);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -15,13 +14,11 @@ export default function ExhibitorHome() {
 
         const fetchData = async () => {
             try {
-                const [eventsRes, appsRes, profileRes] = await Promise.all([
-                    apiClient.get('/exhibitions/public/exhibitions/'),
+                const [appsRes, profileRes] = await Promise.all([
                     apiClient.get('/exhibitions/exhibitor/my-applications/'),
                     apiClient.get('/exhibitions/exhibitor/profile/status/'),
                 ]);
 
-                setEvents(eventsRes.data.data || eventsRes.data);
                 setMyApplications(appsRes.data);
 
                 if (profileRes.data.exists) {
@@ -50,7 +47,6 @@ export default function ExhibitorHome() {
 
     return (
         <EventsHomePage
-            events={events}
             loading={loading || authLoading}
             role="exhibitor"
             myApplications={myApplications}

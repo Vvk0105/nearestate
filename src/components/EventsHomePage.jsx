@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import EventCard from './EventCard';
 import { EventGridSkeleton } from './Skeleton';
+import { useAuth, publicApiClient } from '../context/AuthContext';
 import {
     Loader, LayoutGrid, Zap, CalendarDays, Clock,
     MapPin, Calendar, ChevronLeft, ChevronRight,
@@ -173,18 +174,106 @@ function HeroBanner({ upcomingEvents, role, MEDIA_BASE }) {
  *   onProfileSaved  – callback(updatedProfile) after successful PATCH
  */
 export default function EventsHomePage({
-    events = [],
-    loading = false,
+    events: initialEventsProp = [],
+    loading: initialLoadingProp = false,
     role = 'public',
     myApplications = [],
     profile = null,
-    apiClient = null,
+    apiClient: propApiClient = null,
     onProfileSaved,
 }) {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
     const [activeFilter, setActiveFilter] = useState('all');
 
-    if (loading) return <EventGridSkeleton count={6} />;
+    const { apiClient: contextApiClient } = useAuth();
+    const activeApiClient = role === 'public' ? publicApiClient : (propApiClient || contextApiClient || publicApiClient);
+
+    const [events, setEvents] = useState([]);
+    const [loadingEvents, setLoadingEvents] = useState(true);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const loadMoreRef = useRef(null);
+
+    // Initial load
+    useEffect(() => {
+        let isMounted = true;
+        const fetchInitial = async () => {
+            try {
+                setLoadingEvents(true);
+                const res = await activeApiClient.get('/exhibitions/public/exhibitions/', {
+                    params: { page: 1, limit: 10 }
+                });
+                if (isMounted) {
+                    const data = res.data.data || [];
+                    const total = res.data.total || data.length;
+                    setEvents(data);
+                    setHasMore(data.length < total);
+                    setPage(1);
+                }
+            } catch (error) {
+                console.error("Failed to fetch homepage exhibitions", error);
+            } finally {
+                if (isMounted) {
+                    setLoadingEvents(false);
+                }
+            }
+        };
+        fetchInitial();
+        return () => { isMounted = false; };
+    }, [activeApiClient]);
+
+    // Next page fetch
+    const fetchNextPage = async () => {
+        if (loadingMore || !hasMore) return;
+        setLoadingMore(true);
+        try {
+            const nextPage = page + 1;
+            const res = await activeApiClient.get('/exhibitions/public/exhibitions/', {
+                params: { page: nextPage, limit: 10 }
+            });
+            const data = res.data.data || [];
+            const total = res.data.total || (events.length + data.length);
+            
+            setEvents(prev => {
+                const combined = [...prev, ...data];
+                const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+                setHasMore(unique.length < total);
+                return unique;
+            });
+            setPage(nextPage);
+        } catch (error) {
+            console.error("Failed to fetch homepage exhibitions page", error);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
+
+    // Intersection observer
+    useEffect(() => {
+        if (loadingEvents || !hasMore || initialLoadingProp) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    fetchNextPage();
+                }
+            },
+            { rootMargin: '150px' }
+        );
+
+        if (loadMoreRef.current) {
+            observer.observe(loadMoreRef.current);
+        }
+
+        return () => {
+            if (loadMoreRef.current) {
+                observer.unobserve(loadMoreRef.current);
+            }
+        };
+    }, [hasMore, page, loadingEvents, loadingMore, initialLoadingProp]);
+
+    if (loadingEvents || initialLoadingProp) return <EventGridSkeleton count={6} />;
 
     const classified = events.map(e => ({ ...e, _status: classifyEvent(e) }));
     const counts = {
@@ -338,6 +427,15 @@ export default function EventsHomePage({
                     )}
                 </div>
             )}
+            {/* Load More Trigger */}
+            <div ref={loadMoreRef} className="py-6 flex justify-center">
+                {loadingMore && (
+                    <div className="flex items-center gap-2 text-slate-600">
+                        <Loader className="animate-spin text-blue-600" size={20} />
+                        <span className="text-sm font-semibold">Loading more exhibitions...</span>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
