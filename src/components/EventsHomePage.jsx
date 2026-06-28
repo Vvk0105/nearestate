@@ -63,10 +63,10 @@ function HeroBanner({ upcomingEvents, role, MEDIA_BASE }) {
     // Fallback banner when no upcoming events
     if (!upcomingEvents.length) {
         return (
-            <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center">
+            <div className="relative h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center">
                 <div className="text-center text-white px-6">
-                    <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">Discover Real Estate Exhibitions</h1>
-                    <p className="text-slate-300 text-lg max-w-xl mx-auto">Browse ongoing and past exhibitions below.</p>
+                    <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold mb-3 tracking-tight">Discover Real Estate Exhibitions</h1>
+                    <p className="text-slate-300 text-sm sm:text-base md:text-lg max-w-xl mx-auto">Browse ongoing and past exhibitions below.</p>
                 </div>
             </div>
         );
@@ -91,7 +91,7 @@ function HeroBanner({ upcomingEvents, role, MEDIA_BASE }) {
         role === 'public' ? `/auth/login?next=/events/${event.id}` : detailLink;
 
     return (
-        <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden shadow-2xl group">
+        <div className="relative h-[340px] sm:h-[380px] md:h-[400px] rounded-2xl overflow-hidden shadow-2xl group">
             {/* Background */}
             <div
                 className={`absolute inset-0 transition-opacity duration-350 ${fading ? 'opacity-0' : 'opacity-100'}`}
@@ -107,29 +107,29 @@ function HeroBanner({ upcomingEvents, role, MEDIA_BASE }) {
 
             {/* Content */}
             <div
-                className={`absolute inset-0 flex flex-col justify-end p-6 md:p-10 transition-opacity duration-350 ${fading ? 'opacity-0' : 'opacity-100'}`}
+                className={`absolute inset-0 flex flex-col justify-center p-5 sm:p-8 md:p-10 transition-opacity duration-350 ${fading ? 'opacity-0' : 'opacity-100'}`}
                 style={{ transition: 'opacity 350ms ease' }}
             >
                 <div className="max-w-3xl">
-                    <span className="inline-block mb-3 px-3 py-1 bg-blue-500/80 text-white text-xs font-bold rounded-full uppercase tracking-wider backdrop-blur-sm">
+                    <span className="inline-block mb-2 md:mb-3 px-3 py-1 bg-blue-500/80 text-white text-[10px] sm:text-xs font-bold rounded-full uppercase tracking-wider backdrop-blur-sm">
                         Upcoming
                     </span>
-                    <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-3 tracking-tight leading-tight line-clamp-2">
+                    <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white mb-2 md:mb-3 tracking-tight leading-tight line-clamp-2">
                         {event.name}
                     </h2>
-                    <div className="flex flex-wrap gap-4 text-sm text-slate-200 mb-5">
-                        <span className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
-                            <Calendar size={15} className="text-blue-400" />
+                    <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-slate-200 mb-4 md:mb-5">
+                        <span className="flex items-center gap-2 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                            <Calendar size={14} className="text-blue-400" />
                             {new Date(event.start_date).toLocaleDateString()} – {new Date(event.end_date).toLocaleDateString()}
                         </span>
-                        <span className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
-                            <MapPin size={15} className="text-red-400" />
+                        <span className="flex items-center gap-2 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                            <MapPin size={14} className="text-red-400" />
                             {event.venue}, {event.city}
                         </span>
                     </div>
                     <Link
                         to={ctaTo}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all hover:shadow-blue-500/30 text-sm"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all hover:shadow-blue-500/30 text-xs sm:text-sm"
                     >
                         {ctaLabel} <ArrowRight size={16} />
                     </Link>

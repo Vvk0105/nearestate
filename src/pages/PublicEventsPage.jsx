@@ -8,11 +8,11 @@ export default function PublicEventsPage() {
     return (
         <div className="space-y-10 pb-14">
             {/* Hero Banner */}
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-8 sm:p-12 text-white shadow-xl">
-                <h1 className="text-3xl sm:text-4xl font-extrabold mb-3">
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-6 sm:p-10 md:p-12 text-white shadow-xl">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-3">
                     Discover Real Estate Exhibitions
                 </h1>
-                <p className="text-slate-300 text-lg max-w-2xl">
+                <p className="text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl">
                     Browse all events — ongoing, upcoming, and past. Connect with top developers,
                     brokers, and loan providers.{' '}
                     {!user && (
