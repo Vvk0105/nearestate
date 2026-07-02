@@ -393,15 +393,24 @@ export default function AdminEventDetailsPage() {
     if (loading) return <div className="p-12 text-center"><Spin size="large" /></div>;
     if (!event) return <div className="p-12 text-center">Event not found</div>;
 
+    const isPastEvent = event.end_date && new Date(event.end_date) < new Date();
+
     return (
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <Link to="/admin/events" className="flex items-center gap-2 text-gray-500 hover:text-black">
                     <ArrowLeftOutlined /> Back to Events
                 </Link>
-                <Button type="primary">
-                    <Link to={`/admin/events/${id}/edit`}>Edit Event</Link>
-                </Button>
+                <Space>
+                    {isPastEvent && (
+                        <Button>
+                            <Link to={`/admin/events/${id}/recap`}>🎉 Manage Event Recap</Link>
+                        </Button>
+                    )}
+                    <Button type="primary">
+                        <Link to={`/admin/events/${id}/edit`}>Edit Event</Link>
+                    </Button>
+                </Space>
             </div>
 
             <Card className="mb-6 shadow-sm">
@@ -458,13 +467,28 @@ export default function AdminEventDetailsPage() {
                                 )}
                             </Card>
                         </Col>
-                        {event.registration_fee && (
+                        {/* Price Tiers */}
+                        {event.price_tiers && event.price_tiers.length > 0 ? (
+                            <Col span={24}>
+                                <Card title="Pricing Tiers">
+                                    <div className="flex flex-wrap gap-3">
+                                        {event.price_tiers.map(tier => (
+                                            <div key={tier.id} className="border border-blue-200 bg-blue-50 rounded-lg px-4 py-3 min-w-[160px]">
+                                                <p className="font-bold text-blue-800 text-base">{tier.name}</p>
+                                                {tier.description && <p className="text-xs text-blue-600 mb-1">{tier.description}</p>}
+                                                <p className="text-xl font-extrabold text-blue-900">{event.currency_symbol || '₹'}{tier.fee}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Card>
+                            </Col>
+                        ) : event.registration_fee ? (
                             <Col span={24}>
                                 <Card title="Registration Fee">
                                     <p className="text-lg font-semibold">{event.currency_symbol || '₹'}{event.registration_fee}</p>
                                 </Card>
                             </Col>
-                        )}
+                        ) : null}
                         <Col span={24}>
                             <Card title="Event Links">
                                 <div className="flex flex-col gap-3">

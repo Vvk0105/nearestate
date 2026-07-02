@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Linkedin, Mail, Phone, Clock, MapPin } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Mail, Phone, Clock, MapPin, Smartphone, Apple } from 'lucide-react';
 
 export default function Footer() {
     return (
@@ -28,6 +28,33 @@ export default function Footer() {
                                 className="w-9 h-9 rounded-full bg-blue-800 flex items-center justify-center hover:bg-blue-900 transition-colors text-white">
                                 <Linkedin size={18} />
                             </a>
+                        </div>
+
+                        {/* App Store Buttons */}
+                        <div className="flex flex-col gap-2">
+                            <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Download the App</p>
+                            <div className="flex flex-wrap gap-2">
+                                <a
+                                    href="https://apps.apple.com/au/app/near-estate/id6760655554"
+                                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all text-white text-sm font-medium"
+                                >
+                                    <Apple size={18} className="shrink-0" />
+                                    <span className="leading-tight">
+                                        <span className="block text-[10px] text-slate-400 font-normal">Download on the</span>
+                                        <span className="block text-sm font-semibold">App Store</span>
+                                    </span>
+                                </a>
+                                <a
+                                    href="https://play.google.com/store/apps/details?id=com.nearestate.events&pcampaignid=web_share"
+                                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all text-white text-sm font-medium"
+                                >
+                                    <Smartphone size={18} className="shrink-0" />
+                                    <span className="leading-tight">
+                                        <span className="block text-[10px] text-slate-400 font-normal">Get it on</span>
+                                        <span className="block text-sm font-semibold">Google Play</span>
+                                    </span>
+                                </a>
+                            </div>
                         </div>
                     </div>
 

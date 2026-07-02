@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Form, Input, DatePicker, InputNumber, Switch, Button, Upload, Card, message, Divider, Select } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, UploadOutlined, PictureOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, UploadOutlined, PictureOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { TextArea } = Input;
@@ -14,6 +14,7 @@ export default function AdminCreateEventPage() {
     const [saving, setSaving] = useState(false);
     const [galleryFileList, setGalleryFileList] = useState([]);
     const [mapFileList, setMapFileList] = useState([]);
+    const [priceTiers, setPriceTiers] = useState([{ name: '', fee: 0, description: '' }]);
 
     const handleSubmit = async (values) => {
         setSaving(true);
@@ -41,6 +42,12 @@ export default function AdminCreateEventPage() {
                 formData.append('payment_details', values.payment_details);
             }
             formData.append('is_active', values.is_active || false);
+
+            // Price tiers
+            const validTiers = priceTiers.filter(t => t.name?.trim() && t.fee >= 0);
+            if (validTiers.length > 0) {
+                formData.append('price_tiers', JSON.stringify(validTiers));
+            }
 
             // Map image
             if (mapFileList.length > 0) {
@@ -255,7 +262,9 @@ export default function AdminCreateEventPage() {
                         </Form.Item>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Divider orientation="left">Pricing Tiers</Divider>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center mb-2">
                         <Form.Item
                             label="Currency"
                             name="currency_symbol"
@@ -272,22 +281,54 @@ export default function AdminCreateEventPage() {
                                 <Select.Option value="C$">C$ (CAD)</Select.Option>
                             </Select>
                         </Form.Item>
-
-                        <Form.Item
-                            label="Registration Fee"
-                            name="registration_fee"
-                            className="md:col-span-3"
-                            rules={[
-                                { type: 'number', min: 0, message: 'Fee must be 0 or greater' }
-                            ]}
-                        >
-                            <InputNumber
-                                min={0}
-                                style={{ width: '100%' }}
-                                placeholder="Enter registration fee (optional)"
-                            />
-                        </Form.Item>
                     </div>
+
+                    {/* Dynamic Price Tier Rows */}
+                    <div className="space-y-3 mb-4">
+                        {priceTiers.map((tier, i) => (
+                            <div key={i} className="grid grid-cols-12 gap-2 items-start bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                                <div className="col-span-4">
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Tier Name *</label>
+                                    <Input
+                                        placeholder="e.g. Standard, Premium"
+                                        value={tier.name}
+                                        onChange={e => setPriceTiers(tiers => tiers.map((t, idx) => idx === i ? { ...t, name: e.target.value } : t))}
+                                    />
+                                </div>
+                                <div className="col-span-3">
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Fee *</label>
+                                    <InputNumber
+                                        min={0} style={{ width: '100%' }}
+                                        placeholder="0"
+                                        value={tier.fee}
+                                        onChange={val => setPriceTiers(tiers => tiers.map((t, idx) => idx === i ? { ...t, fee: val || 0 } : t))}
+                                    />
+                                </div>
+                                <div className="col-span-4">
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Description (optional)</label>
+                                    <Input
+                                        placeholder="e.g. 3x3m booth"
+                                        value={tier.description}
+                                        onChange={e => setPriceTiers(tiers => tiers.map((t, idx) => idx === i ? { ...t, description: e.target.value } : t))}
+                                    />
+                                </div>
+                                <div className="col-span-1 flex items-end pb-0.5">
+                                    {priceTiers.length > 1 && (
+                                        <Button
+                                            danger icon={<DeleteOutlined />}
+                                            onClick={() => setPriceTiers(tiers => tiers.filter((_, idx) => idx !== i))}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <Button
+                        icon={<PlusOutlined />} dashed block
+                        onClick={() => setPriceTiers(t => [...t, { name: '', fee: 0, description: '' }])}
+                    >
+                        Add Price Tier
+                    </Button>
 
                     <Form.Item
                         label="Payment Details"

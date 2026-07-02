@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { publicApiClient } from '../../context/AuthContext';
-import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard, ExternalLink } from 'lucide-react';
+import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard, ExternalLink, Image as ImageIcon, PlayCircle, Share2, Link as LinkIcon, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ImageCarousel from '../../components/ImageCarousel';
 import { EventDetailSkeleton } from '../../components/Skeleton';
@@ -25,6 +25,9 @@ export default function EventDetailsPage() {
     const [transactionId, setTransactionId] = useState('');
     const [submittingApp, setSubmittingApp] = useState(false);
     const [applicationStatus, setApplicationStatus] = useState(null);
+
+    // Recap Tab
+    const [recapTab, setRecapTab] = useState('images');
 
     // Prefer active_role (set after switchRole/selectRole) over legacy role field
     const activeRole = user?.active_role || user?.role;
@@ -145,6 +148,18 @@ export default function EventDetailsPage() {
         ? (event.map_image.startsWith('http') ? event.map_image : `${MEDIA_BASE}${event.map_image}`)
         : null;
 
+    // Helper: extract YouTube video ID from any YouTube URL
+    const getYouTubeId = (url) => {
+        if (!url) return null;
+        const match = url.match(
+            /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([-\w]+)/
+        );
+        return match ? match[1] : null;
+    };
+
+    const recap = event.recap || null;
+    const priceTiers = event.price_tiers || [];
+
     return (
         <>
         <div className="space-y-8 relative animate-fade-in-up pb-12">
@@ -222,14 +237,31 @@ export default function EventDetailsPage() {
                                     </div>
                                     <div>
                                         {/* ✅ Null-safe: only access user.role when user is defined */}
-                                        {isExhibitor ? (
+                                        {isExhibitor && !isPastEvent ? (
                                             <>
-                                            <h3 className="text-xl font-bold text-slate-900 mb-3">Application Fee</h3>
-                                            <p className="text-sm text-slate-600 font-semibold">{event.currency_symbol || '₹'}{event.registration_fee}</p>
+                                            <h3 className="text-xl font-bold text-slate-900 mb-3">
+                                                {priceTiers.length > 0 ? 'Booth Pricing' : 'Application Fee'}
+                                            </h3>
+                                            {priceTiers.length > 0 ? (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {priceTiers.map(tier => (
+                                                        <div key={tier.id} className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <Tag size={14} className="text-indigo-500" />
+                                                                <span className="font-bold text-indigo-800 text-sm">{tier.name}</span>
+                                                            </div>
+                                                            {tier.description && <p className="text-xs text-indigo-600 mb-2">{tier.description}</p>}
+                                                            <p className="text-2xl font-extrabold text-indigo-900">{event.currency_symbol || '₹'}{tier.fee}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-slate-600 font-semibold">{event.currency_symbol || '₹'}{event.registration_fee}</p>
+                                            )}
                                             </>
-                                        ) : (
+                                        ) : !isExhibitor && !isPastEvent ? (
                                             <h3 className="text-xl font-bold text-slate-900 mb-3">Free Register</h3>
-                                        )}
+                                        ) : null}
 
                                         {/* Payment Details — only shown to exhibitors */}
                                         {isExhibitor && event.payment_details && (
@@ -340,9 +372,10 @@ export default function EventDetailsPage() {
                     </div>
                 </div>
 
-                {/* Right Column: Status & Action Card */}
+                {/* Right Column: Status & Action Card OR Past Event Badge */}
                 <div className="lg:col-span-1 animate-fade-in-up stagger-3">
                     <div className="sticky top-24 space-y-6">
+                        {!isPastEvent ? (
                         <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
                             <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                                 <Users size={20} className="text-indigo-500" /> Availability
@@ -447,12 +480,168 @@ export default function EventDetailsPage() {
                                 </p>
                             )}
                         </div>
+                        ) : (
+                        /* Past event badge */
+                        <div className="bg-slate-800 text-white rounded-2xl p-6 text-center">
+                            <div className="text-4xl mb-2">🎉</div>
+                            <h3 className="text-lg font-bold mb-1">Event Concluded</h3>
+                            <p className="text-slate-400 text-sm">This event has already taken place. Check out the recap below!</p>
+                        </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
 
+        {/* ──────────────────────────────────────────── */}
+        {/* Event Recap Section — shown only for past events */}
+        {/* ──────────────────────────────────────────── */}
+        {isPastEvent && recap && (
+            <div className="mt-6 animate-fade-in-up">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    {/* Recap Header */}
+                    <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-5 flex items-center gap-3">
+                        <span className="text-3xl">🎉</span>
+                        <div>
+                            <h2 className="text-xl font-extrabold text-white">Event Recap</h2>
+                            <p className="text-slate-400 text-sm">Relive the highlights from {event.name}</p>
+                        </div>
+                    </div>
+
+                    {/* Recap Sub-Tabs */}
+                    <div className="flex border-b border-slate-200 bg-slate-50">
+                        {[
+                            { key: 'images', label: 'Photos', icon: <ImageIcon size={15} /> },
+                            { key: 'videos', label: 'Videos', icon: <PlayCircle size={15} /> },
+                            { key: 'social', label: 'Social Links', icon: <Share2 size={15} /> },
+                        ].map(tab => (
+                            <button
+                                key={tab.key}
+                                onClick={() => setRecapTab(tab.key)}
+                                className={`flex items-center gap-1.5 px-5 py-3 text-sm font-semibold transition-colors border-b-2 ${
+                                    recapTab === tab.key
+                                        ? 'border-blue-600 text-blue-600 bg-white'
+                                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                                }`}
+                            >
+                                {tab.icon} {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="p-6">
+                        {/* ── Images ── */}
+                        {recapTab === 'images' && (
+                            <div>
+                                {recap.images && recap.images.length > 0 ? (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                        {recap.images.map(img => (
+                                            <div
+                                                key={img.id}
+                                                className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-lg transition-shadow"
+                                                onClick={() => window.open(img.image, '_blank')}
+                                            >
+                                                <img
+                                                    src={img.image}
+                                                    alt="Event recap"
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                />
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                                    <ExternalLink className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={22} />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="py-12 text-center text-slate-400">
+                                        <ImageIcon className="mx-auto mb-2 opacity-50" size={40} />
+                                        <p>No photos available yet.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ── Videos ── */}
+                        {recapTab === 'videos' && (
+                            <div>
+                                {recap.videos && recap.videos.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {recap.videos.map(v => {
+                                            const ytId = getYouTubeId(v.youtube_url);
+                                            return (
+                                                <div key={v.id} className="rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-900">
+                                                    {ytId ? (
+                                                        <div className="relative" style={{ paddingTop: '56.25%' }}>
+                                                            <iframe
+                                                                className="absolute inset-0 w-full h-full"
+                                                                src={`https://www.youtube.com/embed/${ytId}`}
+                                                                title={v.title || 'Recap Video'}
+                                                                frameBorder="0"
+                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                allowFullScreen
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <a
+                                                            href={v.youtube_url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="flex items-center gap-3 p-4 text-white hover:bg-slate-800 transition-colors"
+                                                        >
+                                                            <PlayCircle size={24} className="text-red-500 shrink-0" />
+                                                            <span className="truncate text-sm">{v.title || v.youtube_url}</span>
+                                                        </a>
+                                                    )}
+                                                    {v.title && ytId && (
+                                                        <p className="px-4 py-2 text-sm font-semibold text-slate-300 bg-slate-800">{v.title}</p>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="py-12 text-center text-slate-400">
+                                        <PlayCircle className="mx-auto mb-2 opacity-50" size={40} />
+                                        <p>No videos available yet.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ── Social Links ── */}
+                        {recapTab === 'social' && (
+                            <div>
+                                {recap.social_links && recap.social_links.length > 0 ? (
+                                    <div className="flex flex-wrap gap-3">
+                                        {recap.social_links.map(s => (
+                                            <a
+                                                key={s.id}
+                                                href={s.url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="flex items-center gap-2 px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold text-sm hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all shadow-sm group"
+                                            >
+                                                <LinkIcon size={16} className="text-blue-500 group-hover:text-blue-600" />
+                                                {s.title}
+                                                <ExternalLink size={13} className="text-slate-400 group-hover:text-blue-500" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="py-12 text-center text-slate-400">
+                                        <Share2 className="mx-auto mb-2 opacity-50" size={40} />
+                                        <p>No social links available yet.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        )}
+
         {/* Apply Modal — Exhibitors only */}
+
         {showApplyModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-0 overflow-hidden animate-in fade-in zoom-in duration-200">

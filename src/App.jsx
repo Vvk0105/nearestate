@@ -40,6 +40,7 @@ import AdminEventDetailsPage from './pages/admin/AdminEventDetailsPage';
 import AdminCreateEventPage from './pages/admin/AdminCreateEventPage';
 import AdminEditEventPage from './pages/admin/AdminEditEventPage';
 import AdminQRScanPage from './pages/admin/AdminQRScanPage';
+import AdminEventRecapPage from './pages/admin/AdminEventRecapPage';
 
 import ProfilePage from './pages/common/ProfilePage';
 
@@ -60,6 +61,7 @@ function App() {
               <Route path="events/new" element={<AdminCreateEventPage />} />
               <Route path="events/:id" element={<AdminEventDetailsPage />} />
               <Route path="events/:id/edit" element={<AdminEditEventPage />} />
+              <Route path="events/:id/recap" element={<AdminEventRecapPage />} />
               <Route path="scan" element={<AdminQRScanPage />} />
             </Route>
 
