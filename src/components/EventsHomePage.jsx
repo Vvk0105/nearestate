@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import EventCard from './EventCard';
 import { EventGridSkeleton } from './Skeleton';
 import { useAuth, publicApiClient } from '../context/AuthContext';
@@ -184,7 +184,11 @@ export default function EventsHomePage({
     showHero = true,
 }) {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
-    const [activeFilter, setActiveFilter] = useState('all');
+
+    // ── URL-persisted filter state ────────────────────────────────────────────
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeFilter = searchParams.get('filter') || 'all';
+    const setActiveFilter = (filter) => setSearchParams(prev => { prev.set('filter', filter); return prev; }, { replace: true });
 
     const { apiClient: contextApiClient } = useAuth();
     const activeApiClient = role === 'public' ? publicApiClient : (propApiClient || contextApiClient || publicApiClient);
