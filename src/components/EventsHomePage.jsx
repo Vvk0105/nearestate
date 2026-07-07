@@ -6,7 +6,7 @@ import { useAuth, publicApiClient } from '../context/AuthContext';
 import {
     Loader, LayoutGrid, Zap, CalendarDays, Clock,
     MapPin, Calendar, ChevronLeft, ChevronRight,
-    ArrowRight, CheckCircle
+    ArrowRight, CheckCircle, Search, X
 } from 'lucide-react';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -201,6 +201,14 @@ export default function EventsHomePage({
     const [loadingMore, setLoadingMore] = useState(false);
     const loadMoreRef = useRef(null);
 
+    const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(search), 400);
+        return () => clearTimeout(timer);
+    }, [search]);
+
     // Initial/Filter load
     useEffect(() => {
         let isMounted = true;
@@ -208,7 +216,7 @@ export default function EventsHomePage({
             try {
                 setLoadingEvents(true);
                 const res = await activeApiClient.get('/exhibitions/public/exhibitions/', {
-                    params: { page: 1, limit: 10, status: activeFilter }
+                    params: { page: 1, limit: 10, status: activeFilter, search: debouncedSearch }
                 });
                 if (isMounted) {
                     const data = res.data.data || [];
@@ -230,7 +238,7 @@ export default function EventsHomePage({
         };
         fetchInitial();
         return () => { isMounted = false; };
-    }, [activeApiClient, activeFilter]);
+    }, [activeApiClient, activeFilter, debouncedSearch]);
 
     // Next page fetch
     const fetchNextPage = async () => {
@@ -239,7 +247,7 @@ export default function EventsHomePage({
         try {
             const nextPage = page + 1;
             const res = await activeApiClient.get('/exhibitions/public/exhibitions/', {
-                params: { page: nextPage, limit: 10, status: activeFilter }
+                params: { page: nextPage, limit: 10, status: activeFilter, search: debouncedSearch }
             });
             const data = res.data.data || [];
             const total = res.data.total || (events.length + data.length);
@@ -285,7 +293,7 @@ export default function EventsHomePage({
         };
     }, [hasMore, page, loadingEvents, loadingMore, initialLoadingProp]);
 
-    if (loadingEvents || initialLoadingProp) return <EventGridSkeleton count={6} />;
+    if (initialLoadingProp) return <EventGridSkeleton count={6} />;
 
     const classified = events.map(e => ({ ...e, _status: classifyEvent(e) }));
     const filtered = activeFilter === 'all' ? classified : classified.filter(e => e._status === activeFilter);
@@ -355,33 +363,60 @@ export default function EventsHomePage({
             {/* ── Sliding Hero Banner ── */}
             {showHero && <HeroBanner upcomingEvents={upcomingForBanner} role={role} MEDIA_BASE={MEDIA_BASE} />}
 
-            {/* ── Filter Pills ── */}
-            <div className="flex flex-wrap gap-2">
-                {FILTERS.map(({ key, label, icon: Icon, activeBg, dot }) => {
-                    const isActive = activeFilter === key;
-                    return (
+            {/* ── Search & Filter Controls ── */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/40 p-4 rounded-2xl border border-slate-200/50 backdrop-blur-sm shadow-sm">
+                {/* ── Filter Pills ── */}
+                <div className="flex flex-wrap gap-2">
+                    {FILTERS.map(({ key, label, icon: Icon, activeBg, dot }) => {
+                        const isActive = activeFilter === key;
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setActiveFilter(key)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 shadow-sm ${
+                                    isActive
+                                        ? `${activeBg} border-transparent shadow-md`
+                                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:shadow'
+                                }`}
+                            >
+                                {!isActive && <span className={`w-2 h-2 rounded-full ${dot}`} />}
+                                <Icon size={14} />
+                                {label}
+                                <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                    {counts[key]}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* ── Search Input ── */}
+                <div className="relative w-full md:w-80">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <Search size={18} />
+                    </span>
+                    <input
+                        type="text"
+                        placeholder="Search by event, state, city or country..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-10 pr-10 py-2 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm transition-all duration-200 bg-white placeholder-slate-400"
+                    />
+                    {search && (
                         <button
-                            key={key}
-                            onClick={() => setActiveFilter(key)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 shadow-sm ${
-                                isActive
-                                    ? `${activeBg} border-transparent shadow-md`
-                                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:shadow'
-                            }`}
+                            onClick={() => { setSearch(''); }}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
                         >
-                            {!isActive && <span className={`w-2 h-2 rounded-full ${dot}`} />}
-                            <Icon size={14} />
-                            {label}
-                            <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                                {counts[key]}
-                            </span>
+                            <X size={16} />
                         </button>
-                    );
-                })}
+                    )}
+                </div>
             </div>
 
             {/* ── Event Grid ── */}
-            {activeFilter === 'all' ? (
+            {loadingEvents ? (
+                <EventGridSkeleton count={6} />
+            ) : activeFilter === 'all' ? (
                 <div className="space-y-14">
                     {SECTIONS.map(({ key, label, bar }) => {
                         const sectionEvents = classified.filter(e => e._status === key);
@@ -399,7 +434,6 @@ export default function EventsHomePage({
                                             key={event.id}
                                             event={event}
                                             linkOverride={getEventLink(event.id)}
-                                            // action={role === 'exhibitor' ? renderAction(event) : undefined}
                                             action={renderAction(event)}
                                         />
                                     ))}
@@ -409,7 +443,7 @@ export default function EventsHomePage({
                     })}
                     {classified.length === 0 && (
                         <div className="text-center py-16 text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-                            No exhibitions found at the moment.
+                            No exhibitions found.
                         </div>
                     )}
                 </div>

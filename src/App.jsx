@@ -20,6 +20,7 @@ import PublicHome from './pages/PublicHome';
 import PublicEventsPage from './pages/PublicEventsPage';
 import EventDetailsPage from './pages/visitor/EventDetailsPage';
 import ExhibitorDetailsPage from './pages/visitor/ExhibitorDetailsPage';
+import AboutPage from './pages/AboutPage';
 
 // Visitor-only pages (require login)
 import VisitorHome from './pages/visitor/VisitorHome';
@@ -83,6 +84,7 @@ function App() {
               <Route path="/events" element={<PublicEventsPage />} />
               <Route path="/events/:id" element={<EventDetailsPage />} />
               <Route path="/events/:id/exhibitors/:exhibitorId" element={<ExhibitorDetailsPage />} />
+              <Route path="/about" element={<AboutPage />} />
 
               {/* ─── Auth Routes ─── */}
               <Route element={<AuthLayout />}>

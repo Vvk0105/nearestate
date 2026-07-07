@@ -27,25 +27,29 @@ function classifyEvent(event) {
 
 export default function AdminEventsPage() {
     const { apiClient } = useAuth();
-    const [allEvents, setAllEvents]   = useState([]);   // full fetched list
+    const [allEvents, setAllEvents]   = useState([]);   // fetched list matching current filter
     const [loading, setLoading]       = useState(false);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [search, setSearch]         = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
+    const [counts, setCounts]         = useState({ all: 0, ongoing: 0, upcoming: 0, past: 0 });
 
     useEffect(() => {
-        fetchEvents(pagination.current, pagination.pageSize, search);
-    }, []); // Initial load
+        fetchEvents(1, pagination.pageSize, search, activeFilter);
+    }, [activeFilter]); // Trigger fetch whenever filter changes
 
-    const fetchEvents = async (page = 1, limit = 10, query = '') => {
+    const fetchEvents = async (page = 1, limit = 10, query = '', statusFilter = 'all') => {
         setLoading(true);
         try {
             const res = await apiClient.get('/exhibitions/admin/exhibitions/', {
-                params: { page, limit, search: query }
+                params: { page, limit, search: query, status: statusFilter }
             });
             if (res.data.data) {
                 setAllEvents(res.data.data);
                 setPagination(prev => ({ ...prev, current: page, pageSize: limit, total: res.data.total }));
+                if (res.data.counts) {
+                    setCounts(res.data.counts);
+                }
             } else {
                 setAllEvents(res.data);
                 setPagination(prev => ({ ...prev, total: res.data.length }));
@@ -59,18 +63,16 @@ export default function AdminEventsPage() {
     };
 
     const handleTableChange = (newPagination) => {
-        fetchEvents(newPagination.current, newPagination.pageSize, search);
+        fetchEvents(newPagination.current, newPagination.pageSize, search, activeFilter);
     };
 
     const handleSearch = () => {
-        setActiveFilter('all');
-        fetchEvents(1, pagination.pageSize, search);
+        fetchEvents(1, pagination.pageSize, search, activeFilter);
     };
 
     const handleReset = () => {
         setSearch('');
-        setActiveFilter('all');
-        fetchEvents(1, 10, '');
+        fetchEvents(1, 10, '', activeFilter);
     };
 
     const handleDelete = (event) => {
@@ -84,7 +86,7 @@ export default function AdminEventsPage() {
                 try {
                     await apiClient.delete(`/exhibitions/admin/exhibitions/${event.id}/delete/`);
                     message.success('Event deleted successfully');
-                    fetchEvents(pagination.current, pagination.pageSize, search);
+                    fetchEvents(pagination.current, pagination.pageSize, search, activeFilter);
                 } catch (error) {
                     message.error(error.response?.data?.message || 'Failed to delete event');
                 }
@@ -92,15 +94,8 @@ export default function AdminEventsPage() {
         });
     };
 
-    // ── Classified events with counts ────────────────────────────────────────
-    const classified = allEvents.map(e => ({ ...e, _status: classifyEvent(e) }));
-    const filtered   = activeFilter === 'all' ? classified : classified.filter(e => e._status === activeFilter);
-    const counts     = {
-        all:      classified.length,
-        ongoing:  classified.filter(e => e._status === 'ongoing').length,
-        upcoming: classified.filter(e => e._status === 'upcoming').length,
-        past:     classified.filter(e => e._status === 'past').length,
-    };
+    // ── Classified events (adds _status to each item for the status Tag columns) ──
+    const filtered = allEvents.map(e => ({ ...e, _status: classifyEvent(e) }));
 
     // ── Status tag colours ────────────────────────────────────────────────────
     const statusTagColor = { ongoing: 'green', upcoming: 'blue', past: 'default' };
@@ -219,7 +214,7 @@ export default function AdminEventsPage() {
                                 <Icon size={14} />
                                 {label}
                                 <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                                    {counts[key]}
+                                    {counts[key] || 0}
                                 </span>
                             </button>
                         );
@@ -232,20 +227,13 @@ export default function AdminEventsPage() {
                     dataSource={filtered}
                     rowKey="id"
                     loading={loading}
-                    pagination={
-                        activeFilter === 'all'
-                            ? {
-                                current: pagination.current,
-                                pageSize: pagination.pageSize,
-                                total: pagination.total,
-                                showSizeChanger: true,
-                            }
-                            : {
-                                pageSize: 10,
-                                showSizeChanger: true,
-                            }
-                    }
-                    onChange={activeFilter === 'all' ? handleTableChange : undefined}
+                    pagination={{
+                        current: pagination.current,
+                        pageSize: pagination.pageSize,
+                        total: pagination.total,
+                        showSizeChanger: true,
+                    }}
+                    onChange={handleTableChange}
                 />
             </Card>
         </div>
