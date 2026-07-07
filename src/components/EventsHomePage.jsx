@@ -194,6 +194,7 @@ export default function EventsHomePage({
     const activeApiClient = role === 'public' ? publicApiClient : (propApiClient || contextApiClient || publicApiClient);
 
     const [events, setEvents] = useState([]);
+    const [upcomingEventsForBanner, setUpcomingEventsForBanner] = useState([]);
     const [counts, setCounts] = useState({ all: 0, ongoing: 0, upcoming: 0, past: 0 });
     const [loadingEvents, setLoadingEvents] = useState(true);
     const [page, setPage] = useState(1);
@@ -208,6 +209,25 @@ export default function EventsHomePage({
         const timer = setTimeout(() => setDebouncedSearch(search), 400);
         return () => clearTimeout(timer);
     }, [search]);
+
+    // Fetch upcoming events specifically for the Hero Banner slider
+    useEffect(() => {
+        let isMounted = true;
+        const fetchUpcomingForBanner = async () => {
+            try {
+                const res = await activeApiClient.get('/exhibitions/public/exhibitions/', {
+                    params: { page: 1, limit: 5, status: 'upcoming' }
+                });
+                if (isMounted) {
+                    setUpcomingEventsForBanner(res.data.data || []);
+                }
+            } catch (error) {
+                console.error("Failed to fetch banner exhibitions", error);
+            }
+        };
+        fetchUpcomingForBanner();
+        return () => { isMounted = false; };
+    }, [activeApiClient]);
 
     // Initial/Filter load
     useEffect(() => {
@@ -297,7 +317,6 @@ export default function EventsHomePage({
 
     const classified = events.map(e => ({ ...e, _status: classifyEvent(e) }));
     const filtered = activeFilter === 'all' ? classified : classified.filter(e => e._status === activeFilter);
-    const upcomingForBanner = classified.filter(e => e._status === 'upcoming');
 
     // ── per-role helpers ──────────────────────────────────────────────────────
     const getEventLink = (eventId) =>
@@ -361,7 +380,7 @@ export default function EventsHomePage({
         <div className="space-y-10 pb-16 animate-fade-in">
 
             {/* ── Sliding Hero Banner ── */}
-            {showHero && <HeroBanner upcomingEvents={upcomingForBanner} role={role} MEDIA_BASE={MEDIA_BASE} />}
+            {showHero && <HeroBanner upcomingEvents={upcomingEventsForBanner} role={role} MEDIA_BASE={MEDIA_BASE} />}
 
             {/* ── Search & Filter Controls ── */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/40 p-4 rounded-2xl border border-slate-200/50 backdrop-blur-sm shadow-sm">
