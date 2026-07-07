@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { publicApiClient } from '../../context/AuthContext';
 import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard, ExternalLink, Image as ImageIcon, PlayCircle, Share2, Link as LinkIcon, Tag, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import dayjs from 'dayjs';
 import ImageCarousel from '../../components/ImageCarousel';
 import { EventDetailSkeleton } from '../../components/Skeleton';
 
@@ -343,6 +344,27 @@ export default function EventDetailsPage() {
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* Timing Details Section */}
+                                    {event.schedules && event.schedules.length > 0 && (
+                                        <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 md:p-6 shadow-sm space-y-4">
+                                            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                                <Clock className="text-indigo-500" size={18} /> Timing Details
+                                            </h3>
+                                            <div className="divide-y divide-slate-200/80">
+                                                {event.schedules.map((sched, idx) => (
+                                                    <div key={sched.id || idx} className="py-3 flex justify-between items-center text-sm md:text-base">
+                                                        <span className="font-semibold text-slate-700">
+                                                            {dayjs(sched.date).format('DD-MM-YYYY')}
+                                                        </span>
+                                                        <span className="text-slate-600 font-medium bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm text-xs md:text-sm">
+                                                            {dayjs(`2000-01-01T${sched.start_time}`).format('hh:mm A')} — {dayjs(`2000-01-01T${sched.end_time}`).format('hh:mm A')}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Quick Links Section */}
                                     {(event.venue_link || event.location_link) && (

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Form, Input, DatePicker, InputNumber, Switch, Button, Upload, Card, message, Divider, Select } from 'antd';
+import { Form, Input, DatePicker, TimePicker, InputNumber, Switch, Button, Upload, Card, message, Divider, Select } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, UploadOutlined, PictureOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -15,17 +15,61 @@ export default function AdminCreateEventPage() {
     const [galleryFileList, setGalleryFileList] = useState([]);
     const [mapFileList, setMapFileList] = useState([]);
     const [priceTiers, setPriceTiers] = useState([{ name: '', fee: 0, description: '' }]);
+    const [schedules, setSchedules] = useState([{ date: null, start_time: null, end_time: null }]);
+
+    const addScheduleRow = () => {
+        setSchedules(prev => [...prev, { date: null, start_time: null, end_time: null }]);
+    };
+
+    const updateScheduleRow = (index, field, value) => {
+        setSchedules(prev => prev.map((item, idx) => idx === index ? { ...item, [field]: value } : item));
+    };
+
+    const removeScheduleRow = (index) => {
+        setSchedules(prev => prev.filter((_, idx) => idx !== index));
+    };
 
     const handleSubmit = async (values) => {
         setSaving(true);
         try {
-            const formData = new FormData();
+            // Validate schedules
+            if (!schedules || schedules.length === 0) {
+                message.error('Please configure at least one date for the event');
+                setSaving(false);
+                return;
+            }
 
-            // Basic fields
+            for (let i = 0; i < schedules.length; i++) {
+                const s = schedules[i];
+                if (!s.date || !s.start_time || !s.end_time) {
+                    message.error(`Please fill out all fields (Date, Start Time, End Time) for day ${i + 1}`);
+                    setSaving(false);
+                    return;
+                }
+                if (s.end_time.isBefore(s.start_time)) {
+                    message.error(`End time must be after start time for day ${i + 1}`);
+                    setSaving(false);
+                    return;
+                }
+            }
+
+            // Sort schedules by date
+            const sortedSchedules = [...schedules].sort((a, b) => a.date.diff(b.date));
+            const formattedSchedules = sortedSchedules.map(s => ({
+                date: s.date.format('YYYY-MM-DD'),
+                start_time: s.start_time.format('HH:mm:ss'),
+                end_time: s.end_time.format('HH:mm:ss')
+            }));
+
+            const startDateStr = sortedSchedules[0].date.format('YYYY-MM-DD');
+            const endDateStr = sortedSchedules[sortedSchedules.length - 1].date.format('YYYY-MM-DD');
+
+            const formData = new FormData();
             formData.append('name', values.name);
             formData.append('description', values.description);
-            formData.append('start_date', values.start_date.format('YYYY-MM-DD'));
-            formData.append('end_date', values.end_date.format('YYYY-MM-DD'));
+            formData.append('start_date', startDateStr);
+            formData.append('end_date', endDateStr);
+            formData.append('schedules', JSON.stringify(formattedSchedules));
             formData.append('venue', values.venue);
             if (values.venue_link) formData.append('venue_link', values.venue_link);
             if (values.location_link) formData.append('location_link', values.location_link);
@@ -144,28 +188,64 @@ export default function AdminCreateEventPage() {
 
                     <Divider orientation="left">Date & Location</Divider>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Form.Item
-                            label="Start Date"
-                            name="start_date"
-                            rules={[
-                                { required: true, message: 'Please select start date' },
-                                { validator: validateDates }
-                            ]}
+                    {/* Dynamic Event Schedules & Timings */}
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl mb-6">
+                        <h4 className="text-sm font-semibold text-slate-700 mb-3">Event Dates & Timings *</h4>
+                        <div className="space-y-3">
+                            {schedules.map((sched, idx) => (
+                                <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                                    <div className="col-span-4">
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Date</label>
+                                        <DatePicker
+                                            style={{ width: '100%' }}
+                                            value={sched.date}
+                                            onChange={(val) => updateScheduleRow(idx, 'date', val)}
+                                            placeholder="Select Date"
+                                        />
+                                    </div>
+                                    <div className="col-span-3">
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">Start Time</label>
+                                        <TimePicker
+                                            style={{ width: '100%' }}
+                                            use12Hours
+                                            format="hh:mm A"
+                                            value={sched.start_time}
+                                            onChange={(val) => updateScheduleRow(idx, 'start_time', val)}
+                                            placeholder="Start"
+                                        />
+                                    </div>
+                                    <div className="col-span-3">
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1">End Time</label>
+                                        <TimePicker
+                                            style={{ width: '100%' }}
+                                            use12Hours
+                                            format="hh:mm A"
+                                            value={sched.end_time}
+                                            onChange={(val) => updateScheduleRow(idx, 'end_time', val)}
+                                            placeholder="End"
+                                        />
+                                    </div>
+                                    <div className="col-span-2 flex items-end pt-5 justify-center">
+                                        {schedules.length > 1 && (
+                                            <Button
+                                                danger
+                                                icon={<DeleteOutlined />}
+                                                onClick={() => removeScheduleRow(idx)}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <Button
+                            type="dashed"
+                            onClick={addScheduleRow}
+                            icon={<PlusOutlined />}
+                            block
+                            className="mt-3"
                         >
-                            <DatePicker style={{ width: '100%' }} />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="End Date"
-                            name="end_date"
-                            rules={[
-                                { required: true, message: 'Please select end date' },
-                                { validator: validateDates }
-                            ]}
-                        >
-                            <DatePicker style={{ width: '100%' }} />
-                        </Form.Item>
+                            Add Event Day / Timing
+                        </Button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
