@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { publicApiClient } from '../../context/AuthContext';
-import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard, ExternalLink, Image as ImageIcon, PlayCircle, Share2, Link as LinkIcon, Tag, Clock } from 'lucide-react';
+import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard, ExternalLink, Image as ImageIcon, PlayCircle, Share2, Link as LinkIcon, Tag, Clock, QrCode } from 'lucide-react';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import ImageCarousel from '../../components/ImageCarousel';
@@ -698,9 +698,17 @@ export default function EventDetailsPage() {
                                         </button>
                                     )}
                                     {isRegistered && isVisitor && (
-                                        <p className="text-center text-xs text-green-600 font-medium mt-3">
-                                            Check &quot;My Events&quot; for your QR Code
-                                        </p>
+                                        <div className="text-center mt-4 p-3 bg-green-50/60 border border-green-200 rounded-xl space-y-2">
+                                            <p className="text-xs text-green-700 font-semibold flex items-center justify-center gap-1.5">
+                                                <CheckCircle size={14} className="text-green-500" /> Registered successfully!
+                                            </p>
+                                            <Link
+                                                to="/visitor/my-events"
+                                                className="inline-flex items-center justify-center gap-2 w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                                            >
+                                                <QrCode size={14} /> View Entry Pass (QR Code)
+                                            </Link>
+                                        </div>
                                     )}
                                 </div>
                             </div>

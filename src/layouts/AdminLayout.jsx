@@ -48,18 +48,18 @@ export default function AdminLayout() {
             label: 'Events',
             onClick: () => navigate('/admin/events')
         },
-        {
-            key: '/visitor/home',
-            icon: <UserOutlined />,
-            label: 'Visitor View',
-            onClick: () => navigate('/visitor/home')
-        },
-        {
-            key: '/exhibitor/home',
-            icon: <CalendarOutlined />,
-            label: 'Exhibitor View',
-            onClick: () => navigate('/exhibitor/home')
-        }
+        // {
+        //     key: '/visitor/home',
+        //     icon: <UserOutlined />,
+        //     label: 'Visitor View',
+        //     onClick: () => navigate('/visitor/home')
+        // },
+        // {
+        //     key: '/exhibitor/home',
+        //     icon: <CalendarOutlined />,
+        //     label: 'Exhibitor View',
+        //     onClick: () => navigate('/exhibitor/home')
+        // }
     ];
 
     const userMenuItems = [

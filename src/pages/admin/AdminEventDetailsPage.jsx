@@ -9,7 +9,8 @@ import {
 import {
     ArrowLeftOutlined, EyeOutlined, CheckCircleOutlined,
     CloseCircleOutlined, SearchOutlined, ReloadOutlined,
-    UserAddOutlined, ShopOutlined, UploadOutlined, CheckOutlined, LinkOutlined, EnvironmentOutlined
+    UserAddOutlined, ShopOutlined, UploadOutlined, CheckOutlined, LinkOutlined, EnvironmentOutlined,
+    DownloadOutlined
 } from '@ant-design/icons';
 import { ApprovalModal } from './ApprovalModal';
 
@@ -167,6 +168,42 @@ export default function AdminEventDetailsPage() {
 
     const handleExhibitorTableChange = (pagination) => {
         setExhibitorsPagination(pagination);
+    };
+
+    const handleDownloadExhibitors = async () => {
+        try {
+            const res = await apiClient.get(`/exhibitions/admin/exhibitions/${id}/exhibitors/`, {
+                params: { download: 'true', search: exhibitorsSearch },
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `exhibitors-event-${id}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (error) {
+            message.error("Failed to download exhibitors data");
+        }
+    };
+
+    const handleDownloadVisitors = async () => {
+        try {
+            const res = await apiClient.get(`/exhibitions/admin/exhibitions/${id}/visitors/`, {
+                params: { download: 'true', search: visitorsSearch },
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `visitors-event-${id}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (error) {
+            message.error("Failed to download visitors data");
+        }
     };
 
     // Actions
@@ -540,6 +577,7 @@ export default function AdminEventDetailsPage() {
                             style={{ width: 300 }}
                         />
                         <Button icon={<ReloadOutlined />} onClick={() => fetchExhibitors(1, 10, "")}>Refresh</Button>
+                        <Button icon={<DownloadOutlined />} onClick={handleDownloadExhibitors}>Download Excel</Button>
                         <Button
                             type="primary"
                             icon={<ShopOutlined />}
@@ -573,6 +611,7 @@ export default function AdminEventDetailsPage() {
                             style={{ width: 300 }}
                         />
                         <Button icon={<ReloadOutlined />} onClick={() => fetchVisitors(1, 10, "")}>Refresh</Button>
+                        <Button icon={<DownloadOutlined />} onClick={handleDownloadVisitors}>Download Excel</Button>
                         <Button
                             type="primary"
                             icon={<UserAddOutlined />}
