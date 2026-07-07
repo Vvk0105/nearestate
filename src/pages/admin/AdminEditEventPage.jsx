@@ -513,8 +513,8 @@ export default function AdminEditEventPage() {
                         tooltip="Free-text payment instructions for exhibitors (e.g. Account No, IFSC, IBAN, SWIFT). Leave blank to remove."
                     >
                         <TextArea
-                            rows={4}
-                            placeholder="e.g. Account No: 1234567890, Bank: State Bank, IFSC: SBIN0001234, SWIFT: SBININBB"
+                            rows={6}
+                            placeholder="To confirm your exhibitor booking, please make payment to the following account:&#10;Account Name: Delivery Around Pty Ltd&#10;Bank: Commonwealth Bank, Australia&#10;BSB: 063-464&#10;Account Number: 11095751&#10;Please use your company name as the payment reference, upload the screen shot in this page. (Optional: email the payment confirmation to accounts@NearEstate.com, once the transfer has been completed)."
                         />
                     </Form.Item>
 

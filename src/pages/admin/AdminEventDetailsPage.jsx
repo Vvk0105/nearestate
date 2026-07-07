@@ -179,7 +179,8 @@ export default function AdminEventDetailsPage() {
             const url = window.URL.createObjectURL(new Blob([res.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `exhibitors-event-${id}.csv`);
+            const safeName = event?.name ? event.name.replace(/[^a-zA-Z0-9_\-]/g, '_') : id;
+            link.setAttribute('download', `exhibitors-${safeName}.csv`);
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);
@@ -197,7 +198,8 @@ export default function AdminEventDetailsPage() {
             const url = window.URL.createObjectURL(new Blob([res.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `visitors-event-${id}.csv`);
+            const safeName = event?.name ? event.name.replace(/[^a-zA-Z0-9_\-]/g, '_') : id;
+            link.setAttribute('download', `visitors-${safeName}.csv`);
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);

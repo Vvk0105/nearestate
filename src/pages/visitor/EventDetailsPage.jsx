@@ -757,9 +757,9 @@ export default function EventDetailsPage() {
                                                     <Upload className="mx-auto h-12 w-12 text-slate-400 group-hover:text-blue-500 transition-colors" />
                                                     <div className="text-sm text-slate-600">
                                                         <span className="font-medium text-blue-600 hover:text-blue-500">Upload a file</span>
-                                                        <input id="file-upload" name="file-upload" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => setApplyFile(e.target.files[0])} accept="image/*" />
+                                                        <input id="file-upload" name="file-upload" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => setApplyFile(e.target.files[0])} accept="image/*,.pdf" />
                                                     </div>
-                                                    <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 10MB</p>
+                                                    <p className="text-xs text-slate-500 mt-1">PNG, JPG, PDF up to 10MB</p>
                                                 </>
                                             )}
                                         </div>
