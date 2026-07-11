@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Form, Input, InputNumber, Select, Button, Upload, Card, message } from 'antd';
 import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
+import { compressImages } from '../../utils/compressImage';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -11,6 +12,7 @@ export default function AddPropertyForm() {
     const { apiClient } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [compressing, setCompressing] = useState(false);
     const [exhibitions, setExhibitions] = useState([]);
     const [fileList, setFileList] = useState([]);
     const [form] = Form.useForm();
@@ -43,9 +45,14 @@ export default function AddPropertyForm() {
         data.append('price_from', values.price_from);
         data.append('price_to', values.price_to);
 
-        fileList.forEach((file) => {
-            data.append('uploaded_images', file.originFileObj);
-        });
+        // Compress property images before upload
+        if (fileList.length > 0) {
+            setCompressing(true);
+            const rawFiles = fileList.map(f => f.originFileObj);
+            const compressedFiles = await compressImages(rawFiles, 'gallery');
+            setCompressing(false);
+            compressedFiles.forEach((file) => data.append('uploaded_images', file));
+        }
 
         try {
             await apiClient.post(`exhibitions/exhibitor/properties/${values.exhibition}/create/`, data, {

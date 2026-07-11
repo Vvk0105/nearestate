@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Form, Input, DatePicker, TimePicker, InputNumber, Switch, Button, Upload, Card, message, Divider, Select } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, UploadOutlined, PictureOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { compressImage, compressImages } from '../../utils/compressImage';
 
 const { TextArea } = Input;
 
@@ -12,6 +13,7 @@ export default function AdminCreateEventPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [saving, setSaving] = useState(false);
+    const [compressing, setCompressing] = useState(false);
     const [galleryFileList, setGalleryFileList] = useState([]);
     const [mapFileList, setMapFileList] = useState([]);
     const [priceTiers, setPriceTiers] = useState([{ name: '', fee: 0, description: '' }]);
@@ -93,15 +95,22 @@ export default function AdminCreateEventPage() {
                 formData.append('price_tiers', JSON.stringify(validTiers));
             }
 
-            // Map image
+            // Map image — compress before upload
             if (mapFileList.length > 0) {
-                formData.append('map_image', mapFileList[0].originFileObj);
+                setCompressing(true);
+                const compressedMap = await compressImage(mapFileList[0].originFileObj, 'gallery');
+                setCompressing(false);
+                formData.append('map_image', compressedMap);
             }
 
-            // Gallery images
-            galleryFileList.forEach(file => {
-                formData.append('images', file.originFileObj);
-            });
+            // Gallery images — compress all concurrently
+            if (galleryFileList.length > 0) {
+                setCompressing(true);
+                const rawFiles = galleryFileList.map(f => f.originFileObj);
+                const compressedFiles = await compressImages(rawFiles, 'gallery');
+                setCompressing(false);
+                compressedFiles.forEach(file => formData.append('images', file));
+            }
 
             await apiClient.post('/exhibitions/admin/exhibitions/create/', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
@@ -469,12 +478,12 @@ export default function AdminCreateEventPage() {
                         <Button
                             type="primary"
                             htmlType="submit"
-                            loading={saving}
+                            loading={saving || compressing}
                             icon={<SaveOutlined />}
                             size="large"
                             block
                         >
-                            Create Event
+                            {compressing ? 'Compressing images...' : 'Create Event'}
                         </Button>
                     </div>
                 </Form>

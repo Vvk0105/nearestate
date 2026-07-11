@@ -8,6 +8,7 @@ import {
     ArrowLeftOutlined, SaveOutlined, UploadOutlined, DeleteOutlined,
     PlusOutlined, YoutubeOutlined, LinkOutlined
 } from '@ant-design/icons';
+import { compressImages } from '../../utils/compressImage';
 
 export default function AdminEventRecapPage() {
     const { id } = useParams();
@@ -16,6 +17,7 @@ export default function AdminEventRecapPage() {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [compressing, setCompressing] = useState(false);
 
     // Existing data from API
     const [existingImages, setExistingImages] = useState([]);
@@ -72,8 +74,14 @@ export default function AdminEventRecapPage() {
             if (removeImageIds.length > 0) {
                 formData.append('remove_image_ids', removeImageIds.join(','));
             }
-            // New images
-            newImageFiles.forEach(f => formData.append('recap_images', f.originFileObj));
+            // New images — compress before upload
+            if (newImageFiles.length > 0) {
+                setCompressing(true);
+                const rawFiles = newImageFiles.map(f => f.originFileObj);
+                const compressedFiles = await compressImages(rawFiles, 'gallery');
+                setCompressing(false);
+                compressedFiles.forEach(f => formData.append('recap_images', f));
+            }
 
             // Videos to remove
             if (removeVideoIds.length > 0) {
