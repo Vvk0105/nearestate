@@ -10,7 +10,7 @@ import {
     ArrowLeftOutlined, EyeOutlined, CheckCircleOutlined,
     CloseCircleOutlined, SearchOutlined, ReloadOutlined,
     UserAddOutlined, ShopOutlined, UploadOutlined, CheckOutlined, LinkOutlined, EnvironmentOutlined,
-    DownloadOutlined
+    DownloadOutlined, EditOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import { ApprovalModal } from './ApprovalModal';
 
@@ -75,6 +75,13 @@ export default function AdminEventDetailsPage() {
     const [showAddVisitorModal, setShowAddVisitorModal] = useState(false);
     const [addVisitorLoading, setAddVisitorLoading] = useState(false);
     const [addVisitorForm] = Form.useForm();
+
+    // Edit Exhibitor Modal State
+    const [showEditExhibitorModal, setShowEditExhibitorModal] = useState(false);
+    const [editExhibitorRecord, setEditExhibitorRecord] = useState(null);
+    const [editExhibitorLoading, setEditExhibitorLoading] = useState(false);
+    const [editExhibitorBadgeFile, setEditExhibitorBadgeFile] = useState(null);
+    const [editExhibitorForm] = Form.useForm();
 
     useEffect(() => {
         fetchEventDetails();
@@ -345,6 +352,65 @@ export default function AdminEventDetailsPage() {
         }
     };
 
+    const openEditExhibitor = (record) => {
+        setEditExhibitorRecord(record);
+        setEditExhibitorBadgeFile(null);
+        editExhibitorForm.setFieldsValue({
+            booth_number: record.booth_number,
+            company_name: record.company_name,
+            contact_number: record.contact_number,
+            business_type: record.business_type,
+            council_area: record.council_area,
+        });
+        setShowEditExhibitorModal(true);
+    };
+
+    const handleEditExhibitor = async (values) => {
+        setEditExhibitorLoading(true);
+        try {
+            const formData = new FormData();
+            Object.entries(values).forEach(([k, v]) => { if (v !== undefined && v !== null) formData.append(k, v); });
+            if (editExhibitorBadgeFile) formData.append('badge', editExhibitorBadgeFile);
+
+            const res = await apiClient.patch(
+                `/exhibitions/admin/exhibitions/${id}/exhibitors/${editExhibitorRecord.id}/update/`,
+                formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+            message.success('Exhibitor updated successfully');
+            // Optimistic update
+            setExhibitors(prev => prev.map(ex =>
+                ex.id === editExhibitorRecord.id ? { ...ex, ...res.data } : ex
+            ));
+            setShowEditExhibitorModal(false);
+            editExhibitorForm.resetFields();
+        } catch (error) {
+            message.error(error.response?.data?.error || 'Failed to update exhibitor');
+        } finally {
+            setEditExhibitorLoading(false);
+        }
+    };
+
+    const handleDeleteExhibitor = (record) => {
+        Modal.confirm({
+            title: 'Remove Exhibitor?',
+            content: `Are you sure you want to remove ${record.company_name} from this event? Their booth will be freed up.`,
+            okText: 'Remove',
+            okType: 'danger',
+            onOk: async () => {
+                try {
+                    await apiClient.delete(
+                        `/exhibitions/admin/exhibitions/${id}/exhibitors/${record.id}/delete/`
+                    );
+                    message.success('Exhibitor removed from event');
+                    fetchExhibitors(exhibitorsPagination.current, exhibitorsPagination.pageSize, debouncedExhibitorsSearch);
+                } catch (error) {
+                    message.error(error.response?.data?.error || 'Failed to remove exhibitor');
+                }
+            }
+        });
+    };
+
 
     const requestColumns = [
         { title: 'Company', dataIndex: ['exhibitor_profile', 'company_name'], key: 'company_name', render: text => <strong>{text}</strong> },
@@ -393,10 +459,18 @@ export default function AdminEventDetailsPage() {
         { title: 'Email', dataIndex: 'email', key: 'email' },
         { title: 'Booth', dataIndex: 'booth_number', key: 'booth_number' },
         {
-            title: 'Action', key: 'action', render: (_, record) => (
-                <Button icon={<EyeOutlined />} onClick={() => showDetails(record, 'exhibitor')}>
-                    View Details
-                </Button>
+            title: 'Actions', key: 'action', render: (_, record) => (
+                <Space>
+                    <Button size="small" icon={<EyeOutlined />} onClick={() => showDetails(record, 'exhibitor')}>
+                        View
+                    </Button>
+                    <Button size="small" icon={<EditOutlined />} onClick={() => openEditExhibitor(record)}>
+                        Edit
+                    </Button>
+                    <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDeleteExhibitor(record)}>
+                        Remove
+                    </Button>
+                </Space>
             )
         }
     ];
@@ -919,6 +993,108 @@ export default function AdminEventDetailsPage() {
                             style={{ background: '#52c41a', borderColor: '#52c41a' }}
                         >
                             Register Visitor
+                        </Button>
+                    </div>
+                </Form>
+            </Modal>
+
+            {/* ── Edit Exhibitor Modal ── */}
+            <Modal
+                title={
+                    <Space>
+                        <EditOutlined style={{ color: '#1677ff' }} />
+                        <span>Edit Exhibitor Details</span>
+                    </Space>
+                }
+                open={showEditExhibitorModal}
+                onCancel={() => { setShowEditExhibitorModal(false); editExhibitorForm.resetFields(); }}
+                footer={null}
+                width={500}
+                destroyOnClose
+            >
+                <Form
+                    form={editExhibitorForm}
+                    layout="vertical"
+                    onFinish={handleEditExhibitor}
+                >
+                    <Form.Item
+                        label="Booth Number"
+                        name="booth_number"
+                        rules={[{ required: true, message: 'Booth number is required' }]}
+                    >
+                        <Input type="number" min={1} placeholder="e.g. 12" />
+                    </Form.Item>
+                    <Form.Item
+                        label="Company Name"
+                        name="company_name"
+                        rules={[{ required: true, message: 'Company name is required' }]}
+                    >
+                        <Input placeholder="Acme Properties" />
+                    </Form.Item>
+                    <Form.Item label="Contact Number" name="contact_number">
+                        <Input placeholder="+61400000000" />
+                    </Form.Item>
+                    <Form.Item label="Business Type" name="business_type">
+                        <Select placeholder="Select business type" showSearch optionFilterProp="children">
+                            {[
+                                ['DEVELOPER', 'Real Estate Developer'],
+                                ['BROKER', 'Real Estate Agent / Broker'],
+                                ['LOAN', 'Mortgage / Loan Provider'],
+                                ['PROPERTY_REAL_ESTATE', 'Property & Real Estate'],
+                                ['BUILDERS_CONSTRUCTION', 'Builders & Construction'],
+                                ['TRADES_CONTRACTORS', 'Trades & Contractors'],
+                                ['ARCHITECTURE_DESIGN_ENGINEERING', 'Architecture, Design & Engineering'],
+                                ['FINANCE_BANKING', 'Finance & Banking'],
+                                ['LEGAL_COMPLIANCE', 'Legal & Compliance'],
+                                ['INSPECTION_CERTIFICATION', 'Inspection & Certification'],
+                                ['PROPERTY_SERVICES', 'Property Services'],
+                                ['TECHNOLOGY_PROPTECH', 'Technology & PropTech'],
+                                ['FURNITURE_FITOUT_LIFESTYLE', 'Furniture, Fitout & Lifestyle'],
+                                ['GOVERNMENT_COMMUNITY', 'Government & Community'],
+                                ['EDUCATION_MEDIA', 'Education & Media'],
+                                ['TELECOM_INFRASTRUCTURE', 'Telecom & Infrastructure'],
+                                ['RETAIL_MISCELLANEOUS', 'Retail & Miscellaneous'],
+                                ['HOSPITALITY_CATERING', 'Hospitality & Catering'],
+                                ['HEALTH_WELLNESS', 'Health & Wellness'],
+                                ['SUSTAINABILITY_ENERGY', 'Sustainability & Energy'],
+                                ['TRANSPORT_LOGISTICS', 'Transport & Logistics'],
+                                ['RECRUITMENT_HR', 'Recruitment & HR'],
+                                ['MARKETING_ADVERTISING', 'Marketing & Advertising'],
+                                ['EVENTS_ENTERTAINMENT', 'Events & Entertainment'],
+                                ['SECURITY_SAFETY', 'Security & Safety'],
+                                ['MANUFACTURING_INDUSTRIAL', 'Manufacturing & Industrial'],
+                                ['INVESTMENT_WEALTH_MANAGEMENT', 'Investment & Wealth Management'],
+                                ['TRAINING_PROFESSIONAL_DEVELOPMENT', 'Training & Professional Development'],
+                                ['HOME_LIVING', 'Home & Living'],
+                                ['OTHER_BUSINESSES', 'Other Businesses'],
+                            ].map(([v, l]) => <Select.Option key={v} value={v}>{l}</Select.Option>)}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item label="Council / Local Area" name="council_area">
+                        <Input placeholder="e.g. City Centre" />
+                    </Form.Item>
+                    <Form.Item label="Badge (optional — replaces existing)">
+                        <Upload
+                            beforeUpload={(file) => { setEditExhibitorBadgeFile(file); return false; }}
+                            onRemove={() => setEditExhibitorBadgeFile(null)}
+                            maxCount={1}
+                            accept=".pdf,image/*"
+                        >
+                            <Button icon={<UploadOutlined />}>Upload New Badge</Button>
+                        </Upload>
+                        {editExhibitorRecord?.badge && !editExhibitorBadgeFile && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                Current: <a href={editExhibitorRecord.badge} target="_blank" rel="noreferrer">View Badge</a>
+                            </p>
+                        )}
+                        {editExhibitorBadgeFile && (
+                            <p className="text-green-600 text-xs mt-1">✓ {editExhibitorBadgeFile.name}</p>
+                        )}
+                    </Form.Item>
+                    <div className="flex justify-end gap-2 mt-2">
+                        <Button onClick={() => { setShowEditExhibitorModal(false); editExhibitorForm.resetFields(); }}>Cancel</Button>
+                        <Button type="primary" htmlType="submit" loading={editExhibitorLoading} icon={<CheckOutlined />}>
+                            Save Changes
                         </Button>
                     </div>
                 </Form>
