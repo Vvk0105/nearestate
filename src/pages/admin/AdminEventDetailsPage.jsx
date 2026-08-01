@@ -83,6 +83,12 @@ export default function AdminEventDetailsPage() {
     const [editExhibitorBadgeFile, setEditExhibitorBadgeFile] = useState(null);
     const [editExhibitorForm] = Form.useForm();
 
+    // Edit Visitor Modal State
+    const [showEditVisitorModal, setShowEditVisitorModal] = useState(false);
+    const [editVisitorRecord, setEditVisitorRecord] = useState(null);
+    const [editVisitorLoading, setEditVisitorLoading] = useState(false);
+    const [editVisitorForm] = Form.useForm();
+
     useEffect(() => {
         fetchEventDetails();
         fetchRequests();
@@ -411,6 +417,55 @@ export default function AdminEventDetailsPage() {
         });
     };
 
+    const openEditVisitor = (record) => {
+        setEditVisitorRecord(record);
+        editVisitorForm.setFieldsValue({
+            name: record.name,
+            is_checked_in: record.is_checked_in,
+        });
+        setShowEditVisitorModal(true);
+    };
+
+    const handleEditVisitor = async (values) => {
+        setEditVisitorLoading(true);
+        try {
+            const res = await apiClient.patch(
+                `/exhibitions/admin/exhibitions/${id}/visitors/${editVisitorRecord.id}/update/`,
+                { name: values.name, is_checked_in: values.is_checked_in }
+            );
+            message.success('Visitor updated successfully');
+            setVisitors(prev => prev.map(v =>
+                v.id === editVisitorRecord.id ? { ...v, ...res.data } : v
+            ));
+            setShowEditVisitorModal(false);
+            editVisitorForm.resetFields();
+        } catch (error) {
+            message.error(error.response?.data?.error || 'Failed to update visitor');
+        } finally {
+            setEditVisitorLoading(false);
+        }
+    };
+
+    const handleDeleteVisitor = (record) => {
+        Modal.confirm({
+            title: 'Remove Visitor?',
+            content: `Are you sure you want to remove ${record.name} (${record.email}) from this event? Their visitor slot will be freed up.`,
+            okText: 'Remove',
+            okType: 'danger',
+            onOk: async () => {
+                try {
+                    await apiClient.delete(
+                        `/exhibitions/admin/exhibitions/${id}/visitors/${record.id}/delete/`
+                    );
+                    message.success('Visitor removed from event');
+                    fetchVisitors(visitorsPagination.current, visitorsPagination.pageSize, debouncedVisitorsSearch);
+                } catch (error) {
+                    message.error(error.response?.data?.error || 'Failed to remove visitor');
+                }
+            }
+        });
+    };
+
 
     const requestColumns = [
         { title: 'Company', dataIndex: ['exhibitor_profile', 'company_name'], key: 'company_name', render: text => <strong>{text}</strong> },
@@ -490,13 +545,20 @@ export default function AdminEventDetailsPage() {
             title: 'Actions', key: 'actions', render: (_, record) => (
                 <Space>
                     <Button
+                        size="small"
                         type={record.is_checked_in ? 'default' : 'primary'}
                         onClick={() => handleToggleCheckIn(record.id, record.is_checked_in)}
                     >
                         {record.is_checked_in ? 'Check Out' : 'Check In'}
                     </Button>
-                    <Button icon={<EyeOutlined />} onClick={() => showDetails(record, 'visitor')}>
-                        Details
+                    <Button size="small" icon={<EyeOutlined />} onClick={() => showDetails(record, 'visitor')}>
+                        View
+                    </Button>
+                    <Button size="small" icon={<EditOutlined />} onClick={() => openEditVisitor(record)}>
+                        Edit
+                    </Button>
+                    <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDeleteVisitor(record)}>
+                        Remove
                     </Button>
                 </Space>
             )
@@ -1094,6 +1156,55 @@ export default function AdminEventDetailsPage() {
                     <div className="flex justify-end gap-2 mt-2">
                         <Button onClick={() => { setShowEditExhibitorModal(false); editExhibitorForm.resetFields(); }}>Cancel</Button>
                         <Button type="primary" htmlType="submit" loading={editExhibitorLoading} icon={<CheckOutlined />}>
+                            Save Changes
+                        </Button>
+                    </div>
+                </Form>
+            </Modal>
+
+            {/* ── Edit Visitor Modal ── */}
+            <Modal
+                title={
+                    <Space>
+                        <EditOutlined style={{ color: '#52c41a' }} />
+                        <span>Edit Visitor Details</span>
+                    </Space>
+                }
+                open={showEditVisitorModal}
+                onCancel={() => { setShowEditVisitorModal(false); editVisitorForm.resetFields(); }}
+                footer={null}
+                width={420}
+                destroyOnClose
+            >
+                <Form
+                    form={editVisitorForm}
+                    layout="vertical"
+                    onFinish={handleEditVisitor}
+                >
+                    <Form.Item
+                        label="Visitor Name"
+                        name="name"
+                        rules={[{ required: true, message: 'Name is required' }]}
+                    >
+                        <Input placeholder="Full name" />
+                    </Form.Item>
+                    <Form.Item
+                        label="Check-in Status"
+                        name="is_checked_in"
+                        valuePropName="checked"
+                    >
+                        <input type="checkbox" id="visitor-checkin-checkbox" style={{ marginRight: 8 }} />
+                        <label htmlFor="visitor-checkin-checkbox" className="text-sm text-gray-600 cursor-pointer">Mark as Checked In</label>
+                    </Form.Item>
+                    <div className="flex justify-end gap-2 mt-2">
+                        <Button onClick={() => { setShowEditVisitorModal(false); editVisitorForm.resetFields(); }}>Cancel</Button>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={editVisitorLoading}
+                            icon={<CheckOutlined />}
+                            style={{ background: '#52c41a', borderColor: '#52c41a' }}
+                        >
                             Save Changes
                         </Button>
                     </div>
