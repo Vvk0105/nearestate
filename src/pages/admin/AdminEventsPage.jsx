@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { Table, Button, Input, Tag, Card, message, Modal } from 'antd';
-import { PlusOutlined, SearchOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
-import { LayoutGrid, Zap, CalendarDays, Clock } from 'lucide-react';
+import { PlusOutlined, SearchOutlined, ReloadOutlined, EyeOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
+import { LayoutGrid, Zap, CalendarDays, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 // ── Status classifier (mirrors EventsHomePage logic) ─────────────────────────
 const FILTERS = [
@@ -11,6 +11,8 @@ const FILTERS = [
     { key: 'ongoing',  label: 'Ongoing',  icon: Zap,          activeBg: 'bg-green-600 text-white',  dot: 'bg-green-500'  },
     { key: 'upcoming', label: 'Upcoming', icon: CalendarDays, activeBg: 'bg-blue-600 text-white',   dot: 'bg-blue-500'   },
     { key: 'past',     label: 'Past',     icon: Clock,        activeBg: 'bg-slate-500 text-white',  dot: 'bg-slate-400'  },
+    { key: 'active',   label: 'Active',   icon: CheckCircle,  activeBg: 'bg-emerald-600 text-white',dot: 'bg-emerald-500' },
+    { key: 'inactive', label: 'Inactive', icon: XCircle,      activeBg: 'bg-rose-600 text-white',   dot: 'bg-rose-400'   },
 ];
 
 function classifyEvent(event) {
@@ -27,12 +29,13 @@ function classifyEvent(event) {
 
 export default function AdminEventsPage() {
     const { apiClient } = useAuth();
-    const [allEvents, setAllEvents]   = useState([]);   // fetched list matching current filter
+    const [allEvents, setAllEvents]   = useState([]);
     const [loading, setLoading]       = useState(false);
+    const [togglingId, setTogglingId] = useState(null);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [search, setSearch]         = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
-    const [counts, setCounts]         = useState({ all: 0, ongoing: 0, upcoming: 0, past: 0 });
+    const [counts, setCounts]         = useState({ all: 0, ongoing: 0, upcoming: 0, past: 0, active: 0, inactive: 0 });
 
     useEffect(() => {
         fetchEvents(1, pagination.pageSize, search, activeFilter);
@@ -94,12 +97,42 @@ export default function AdminEventsPage() {
         });
     };
 
+    const handleToggleStatus = async (event) => {
+        const willActivate = !event.is_active;
+        Modal.confirm({
+            title: willActivate ? 'Activate Event' : 'Deactivate Event',
+            content: willActivate
+                ? `Make "${event.name}" active? It will be visible to the public.`
+                : `Make "${event.name}" inactive? It will be hidden from the public.`,
+            okText: willActivate ? 'Activate' : 'Deactivate',
+            okType: willActivate ? 'primary' : 'danger',
+            cancelText: 'Cancel',
+            onOk: async () => {
+                setTogglingId(event.id);
+                try {
+                    await apiClient.patch(`/exhibitions/admin/exhibitions/${event.id}/toggle-status/`);
+                    message.success(
+                        willActivate ? 'Event activated successfully' : 'Event deactivated successfully'
+                    );
+                    fetchEvents(pagination.current, pagination.pageSize, search, activeFilter);
+                } catch (error) {
+                    message.error(error.response?.data?.message || 'Failed to update status');
+                } finally {
+                    setTogglingId(null);
+                }
+            }
+        });
+    };
+
     // ── Classified events (adds _status to each item for the status Tag columns) ──
     const filtered = allEvents.map(e => ({ ...e, _status: classifyEvent(e) }));
 
     // ── Status tag colours ────────────────────────────────────────────────────
     const statusTagColor = { ongoing: 'green', upcoming: 'blue', past: 'default' };
     const statusLabel    = { ongoing: 'Ongoing', upcoming: 'Upcoming', past: 'Past' };
+
+    // ── Whether the current tab shows the toggle-status action ────────────────
+    const showToggleAction = activeFilter === 'active' || activeFilter === 'inactive';
 
     const columns = [
         {
@@ -154,10 +187,36 @@ export default function AdminEventsPage() {
             title: 'Actions',
             key: 'actions',
             render: (_, record) => (
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                     <Link to={`/admin/events/${record.id}`}>
                         <Button type="link" icon={<EyeOutlined />}>View Details</Button>
                     </Link>
+
+                    {/* Toggle Active/Inactive — only shown in the Active/Inactive tabs */}
+                    {showToggleAction && (
+                        record.is_active ? (
+                            <Button
+                                type="link"
+                                danger
+                                icon={<StopOutlined />}
+                                loading={togglingId === record.id}
+                                onClick={() => handleToggleStatus(record)}
+                            >
+                                Make Inactive
+                            </Button>
+                        ) : (
+                            <Button
+                                type="link"
+                                style={{ color: '#16a34a' }}
+                                icon={<CheckCircleOutlined />}
+                                loading={togglingId === record.id}
+                                onClick={() => handleToggleStatus(record)}
+                            >
+                                Make Active
+                            </Button>
+                        )
+                    )}
+
                     <Button
                         type="link"
                         danger
@@ -220,6 +279,20 @@ export default function AdminEventsPage() {
                         );
                     })}
                 </div>
+
+                {/* ── Active/Inactive tab hint ── */}
+                {activeFilter === 'inactive' && (
+                    <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">
+                        <XCircle size={16} />
+                        Events in this tab are <strong>not visible to the public</strong>. Click <strong>Make Active</strong> to publish an event.
+                    </div>
+                )}
+                {activeFilter === 'active' && (
+                    <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm">
+                        <CheckCircle size={16} />
+                        Events in this tab are <strong>publicly visible</strong>. Click <strong>Make Inactive</strong> to hide an event.
+                    </div>
+                )}
 
                 {/* ── Events Table ── */}
                 <Table
