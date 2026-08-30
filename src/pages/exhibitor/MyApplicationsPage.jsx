@@ -78,13 +78,22 @@ export default function MyApplicationsPage() {
                 open={previewVisible}
                 footer={null}
                 onCancel={() => setPreviewVisible(false)}
-                width={600}
+                width={800}
+                title="Badge Preview"
             >
-                <img
-                    src={previewImage}
-                    alt="Transaction Screenshot"
-                    style={{ width: '100%', borderRadius: 8 }}
-                />
+                {previewImage && previewImage.toLowerCase().endsWith('.pdf') ? (
+                    <iframe 
+                        src={previewImage} 
+                        title="Badge Preview" 
+                        style={{ width: '100%', height: '70vh', border: 'none', borderRadius: 8 }}
+                    />
+                ) : (
+                    <img
+                        src={previewImage}
+                        alt="Preview"
+                        style={{ width: '100%', borderRadius: 8 }}
+                    />
+                )}
             </Modal>
         </div>
     );
