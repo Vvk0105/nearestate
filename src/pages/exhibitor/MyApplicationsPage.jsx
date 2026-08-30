@@ -12,6 +12,21 @@ export default function MyApplicationsPage() {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const formatMediaUrl = (path) => {
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        
+        let base = MEDIA_BASE.endsWith('/') ? MEDIA_BASE.slice(0, -1) : MEDIA_BASE;
+        let cleanPath = path.startsWith('/') ? path : `/${path}`;
+        
+        // Prevent double /media/ if VITE_MEDIA_BASE_URL was explicitly set with /media
+        if (base.endsWith('/media') && cleanPath.startsWith('/media')) {
+            base = base.slice(0, -6);
+        }
+        
+        return `${base}${cleanPath}`;
+    };
+
     useEffect(() => {
         const fetchApps = async () => {
             try {
@@ -45,7 +60,7 @@ export default function MyApplicationsPage() {
                                     <p className="text-sm text-slate-600 mt-1">Booth: <strong>{app?.booth_number}</strong></p>
                                 )}
                                 {app.badge ? (
-                                    <div className="cursor-pointer" onClick={() => { setPreviewImage(`${MEDIA_BASE}${app.badge}`); setPreviewVisible(true); }}>
+                                    <div className="cursor-pointer" onClick={() => { setPreviewImage(formatMediaUrl(app.badge)); setPreviewVisible(true); }}>
                                         <p className="text-sm text-slate-600 mt-1">Badge <span className="text-purple-500">Preview</span></p>
                                     </div>
                                 ): (
