@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useLocation, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { publicApiClient } from '../../context/AuthContext';
 import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard, ExternalLink, Image as ImageIcon, PlayCircle, Share2, Link as LinkIcon, Tag, Clock, QrCode } from 'lucide-react';
@@ -12,6 +12,7 @@ export default function EventDetailsPage() {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
     const { id } = useParams();
     const location = useLocation();
+    const navigate = useNavigate();
     const { apiClient, user } = useAuth();
     const [event, setEvent] = useState(null);
     const [exhibitors, setExhibitors] = useState([]);
@@ -27,11 +28,6 @@ export default function EventDetailsPage() {
     // Recap sub-tab (local state is fine — it's nested inside the Recaps tab)
     const [recapTab, setRecapTab] = useState('images');
 
-    // Exhibitor Apply State
-    const [showApplyModal, setShowApplyModal] = useState(false);
-    const [applyFile, setApplyFile] = useState(null);
-    const [transactionId, setTransactionId] = useState('');
-    const [submittingApp, setSubmittingApp] = useState(false);
     const [applicationStatus, setApplicationStatus] = useState(null);
 
     // Prefer active_role (set after switchRole/selectRole) over legacy role field
@@ -102,7 +98,7 @@ export default function EventDetailsPage() {
             return;
         }
         if (isExhibitor) {
-            setShowApplyModal(true);
+            navigate(`/exhibitor/checkout/${id}`);
             return;
         }
 
@@ -125,34 +121,7 @@ export default function EventDetailsPage() {
         }
     };
 
-    const handleApplySubmit = async (e) => {
-        e.preventDefault();
-        if (!applyFile) {
-            toast.error('Please upload payment screenshot.');
-            return;
-        }
-        setSubmittingApp(true);
 
-        const formData = new FormData();
-        formData.append('payment_screenshot', applyFile);
-        formData.append('transaction_id', transactionId);
-
-        try {
-            await apiClient.post(`/exhibitions/exhibitor/apply/${id}/`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-            toast.success('Application submitted successfully!');
-            setApplicationStatus('PENDING');
-            setIsRegistered(true);
-            setShowApplyModal(false);
-            fetchData();
-        } catch (error) {
-            console.error(error);
-            toast.error(error.response?.data?.error || 'Application failed.');
-        } finally {
-            setSubmittingApp(false);
-        }
-    };
 
     if (loading) return <EventDetailSkeleton />;
     if (!event) return <div className="text-center p-12 font-medium text-slate-500">Event not found.</div>;
@@ -327,21 +296,7 @@ export default function EventDetailsPage() {
                                                 <h3 className="text-xl font-bold text-slate-900 mb-3">Free Register</h3>
                                             ) : null}
 
-                                            {/* Payment Details — only shown to exhibitors for active events */}
-                                            {isExhibitor && !isPastEvent && event.payment_details && (
-                                                <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-5">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <CreditCard size={18} className="text-blue-600 flex-shrink-0" />
-                                                        <h4 className="font-bold text-blue-800 text-base">Payment Instructions</h4>
-                                                    </div>
-                                                    <pre className="text-sm text-blue-900 whitespace-pre-wrap font-sans leading-relaxed">
-                                                        {event.payment_details}
-                                                    </pre>
-                                                    <p className="text-xs text-blue-500 mt-3 font-medium">
-                                                        💡 Complete the payment, then upload your screenshot when applying.
-                                                    </p>
-                                                </div>
-                                            )}
+
                                         </div>
                                     </div>
 
@@ -717,79 +672,7 @@ export default function EventDetailsPage() {
                 </div>
             </div>
 
-            {/* Apply Modal — Exhibitors only */}
-            {showApplyModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-0 overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                            <h3 className="text-lg font-bold text-slate-900">Exhibitor Application</h3>
-                            <button onClick={() => setShowApplyModal(false)} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 hover:bg-slate-100 transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
 
-                        <div className="p-6">
-                            {event.payment_details && (
-                                <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <CreditCard size={16} className="text-blue-600 flex-shrink-0" />
-                                        <h4 className="font-bold text-blue-800 text-sm">Payment Instructions</h4>
-                                    </div>
-                                    <pre className="text-xs text-blue-900 whitespace-pre-wrap font-sans leading-relaxed">
-                                        {event.payment_details}
-                                    </pre>
-                                </div>
-                            )}
-                            <form onSubmit={handleApplySubmit} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Payment Screenshot</label>
-                                    <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer relative group">
-                                        <div className="space-y-1 text-center">
-                                            {applyFile ? (
-                                                <div className="text-sm text-slate-600">
-                                                    <p className="font-bold text-green-600 truncate max-w-[200px] mx-auto flex items-center justify-center gap-1">
-                                                        <CheckCircle size={14} /> {applyFile.name}
-                                                    </p>
-                                                    <button type="button" onClick={() => setApplyFile(null)} className="text-red-500 text-xs mt-2 hover:underline font-medium">Change File</button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <Upload className="mx-auto h-12 w-12 text-slate-400 group-hover:text-blue-500 transition-colors" />
-                                                    <div className="text-sm text-slate-600">
-                                                        <span className="font-medium text-blue-600 hover:text-blue-500">Upload a file</span>
-                                                        <input id="file-upload" name="file-upload" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => setApplyFile(e.target.files[0])} accept="image/*,.pdf" />
-                                                    </div>
-                                                    <p className="text-xs text-slate-500 mt-1">PNG, JPG, PDF up to 10MB</p>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Transaction ID</label>
-                                    <input
-                                        type="text"
-                                        className="block w-full border border-slate-300 rounded-lg shadow-sm py-2.5 px-3 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                        value={transactionId}
-                                        onChange={(e) => setTransactionId(e.target.value)}
-                                        placeholder="Enter UPI/Bank Transaction ID"
-                                    />
-                                </div>
-
-                                <div className="flex gap-3 pt-4">
-                                    <button type="button" onClick={() => setShowApplyModal(false)} className="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl shadow-sm text-sm font-bold text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 transition-colors">
-                                        Cancel
-                                    </button>
-                                    <button type="submit" disabled={submittingApp} className="flex-1 py-2.5 px-4 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-70 disabled:shadow-none transition-all">
-                                        {submittingApp ? 'Submitting...' : 'Submit Application'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 }

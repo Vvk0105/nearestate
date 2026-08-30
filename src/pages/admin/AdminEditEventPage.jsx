@@ -69,7 +69,8 @@ export default function AdminEditEventPage() {
                 booth_capacity: data.booth_capacity,
                 visitor_capacity: data.visitor_capacity,
                 registration_fee: data.registration_fee,
-                currency_symbol: data.currency_symbol || '₹',
+                // Set standard currency code for the dropdown
+                currency_code: data.currency_code || 'INR',
                 payment_details: data.payment_details || '',
                 is_active: data.is_active
             });
@@ -160,10 +161,17 @@ export default function AdminEditEventPage() {
             formData.append('visitor_capacity', values.visitor_capacity);
             if (values.registration_fee !== undefined && values.registration_fee !== null) {
                 formData.append('registration_fee', values.registration_fee);
-                formData.append('currency_symbol', values.currency_symbol || '₹');
             }
-            // Always send payment_details (empty string clears it server-side)
-            formData.append('payment_details', values.payment_details || '');
+            // Currency: mapped from standard currency_code
+            const CURRENCY_MAP = {
+                'INR': '₹', 'AUD': 'A$', 'USD': '$', 'EUR': '€', 
+                'GBP': '£', 'JPY': '¥', 'CAD': 'C$',
+            };
+            const currencyCode = values.currency_code || 'INR';
+            const currencySymbol = CURRENCY_MAP[currencyCode] || '₹';
+            formData.append('currency_symbol', currencySymbol);
+            formData.append('currency_code',   currencyCode);
+
             formData.append('is_active', values.is_active);
 
             // Price tiers
@@ -455,15 +463,15 @@ export default function AdminEditEventPage() {
                     <Divider orientation="left">Pricing Tiers</Divider>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center mb-2">
-                        <Form.Item label="Currency" name="currency_symbol" className="md:col-span-1">
+                        <Form.Item label="Currency" name="currency_code" className="md:col-span-1">
                             <Select>
-                                <Select.Option value="₹">₹ (INR)</Select.Option>
-                                <Select.Option value="$">$ (USD)</Select.Option>
-                                <Select.Option value="€">€ (EUR)</Select.Option>
-                                <Select.Option value="£">£ (GBP)</Select.Option>
-                                <Select.Option value="¥">¥ (JPY)</Select.Option>
-                                <Select.Option value="A$">A$ (AUD)</Select.Option>
-                                <Select.Option value="C$">C$ (CAD)</Select.Option>
+                                <Select.Option value="INR">₹ INR (Indian Rupee)</Select.Option>
+                                <Select.Option value="AUD">A$ AUD (Australian Dollar)</Select.Option>
+                                <Select.Option value="USD">$ USD (US Dollar)</Select.Option>
+                                <Select.Option value="EUR">€ EUR (Euro)</Select.Option>
+                                <Select.Option value="GBP">£ GBP (British Pound)</Select.Option>
+                                <Select.Option value="JPY">¥ JPY (Japanese Yen)</Select.Option>
+                                <Select.Option value="CAD">C$ CAD (Canadian Dollar)</Select.Option>
                             </Select>
                         </Form.Item>
                     </div>
@@ -515,16 +523,7 @@ export default function AdminEditEventPage() {
                         Add Price Tier
                     </Button>
 
-                    <Form.Item
-                        label="Payment Details"
-                        name="payment_details"
-                        tooltip="Free-text payment instructions for exhibitors (e.g. Account No, IFSC, IBAN, SWIFT). Leave blank to remove."
-                    >
-                        <TextArea
-                            rows={6}
-                            placeholder="To confirm your exhibitor booking, please make payment to the following account:&#10;Account Name: Delivery Around Pty Ltd&#10;Bank: Commonwealth Bank, Australia&#10;BSB: 063-464&#10;Account Number: 11095751&#10;Please use your company name as the payment reference, upload the screen shot in this page. (Optional: email the payment confirmation to accounts@NearEstate.com, once the transfer has been completed)."
-                        />
-                    </Form.Item>
+
 
                     <Divider orientation="left">Images</Divider>
 
@@ -620,9 +619,9 @@ export default function AdminEditEventPage() {
                         </Upload>
                     </Form.Item>
 
-                    {/* <Form.Item label="Active Status" name="is_active" valuePropName="checked">
+                    <Form.Item label="Active Status" name="is_active" valuePropName="checked">
                         <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
-                    </Form.Item> */}
+                    </Form.Item>
 
                     <Divider />
 

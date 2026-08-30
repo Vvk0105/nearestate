@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-    Table, Tabs, Button, Input, Tag, Drawer, Descriptions,
+    Table, Tabs, Button, Input, InputNumber, Tag, Drawer, Descriptions,
     Space, Modal, message, Card, Row, Col, Progress, Spin,
     Form, Select, Upload, Steps, Divider
 } from 'antd';
@@ -83,6 +83,12 @@ export default function AdminEventDetailsPage() {
     const [editExhibitorBadgeFile, setEditExhibitorBadgeFile] = useState(null);
     const [editExhibitorForm] = Form.useForm();
 
+    // Assign Booth Modal State
+    const [showAssignBoothModal, setShowAssignBoothModal] = useState(false);
+    const [assignBoothRecord, setAssignBoothRecord] = useState(null);
+    const [assignBoothLoading, setAssignBoothLoading] = useState(false);
+    const [assignBoothForm] = Form.useForm();
+
     // Edit Visitor Modal State
     const [showEditVisitorModal, setShowEditVisitorModal] = useState(false);
     const [editVisitorRecord, setEditVisitorRecord] = useState(null);
@@ -91,7 +97,6 @@ export default function AdminEventDetailsPage() {
 
     useEffect(() => {
         fetchEventDetails();
-        fetchRequests();
     }, [id]);
 
     // Debounce effects
@@ -467,58 +472,54 @@ export default function AdminEventDetailsPage() {
     };
 
 
-    const requestColumns = [
-        { title: 'Company', dataIndex: ['exhibitor_profile', 'company_name'], key: 'company_name', render: text => <strong>{text}</strong> },
-        { title: 'Email', dataIndex: ['user', 'email'], key: 'email' },
-        {
-            title: 'Status', dataIndex: 'status', key: 'status', render: status => (
-                <Tag color={status === 'APPROVED' ? 'green' : status === 'REJECTED' ? 'red' : 'gold'}>
-                    {status}
-                </Tag>
-            )
-        },
-        { title: 'Transaction ID', dataIndex: 'transaction_id', key: 'transaction_id' },
-        {
-            title: 'Payment Screenshot',
-            dataIndex: 'payment_screenshot',
-            key: 'payment_screenshot',
-            render: (_, record) => (
-                <Button
-                    type="link"
-                    onClick={() => {
-                        setPreviewImage(record.payment_screenshot);
-                        setPreviewVisible(true);
-                    }}
-                >
-                    Transaction Details
-                </Button>
-            )
-        },
-        {
-            title: 'Actions', key: 'actions', render: (_, record) => (
-                <Space>
-                    {record.status === 'PENDING' && (
-                        <>
-                            <Button type="primary" shape="circle" icon={<CheckCircleOutlined />} onClick={() => { setSelectedReq(record); setShowModal(true); }} />
-                            <Button type="primary" danger shape="circle" icon={<CloseCircleOutlined />} onClick={() => handleReject(record.id)} />
-                        </>
-                    )}
-                    {record.status === 'APPROVED' && <span className="text-gray-500">Booth: {record.booth_number}</span>}
-                </Space>
-            )
-        },
-    ];
+
 
     const exhibitorColumns = [
         { title: 'Company Name', dataIndex: 'company_name', key: 'company_name', render: text => <strong>{text}</strong> },
         { title: 'Email', dataIndex: 'email', key: 'email' },
-        { title: 'Booth', dataIndex: 'booth_number', key: 'booth_number' },
+        {
+            title: 'Plan',
+            dataIndex: 'selected_tier_name',
+            key: 'selected_tier_name',
+            render: (name, record) => name ? (
+                <span>
+                    <Tag color="blue">{name}</Tag>
+                    {record.selected_tier_fee && (
+                        <span className="text-xs text-gray-400 ml-1">
+                            {event?.currency_symbol || '₹'}{record.selected_tier_fee}
+                        </span>
+                    )}
+                </span>
+            ) : <span className="text-gray-400 text-xs">—</span>
+        },
+        {
+            title: 'Booth No',
+            dataIndex: 'booth_number',
+            key: 'booth_number',
+            render: (num) => num
+                ? <Tag color="green">#{num}</Tag>
+                : <Tag color="orange">Pending</Tag>
+        },
         {
             title: 'Actions', key: 'action', render: (_, record) => (
                 <Space>
                     <Button size="small" icon={<EyeOutlined />} onClick={() => showDetails(record, 'exhibitor')}>
                         View
                     </Button>
+                    {/* Assign Booth — shown when booth not yet assigned */}
+                    {!record.booth_number && (
+                        <Button
+                            size="small"
+                            type="primary"
+                            onClick={() => {
+                                setAssignBoothRecord(record);
+                                assignBoothForm.resetFields();
+                                setShowAssignBoothModal(true);
+                            }}
+                        >
+                            Assign Booth
+                        </Button>
+                    )}
                     <Button size="small" icon={<EditOutlined />} onClick={() => openEditExhibitor(record)}>
                         Edit
                     </Button>
@@ -695,17 +696,7 @@ export default function AdminEventDetailsPage() {
                     </Row>
                 </TabPane>
 
-                <TabPane tab={`Requests (${requests.length})`} key="2">
-                    <Table
-                        columns={requestColumns}
-                        dataSource={requests}
-                        rowKey="id"
-                        loading={requestsLoading}
-                        pagination={{ pageSize: 5 }}
-                    />
-                </TabPane>
-
-                <TabPane tab="Exhibitors" key="3">
+                <TabPane tab="Exhibitors" key="2">
                     <div className="mb-4 flex gap-2 flex-wrap">
                         <Input
                             placeholder="Search exhibitors..."
@@ -739,7 +730,7 @@ export default function AdminEventDetailsPage() {
                     />
                 </TabPane>
 
-                <TabPane tab="Visitors" key="4">
+                <TabPane tab="Visitors" key="3">
                     <div className="mb-4 flex gap-2 flex-wrap">
                         <Input
                             placeholder="Search visitors..."
@@ -832,6 +823,66 @@ export default function AdminEventDetailsPage() {
                     alt="Transaction Screenshot"
                     style={{ width: '100%', borderRadius: 8 }}
                 />
+            </Modal>
+
+            {/* ── Assign Booth Modal ── */}
+            <Modal
+                title="Assign Booth Number"
+                open={showAssignBoothModal}
+                onCancel={() => { setShowAssignBoothModal(false); assignBoothForm.resetFields(); }}
+                footer={null}
+                width={360}
+                destroyOnClose
+            >
+                {assignBoothRecord && (
+                    <div className="mb-4 p-3 bg-slate-50 rounded-lg text-sm text-slate-600">
+                        <strong>{assignBoothRecord.company_name}</strong>
+                        <br />{assignBoothRecord.email}
+                        {assignBoothRecord.selected_tier_name && (
+                            <><br /><Tag color="blue" className="mt-1">{assignBoothRecord.selected_tier_name}</Tag></>
+                        )}
+                    </div>
+                )}
+                <Form
+                    form={assignBoothForm}
+                    layout="vertical"
+                    onFinish={async (values) => {
+                        setAssignBoothLoading(true);
+                        try {
+                            const res = await apiClient.patch(
+                                `/exhibitions/admin/exhibitions/${id}/exhibitors/${assignBoothRecord.id}/update/`,
+                                { booth_number: values.booth_number }
+                            );
+                            message.success(`Booth #${values.booth_number} assigned! Updated badge email sent.`);
+                            setExhibitors(prev => prev.map(ex =>
+                                ex.id === assignBoothRecord.id ? { ...ex, booth_number: res.data.booth_number } : ex
+                            ));
+                            setShowAssignBoothModal(false);
+                            assignBoothForm.resetFields();
+                        } catch (error) {
+                            message.error(error.response?.data?.error || 'Failed to assign booth');
+                        } finally {
+                            setAssignBoothLoading(false);
+                        }
+                    }}
+                >
+                    <Form.Item
+                        label="Booth Number"
+                        name="booth_number"
+                        rules={[{ required: true, message: 'Enter a booth number' }]}
+                    >
+                        <InputNumber min={1} style={{ width: '100%' }} placeholder="e.g. 42" />
+                    </Form.Item>
+                    <p className="text-xs text-slate-500 mb-4">
+                        💡 An email with the updated exhibitor badge (including this booth number) will be sent automatically.
+                    </p>
+                    <div className="flex gap-2 justify-end">
+                        <Button onClick={() => setShowAssignBoothModal(false)}>Cancel</Button>
+                        <Button type="primary" htmlType="submit" loading={assignBoothLoading}>
+                            Assign & Send Email
+                        </Button>
+                    </div>
+                </Form>
             </Modal>
 
             {/* ── Add Exhibitor Modal (3-step) ── */}

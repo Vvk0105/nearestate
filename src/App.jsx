@@ -30,6 +30,9 @@ import MyEventsPage from './pages/visitor/MyEventsPage';
 import ExhibitorHome from './pages/exhibitor/ExhibitorHome';
 import ApplyExhibitionPage from './pages/exhibitor/ApplyExhibitionPage';
 import ApplicationFormPage from './pages/exhibitor/ApplicationFormPage';
+import CheckoutPage from './pages/exhibitor/CheckoutPage';
+import PaymentSuccessPage from './pages/exhibitor/PaymentSuccessPage';
+import PaymentCancelPage from './pages/exhibitor/PaymentCancelPage';
 import MyApplicationsPage from './pages/exhibitor/MyApplicationsPage';
 import ManagePropertiesPage from './pages/exhibitor/ManagePropertiesPage';
 import AddPropertyForm from './pages/exhibitor/AddPropertyForm';
@@ -112,10 +115,17 @@ function App() {
                 <Route path="/exhibitor/events/:eventId/exhibitors/:exhibitorId" element={<ExhibitorDetailsPage />} />
                 <Route path="/exhibitor/applications" element={<MyApplicationsPage />} />
                 <Route path="/exhibitor/applications/new" element={<ApplyExhibitionPage />} />
+                {/* Legacy manual-payment route (kept for backward compat) */}
                 <Route path="/exhibitor/apply/:id" element={<ApplicationFormPage />} />
+                {/* New Stripe checkout route */}
+                <Route path="/exhibitor/checkout/:id" element={<CheckoutPage />} />
                 <Route path="/exhibitor/properties" element={<ManagePropertiesPage />} />
                 <Route path="/exhibitor/properties/new" element={<AddPropertyForm />} />
               </Route>
+
+              {/* ─── Stripe redirect landing pages (no auth needed) ─── */}
+              <Route path="/exhibitor/payment-success" element={<PaymentSuccessPage />} />
+              <Route path="/exhibitor/payment-cancel" element={<PaymentCancelPage />} />
 
             </Route>
           </Routes>

@@ -38,7 +38,7 @@ export default function ApplyExhibitionPage() {
         // Let's do a simple file input trigger here for MVP simplicity or a Modal.
 
         // Actually, navigation to /exhibitor/apply/:id is better.
-        navigate(`/exhibitor/apply/${exhibitionId}`);
+        navigate(`/exhibitor/checkout/${exhibitionId}`);
     };
 
     if (loading) return <FullPageLoader message="Loading exhibitions..." />;
