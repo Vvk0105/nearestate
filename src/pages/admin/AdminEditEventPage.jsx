@@ -620,9 +620,9 @@ export default function AdminEditEventPage() {
                         </Upload>
                     </Form.Item>
 
-                    <Form.Item label="Active Status" name="is_active" valuePropName="checked">
+                    {/* <Form.Item label="Active Status" name="is_active" valuePropName="checked">
                         <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
-                    </Form.Item>
+                    </Form.Item> */}
 
                     <Divider />
 
