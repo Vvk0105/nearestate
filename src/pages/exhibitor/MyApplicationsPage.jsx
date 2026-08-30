@@ -5,7 +5,7 @@ import { Modal } from 'antd';
 import FullPageLoader from '../../components/FullPageLoader';
 
 export default function MyApplicationsPage() {
-    const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
+    const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL || (import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace(/\/api\/?$/, '') : '');
     const [previewImage, setPreviewImage] = useState(null);
     const [previewVisible, setPreviewVisible] = useState(false);
     const { apiClient } = useAuth();
