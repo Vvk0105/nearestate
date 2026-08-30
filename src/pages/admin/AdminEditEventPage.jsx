@@ -71,7 +71,6 @@ export default function AdminEditEventPage() {
                 registration_fee: data.registration_fee,
                 // Set standard currency code for the dropdown
                 currency_code: data.currency_code || 'INR',
-                payment_details: data.payment_details || '',
                 is_active: data.is_active
             });
 
