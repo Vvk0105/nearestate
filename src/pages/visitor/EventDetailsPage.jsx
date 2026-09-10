@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { publicApiClient } from '../../context/AuthContext';
-import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard, ExternalLink, Image as ImageIcon, PlayCircle, Share2, Link as LinkIcon, Tag, Clock, QrCode } from 'lucide-react';
+import { MapPin, Calendar, Store, CheckCircle, Upload, X, Info, Map as MapIcon, Users, LogIn, CreditCard, ExternalLink, Image as ImageIcon, PlayCircle, Share2, Link as LinkIcon, Tag, Clock, QrCode, RefreshCw, XCircle, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import ImageCarousel from '../../components/ImageCarousel';
@@ -29,6 +29,7 @@ export default function EventDetailsPage() {
     const [recapTab, setRecapTab] = useState('images');
 
     const [applicationStatus, setApplicationStatus] = useState(null);
+    const [cancellingApp, setCancellingApp] = useState(false);
 
     // Prefer active_role (set after switchRole/selectRole) over legacy role field
     const activeRole = user?.active_role || user?.role;
@@ -627,30 +628,76 @@ export default function EventDetailsPage() {
                                             Login to Register
                                         </Link>
                                     ) : (
-                                        <button
-                                            onClick={handleRegister}
-                                            disabled={registering || (isExhibitor && Boolean(applicationStatus)) || (isVisitor && isRegistered)}
-                                            className={`w-full py-4 rounded-xl font-bold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 ${(isRegistered || applicationStatus) && applicationStatus !== 'REJECTED'
-                                                    ? 'bg-green-600 text-white cursor-default hover:shadow-md'
-                                                    : applicationStatus === 'REJECTED'
-                                                        ? 'bg-red-600 text-white cursor-default'
+                                        <>
+                                        {isExhibitor ? (
+                                            <>
+                                                {applicationStatus === 'PENDING' && (
+                                                    <div className="flex gap-2 w-full">
+                                                        <Link
+                                                            to={`/exhibitor/checkout/${id}`}
+                                                            className="flex-1 py-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl text-center flex items-center justify-center gap-2 shadow-lg transition-all"
+                                                        >
+                                                            <RefreshCw size={18} /> Resume Payment
+                                                        </Link>
+                                                        <button
+                                                            disabled={cancellingApp}
+                                                            onClick={async () => {
+                                                                setCancellingApp(true);
+                                                                try {
+                                                                    await apiClient.delete(`/exhibitions/exhibitor/my-applications/?exhibition_id=${id}`);
+                                                                    setApplicationStatus(null);
+                                                                    setIsRegistered(false);
+                                                                } catch (e) {
+                                                                    console.error('Cancel failed', e);
+                                                                } finally {
+                                                                    setCancellingApp(false);
+                                                                }
+                                                            }}
+                                                            className="flex-1 py-4 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl border border-red-200 flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                                                        >
+                                                            {cancellingApp ? <Loader size={18} className="animate-spin" /> : <XCircle size={18} />}
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                {applicationStatus === 'APPROVED' && (
+                                                    <div className="w-full py-4 bg-green-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 cursor-default">
+                                                        <CheckCircle size={20} /> Application Approved
+                                                    </div>
+                                                )}
+                                                {applicationStatus === 'REJECTED' && (
+                                                    <div className="w-full py-4 bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 cursor-default">
+                                                        <XCircle size={20} /> Application Rejected
+                                                    </div>
+                                                )}
+                                                {!applicationStatus && (
+                                                    <button
+                                                        onClick={handleRegister}
+                                                        disabled={registering}
+                                                        className="w-full py-4 rounded-xl font-bold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700"
+                                                    >
+                                                        {registering ? 'Processing...' : 'Apply for Booth'}
+                                                    </button>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <button
+                                                onClick={handleRegister}
+                                                disabled={registering || (isVisitor && isRegistered)}
+                                                className={`w-full py-4 rounded-xl font-bold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 ${
+                                                    isRegistered
+                                                        ? 'bg-green-600 text-white cursor-default hover:shadow-md'
                                                         : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
                                                 }`}
-                                        >
-                                            {isExhibitor ? (
-                                                applicationStatus ? (
-                                                    <><CheckCircle size={20} /> Application {applicationStatus}</>
-                                                ) : (
-                                                    'Apply for Booth'
-                                                )
-                                            ) : (
-                                                isRegistered ? (
+                                            >
+                                                {isRegistered ? (
                                                     <><CheckCircle size={20} /> You&apos;re Going!</>
                                                 ) : (
                                                     <>{registering ? 'Processing...' : 'Register for Event'}</>
-                                                )
-                                            )}
-                                        </button>
+                                                )}
+                                            </button>
+                                        )}
+                                        </>
                                     )}
                                     {isRegistered && isVisitor && (
                                         <div className="text-center mt-4 p-3 bg-green-50/60 border border-green-200 rounded-xl space-y-2">
