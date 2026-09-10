@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import EventCard from './EventCard';
 import { EventGridSkeleton } from './Skeleton';
@@ -6,7 +6,7 @@ import { useAuth, publicApiClient } from '../context/AuthContext';
 import {
     Loader, LayoutGrid, Zap, CalendarDays, Clock,
     MapPin, Calendar, ChevronLeft, ChevronRight,
-    ArrowRight, CheckCircle, Search, X, RefreshCw
+    ArrowRight, CheckCircle, Search, X, RefreshCw, XCircle
 } from 'lucide-react';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -201,6 +201,7 @@ export default function EventsHomePage({
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const loadMoreRef = useRef(null);
+    const [cancellingId, setCancellingId] = useState(null);
 
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -359,14 +360,45 @@ export default function EventsHomePage({
                 Application Approved <CheckCircle size={16} />
             </Link>
         );
-        if (status === 'PENDING') return (
-            <Link
-                to={`/exhibitor/checkout/${event.id}`}
-                className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl text-center flex items-center justify-center gap-2 text-sm transition-colors shadow-sm"
-            >
-                <RefreshCw size={14} /> Resume Payment
-            </Link>
-        );
+        if (status === 'PENDING') {
+            const isCancelling = cancellingId === event.id;
+            const handleCancel = async () => {
+                if (isCancelling) return;
+                setCancellingId(event.id);
+                try {
+                    await activeApiClient.delete(
+                        `/exhibitions/exhibitor/my-applications/?exhibition_id=${event.id}`
+                    );
+                    // Refresh applications from parent if callback provided
+                    if (typeof onProfileSaved === 'function') onProfileSaved();
+                    // Force re-render by clearing cancelled event from local status
+                    window.location.reload();
+                } catch (err) {
+                    console.error('Cancel failed', err);
+                    setCancellingId(null);
+                }
+            };
+            return (
+                <div className="flex gap-2 w-full">
+                    <Link
+                        to={`/exhibitor/checkout/${event.id}`}
+                        className="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl text-center flex items-center justify-center gap-1.5 text-sm transition-colors shadow-sm"
+                    >
+                        <RefreshCw size={13} /> Resume
+                    </Link>
+                    <button
+                        onClick={handleCancel}
+                        disabled={isCancelling}
+                        className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl border border-red-200 flex items-center justify-center gap-1.5 text-sm transition-colors disabled:opacity-60"
+                    >
+                        {isCancelling
+                            ? <Loader size={13} className="animate-spin" />
+                            : <XCircle size={13} />}
+                        Cancel
+                    </button>
+                </div>
+            );
+        }
         if (status === 'REJECTED') return (
             <div className="w-full py-2.5 bg-red-50 text-red-700 font-bold rounded-xl border border-red-200 text-center text-sm">
                 Application Rejected
