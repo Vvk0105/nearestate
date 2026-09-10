@@ -6,7 +6,7 @@ import { useAuth, publicApiClient } from '../context/AuthContext';
 import {
     Loader, LayoutGrid, Zap, CalendarDays, Clock,
     MapPin, Calendar, ChevronLeft, ChevronRight,
-    ArrowRight, CheckCircle, Search, X
+    ArrowRight, CheckCircle, Search, X, RefreshCw
 } from 'lucide-react';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -360,9 +360,12 @@ export default function EventsHomePage({
             </Link>
         );
         if (status === 'PENDING') return (
-            <div className="w-full py-2.5 bg-yellow-50 text-yellow-700 font-bold rounded-xl border border-yellow-200 text-center flex items-center justify-center gap-2 text-sm">
-                <Loader size={14} className="animate-spin" /> Pending Approval
-            </div>
+            <Link
+                to={`/exhibitor/checkout/${event.id}`}
+                className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl text-center flex items-center justify-center gap-2 text-sm transition-colors shadow-sm"
+            >
+                <RefreshCw size={14} /> Resume Payment
+            </Link>
         );
         if (status === 'REJECTED') return (
             <div className="w-full py-2.5 bg-red-50 text-red-700 font-bold rounded-xl border border-red-200 text-center text-sm">
