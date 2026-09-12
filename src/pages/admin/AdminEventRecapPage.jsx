@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-    Card, Button, Upload, message, Divider, Spin, Image, Input, Form, Space
+    Card, Button, Upload, Divider, Spin, Image, Input, Form, Space
 } from 'antd';
+import toast from 'react-hot-toast';
 import {
     ArrowLeftOutlined, SaveOutlined, UploadOutlined, DeleteOutlined,
     PlusOutlined, YoutubeOutlined, LinkOutlined
@@ -58,7 +59,7 @@ export default function AdminEventRecapPage() {
                 // No recap yet — that's fine
             }
         } catch {
-            message.error('Failed to load event');
+            toast.error('Failed to load event');
             navigate(`/admin/events/${id}`);
         } finally {
             setLoading(false);
@@ -107,7 +108,7 @@ export default function AdminEventRecapPage() {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            message.success('Event recap saved!');
+            toast.success('Event recap saved!');
             // Reset new items and re-fetch
             setNewImageFiles([]);
             setNewVideos([]);
@@ -117,7 +118,7 @@ export default function AdminEventRecapPage() {
             setRemoveSocialIds([]);
             fetchRecap();
         } catch (err) {
-            message.error(err.response?.data?.detail || 'Failed to save recap');
+            toast.error(err.response?.data?.detail || 'Failed to save recap');
         } finally {
             setSaving(false);
         }
@@ -138,11 +139,11 @@ export default function AdminEventRecapPage() {
     const uploadProps = {
         beforeUpload: (file) => {
             if (!file.type.startsWith('image/')) {
-                message.error('Only image files are allowed!');
+                toast.error('Only image files are allowed!');
                 return Upload.LIST_IGNORE;
             }
             if (file.size / 1024 / 1024 > 10) {
-                message.error('Image must be smaller than 10MB!');
+                toast.error('Image must be smaller than 10MB!');
                 return Upload.LIST_IGNORE;
             }
             return false;

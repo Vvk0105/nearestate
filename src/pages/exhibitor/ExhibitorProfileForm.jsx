@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Form, Input, Select, Button, Card, message } from 'antd';
+import { Form, Input, Select, Button, Card } from 'antd';
 import { PhoneOutlined, EnvironmentOutlined, SolutionOutlined, ArrowLeftOutlined, GlobalOutlined } from '@ant-design/icons';
+import toast from 'react-hot-toast';
 import { BankOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -22,7 +23,7 @@ export default function ExhibitorProfileForm() {
             const userResponse = await apiClient.get('/auth/me/');
             setUser(userResponse.data);
 
-            message.success("Profile setup complete! Welcome aboard.");
+            toast.success("Profile setup complete! Welcome aboard.");
             setTimeout(() => {
                 navigate('/exhibitor/home');
             }, 1000);
@@ -31,7 +32,7 @@ export default function ExhibitorProfileForm() {
             const errorMsg = error.response?.data?.company_name?.[0] ||
                 error.response?.data?.contact_number?.[0] ||
                 "Failed to save profile. Please check your inputs.";
-            message.error(errorMsg);
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }

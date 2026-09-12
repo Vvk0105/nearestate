@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Form, Input, InputNumber, Select, Button, Upload, Card, message } from 'antd';
+import { Form, Input, InputNumber, Select, Button, Upload, Card } from 'antd';
 import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
+import toast from 'react-hot-toast';
 import { compressImages } from '../../utils/compressImage';
 
 const { TextArea } = Input;
@@ -32,7 +33,7 @@ export default function AddPropertyForm() {
 
     const handleSubmit = async (values) => {
         if (!values.exhibition) {
-            message.error("Please select an exhibition.");
+            toast.error("Please select an exhibition.");
             return;
         }
 
@@ -58,14 +59,14 @@ export default function AddPropertyForm() {
             await apiClient.post(`exhibitions/exhibitor/properties/${values.exhibition}/create/`, data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            message.success("Property listed successfully!");
+            toast.success("Property listed successfully!");
             navigate('/exhibitor/properties');
         } catch (error) {
             console.error(error);
             const errorMsg = error.response?.data?.title?.[0] ||
                 error.response?.data?.price?.[0] ||
                 "Failed to add property.";
-            message.error(errorMsg);
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -75,12 +76,12 @@ export default function AddPropertyForm() {
         beforeUpload: (file) => {
             const isImage = file.type.startsWith('image/');
             if (!isImage) {
-                message.error('You can only upload image files!');
+                toast.error('You can only upload image files!');
                 return Upload.LIST_IGNORE;
             }
             const isLt5M = file.size / 1024 / 1024 < 5;
             if (!isLt5M) {
-                message.error('Image must be smaller than 5MB!');
+                toast.error('Image must be smaller than 5MB!');
                 return Upload.LIST_IGNORE;
             }
             return false; // Prevent auto upload

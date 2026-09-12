@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { Table, Button, Input, Tag, Card, message, Modal } from 'antd';
+import { Table, Button, Input, Tag, Card, Modal } from 'antd';
+import toast from 'react-hot-toast';
 import { PlusOutlined, SearchOutlined, ReloadOutlined, EyeOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { LayoutGrid, Zap, CalendarDays, Clock, CheckCircle, XCircle } from 'lucide-react';
 
@@ -59,7 +60,7 @@ export default function AdminEventsPage() {
             }
         } catch (error) {
             console.error(error);
-            message.error('Failed to load events');
+            toast.error('Failed to load events');
         } finally {
             setLoading(false);
         }
@@ -88,10 +89,10 @@ export default function AdminEventsPage() {
             onOk: async () => {
                 try {
                     await apiClient.delete(`/exhibitions/admin/exhibitions/${event.id}/delete/`);
-                    message.success('Event deleted successfully');
+                    toast.success('Event deleted successfully');
                     fetchEvents(pagination.current, pagination.pageSize, search, activeFilter);
                 } catch (error) {
-                    message.error(error.response?.data?.message || 'Failed to delete event');
+                    toast.error(error.response?.data?.message || 'Failed to delete event');
                 }
             }
         });
@@ -111,12 +112,12 @@ export default function AdminEventsPage() {
                 setTogglingId(event.id);
                 try {
                     await apiClient.patch(`/exhibitions/admin/exhibitions/${event.id}/toggle-status/`);
-                    message.success(
+                    toast.success(
                         willActivate ? 'Event activated successfully' : 'Event deactivated successfully'
                     );
                     fetchEvents(pagination.current, pagination.pageSize, search, activeFilter);
                 } catch (error) {
-                    message.error(error.response?.data?.message || 'Failed to update status');
+                    toast.error(error.response?.data?.message || 'Failed to update status');
                 } finally {
                     setTogglingId(null);
                 }

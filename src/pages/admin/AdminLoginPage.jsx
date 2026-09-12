@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Form, Input, Button, Card, message } from 'antd';
+import { Form, Input, Button, Card } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
+import toast from 'react-hot-toast';
 
 export default function AdminLoginPage() {
     const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ export default function AdminLoginPage() {
             const { access, refresh, user, role } = res.data;
 
             if (role !== 'ADMIN' && !user?.is_superuser) {
-                message.error("Access Denied. Admins only.");
+                toast.error("Access Denied. Admins only.");
                 setLoading(false);
                 return;
             }
@@ -27,11 +28,11 @@ export default function AdminLoginPage() {
             login(access, userData, refresh);
             console.log("LOGIN SUCCESS - REDIRECTING");
             navigate('/admin/dashboard');
-            message.success("Welcome Admin!");
+            toast.success("Welcome Admin!");
         } catch (error) {
             console.error(error);
             const errorMessage = error.response?.data?.error || "Admin Login Failed. Check credentials.";
-            message.error(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }

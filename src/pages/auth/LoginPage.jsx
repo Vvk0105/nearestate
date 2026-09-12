@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Form, Input, Button, Card, Divider, message } from 'antd';
+import { Form, Input, Button, Card, Divider } from 'antd';
 import { MailOutlined, LockOutlined } from '@ant-design/icons';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
     const [step, setStep] = useState('email');
@@ -20,10 +21,10 @@ export default function LoginPage() {
             await apiClient.post('/auth/email-otp/send/', { email: values.email });
             setEmailValue(values.email);
             setStep('otp');
-            message.success('OTP sent to your email!');
+            toast.success('OTP sent to your email!');
         } catch (error) {
             const errorMessage = error.response?.data?.error || 'Failed to send OTP. Please try again.';
-            message.error(errorMessage);
+            toast.error(errorMessage);
             console.error(error);
         } finally {
             setLoading(false);
@@ -39,12 +40,12 @@ export default function LoginPage() {
             });
             const { access, refresh, user } = res.data;
             login(access, user, refresh);
-            message.success('Login successful!');
+            toast.success('Login successful!');
             navigateUser(user);
         } catch (error) {
             console.error("Login verification failed:", error);
             const errorMessage = error.response?.data?.error || 'Invalid OTP or Login Failed. Please try again.';
-            message.error(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -64,13 +65,13 @@ export default function LoginPage() {
                     const { access, refresh, user } = res.data;
 
                     login(access, user, refresh);
-                    message.success("Google login successful");
+                    toast.success("Google login successful");
 
                     navigateUser(user);
                 } catch (err) {
                     console.error(err);
                     const errorMessage = err.response?.data?.error || "Google login failed";
-                    message.error(errorMessage);
+                    toast.error(errorMessage);
                 }
             },
         });

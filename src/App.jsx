@@ -54,7 +54,43 @@ function App() {
       <ScrollToTop />
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
         <AuthProvider>
-          <Toaster position="top-right" />
+          <Toaster
+            position="top-center"
+            containerStyle={{
+              top: 24,
+            }}
+            toastOptions={{
+              duration: 3500,
+              style: {
+                background: '#ffffff',
+                color: '#0f172a',
+                border: '1px solid #e2e8f0',
+                borderRadius: '14px',
+                padding: '12px 18px',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04)',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#ffffff',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#ffffff',
+                },
+              },
+              loading: {
+                iconTheme: {
+                  primary: '#6366f1',
+                  secondary: '#ffffff',
+                },
+              },
+            }}
+          />
           <Routes>
             {/* ─── Admin Routes ─── */}
             <Route path="/admin/login" element={<AdminLoginPage />} />

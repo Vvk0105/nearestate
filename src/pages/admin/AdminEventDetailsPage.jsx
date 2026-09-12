@@ -3,9 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     Table, Tabs, Button, Input, InputNumber, Tag, Drawer, Descriptions,
-    Space, Modal, message, Card, Row, Col, Progress, Spin,
+    Space, Modal, Card, Row, Col, Progress, Spin,
     Form, Select, Upload, Steps, Divider
 } from 'antd';
+import toast from 'react-hot-toast';
 import {
     ArrowLeftOutlined, EyeOutlined, CheckCircleOutlined,
     CloseCircleOutlined, SearchOutlined, ReloadOutlined,
@@ -132,7 +133,7 @@ export default function AdminEventDetailsPage() {
             const res = await apiClient.get(`/exhibitions/public/exhibitions/${id}/`);
             setEvent(res.data);
         } catch (error) {
-            message.error("Failed to load event details");
+            toast.error("Failed to load event details");
         } finally {
             setLoading(false);
         }
@@ -203,7 +204,7 @@ export default function AdminEventDetailsPage() {
             link.click();
             link.parentNode.removeChild(link);
         } catch (error) {
-            message.error("Failed to download exhibitors data");
+            toast.error("Failed to download exhibitors data");
         }
     };
 
@@ -222,7 +223,7 @@ export default function AdminEventDetailsPage() {
             link.click();
             link.parentNode.removeChild(link);
         } catch (error) {
-            message.error("Failed to download visitors data");
+            toast.error("Failed to download visitors data");
         }
     };
 
@@ -230,11 +231,11 @@ export default function AdminEventDetailsPage() {
     const handleToggleCheckIn = async (visId, currentStatus) => {
         try {
             const res = await apiClient.post(`exhibitions/admin/visitors/${visId}/toggle-checkin/`);
-            message.success(`Visitor ${res.data.is_checked_in ? 'Checked In' : 'Checked Out'}`);
+            toast.success(`Visitor ${res.data.is_checked_in ? 'Checked In' : 'Checked Out'}`);
             // Optimistic update or refetch
             setVisitors(visitors.map(v => v.id === visId ? { ...v, is_checked_in: res.data.is_checked_in } : v));
         } catch (error) {
-            message.error("Failed to update status");
+            toast.error("Failed to update status");
         }
     };
 
@@ -245,10 +246,10 @@ export default function AdminEventDetailsPage() {
             onOk: async () => {
                 try {
                     await apiClient.post(`exhibitions/admin/exhibitor-application/${reqId}/`, { action: 'REJECT' });
-                    message.success("Application Rejected");
+                    toast.success("Application Rejected");
                     fetchRequests();
                 } catch (error) {
-                    message.error("Failed to reject");
+                    toast.error("Failed to reject");
                 }
             }
         });
@@ -259,12 +260,12 @@ export default function AdminEventDetailsPage() {
             await apiClient.post(`exhibitions/admin/exhibitor-application/${reqId}/`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            message.success("Application Approved");
+            toast.success("Application Approved");
             fetchRequests();
             // Refresh exhibitors if approved
             fetchExhibitors(1, 10, "");
         } catch (error) {
-            message.error(error.response?.data?.error || "Failed to approve");
+            toast.error(error.response?.data?.error || "Failed to approve");
         }
     };
 
@@ -283,14 +284,14 @@ export default function AdminEventDetailsPage() {
                 { params: { email: values.email } }
             );
             if (res.data.already_registered) {
-                message.error('This person is already registered as an exhibitor for this event.');
+                toast.error('This person is already registered as an exhibitor for this event.');
                 return;
             }
             setExhibitorEmail(values.email);
             setExhibitorLookup(res.data);
             setExhibitorStep(1);
         } catch (err) {
-            message.error(err.response?.data?.error || 'Lookup failed');
+            toast.error(err.response?.data?.error || 'Lookup failed');
         } finally {
             setExhibitorLookupLoading(false);
         }
@@ -327,11 +328,11 @@ export default function AdminEventDetailsPage() {
                 formData,
                 { headers: { 'Content-Type': 'multipart/form-data' } }
             );
-            message.success('Exhibitor added and approved! Confirmation email sent.');
+            toast.success('Exhibitor added and approved! Confirmation email sent.');
             closeAddExhibitorModal();
             fetchExhibitors(1, exhibitorsPagination.pageSize, debouncedExhibitorsSearch);
         } catch (error) {
-            message.error(error.response?.data?.error || 'Failed to add exhibitor');
+            toast.error(error.response?.data?.error || 'Failed to add exhibitor');
         } finally {
             setAddExhibitorLoading(false);
         }
@@ -353,12 +354,12 @@ export default function AdminEventDetailsPage() {
         setAddVisitorLoading(true);
         try {
             await apiClient.post(`/exhibitions/admin/exhibitions/${id}/add-visitor/`, values);
-            message.success('Visitor registered successfully! A QR pass has been emailed to them.');
+            toast.success('Visitor registered successfully! A QR pass has been emailed to them.');
             setShowAddVisitorModal(false);
             addVisitorForm.resetFields();
             fetchVisitors(1, visitorsPagination.pageSize, debouncedVisitorsSearch);
         } catch (error) {
-            message.error(error.response?.data?.error || 'Failed to add visitor');
+            toast.error(error.response?.data?.error || 'Failed to add visitor');
         } finally {
             setAddVisitorLoading(false);
         }
@@ -390,7 +391,7 @@ export default function AdminEventDetailsPage() {
                 formData,
                 { headers: { 'Content-Type': 'multipart/form-data' } }
             );
-            message.success('Exhibitor updated successfully');
+            toast.success('Exhibitor updated successfully');
             // Optimistic update
             setExhibitors(prev => prev.map(ex =>
                 ex.id === editExhibitorRecord.id ? { ...ex, ...res.data } : ex
@@ -398,7 +399,7 @@ export default function AdminEventDetailsPage() {
             setShowEditExhibitorModal(false);
             editExhibitorForm.resetFields();
         } catch (error) {
-            message.error(error.response?.data?.error || 'Failed to update exhibitor');
+            toast.error(error.response?.data?.error || 'Failed to update exhibitor');
         } finally {
             setEditExhibitorLoading(false);
         }
@@ -415,10 +416,10 @@ export default function AdminEventDetailsPage() {
                     await apiClient.delete(
                         `/exhibitions/admin/exhibitions/${id}/exhibitors/${record.id}/delete/`
                     );
-                    message.success('Exhibitor removed from event');
+                    toast.success('Exhibitor removed from event');
                     fetchExhibitors(exhibitorsPagination.current, exhibitorsPagination.pageSize, debouncedExhibitorsSearch);
                 } catch (error) {
-                    message.error(error.response?.data?.error || 'Failed to remove exhibitor');
+                    toast.error(error.response?.data?.error || 'Failed to remove exhibitor');
                 }
             }
         });
@@ -440,14 +441,14 @@ export default function AdminEventDetailsPage() {
                 `/exhibitions/admin/exhibitions/${id}/visitors/${editVisitorRecord.id}/update/`,
                 { name: values.name, is_checked_in: values.is_checked_in }
             );
-            message.success('Visitor updated successfully');
+            toast.success('Visitor updated successfully');
             setVisitors(prev => prev.map(v =>
                 v.id === editVisitorRecord.id ? { ...v, ...res.data } : v
             ));
             setShowEditVisitorModal(false);
             editVisitorForm.resetFields();
         } catch (error) {
-            message.error(error.response?.data?.error || 'Failed to update visitor');
+            toast.error(error.response?.data?.error || 'Failed to update visitor');
         } finally {
             setEditVisitorLoading(false);
         }
@@ -464,10 +465,10 @@ export default function AdminEventDetailsPage() {
                     await apiClient.delete(
                         `/exhibitions/admin/exhibitions/${id}/visitors/${record.id}/delete/`
                     );
-                    message.success('Visitor removed from event');
+                    toast.success('Visitor removed from event');
                     fetchVisitors(visitorsPagination.current, visitorsPagination.pageSize, debouncedVisitorsSearch);
                 } catch (error) {
-                    message.error(error.response?.data?.error || 'Failed to remove visitor');
+                    toast.error(error.response?.data?.error || 'Failed to remove visitor');
                 }
             }
         });
@@ -867,14 +868,14 @@ export default function AdminEventDetailsPage() {
                                 `/exhibitions/admin/exhibitions/${id}/exhibitors/${assignBoothRecord.id}/update/`,
                                 { booth_number: values.booth_number }
                             );
-                            message.success(`Booth #${values.booth_number} assigned! Updated badge email sent.`);
+                            toast.success(`Booth #${values.booth_number} assigned! Updated badge email sent.`);
                             setExhibitors(prev => prev.map(ex =>
                                 ex.id === assignBoothRecord.id ? { ...ex, booth_number: res.data.booth_number } : ex
                             ));
                             setShowAssignBoothModal(false);
                             assignBoothForm.resetFields();
                         } catch (error) {
-                            message.error(error.response?.data?.error || 'Failed to assign booth');
+                            toast.error(error.response?.data?.error || 'Failed to assign booth');
                         } finally {
                             setAssignBoothLoading(false);
                         }

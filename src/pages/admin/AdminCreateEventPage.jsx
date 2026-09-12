@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Form, Input, DatePicker, TimePicker, InputNumber, Switch, Button, Upload, Card, message, Divider, Select } from 'antd';
+import { Form, Input, DatePicker, TimePicker, InputNumber, Switch, Button, Upload, Card, Divider, Select } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, UploadOutlined, PictureOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import { compressImage, compressImages } from '../../utils/compressImage';
 
@@ -36,7 +37,7 @@ export default function AdminCreateEventPage() {
         try {
             // Validate schedules
             if (!schedules || schedules.length === 0) {
-                message.error('Please configure at least one date for the event');
+                toast.error('Please configure at least one date for the event');
                 setSaving(false);
                 return;
             }
@@ -44,12 +45,12 @@ export default function AdminCreateEventPage() {
             for (let i = 0; i < schedules.length; i++) {
                 const s = schedules[i];
                 if (!s.date || !s.start_time || !s.end_time) {
-                    message.error(`Please fill out all fields (Date, Start Time, End Time) for day ${i + 1}`);
+                    toast.error(`Please fill out all fields (Date, Start Time, End Time) for day ${i + 1}`);
                     setSaving(false);
                     return;
                 }
                 if (s.end_time.isBefore(s.start_time)) {
-                    message.error(`End time must be after start time for day ${i + 1}`);
+                    toast.error(`End time must be after start time for day ${i + 1}`);
                     setSaving(false);
                     return;
                 }
@@ -122,11 +123,11 @@ export default function AdminCreateEventPage() {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            message.success('Event created successfully!');
+            toast.success('Event created successfully!');
             navigate('/admin/events');
         } catch (error) {
             console.error(error);
-            message.error(error.response?.data?.message || 'Failed to create event');
+            toast.error(error.response?.data?.message || 'Failed to create event');
         } finally {
             setSaving(false);
         }
@@ -146,11 +147,11 @@ export default function AdminCreateEventPage() {
         beforeUpload: (file) => {
             const isImage = file.type.startsWith('image/');
             if (!isImage) {
-                message.error('You can only upload image files!');
+                toast.error('You can only upload image files!');
             }
             const isLt5M = file.size / 1024 / 1024 < 5;
             if (!isLt5M) {
-                message.error('Image must be smaller than 5MB!');
+                toast.error('Image must be smaller than 5MB!');
             }
             return false; // Prevent auto upload
         },

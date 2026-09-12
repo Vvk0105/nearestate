@@ -3,7 +3,7 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useAuth } from '../../context/AuthContext';
 import { Card, Button, Spin, Result } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { message } from 'antd';
+import toast from 'react-hot-toast';
 
 export default function AdminQRScanPage() {
     const { apiClient } = useAuth();
@@ -46,12 +46,12 @@ export default function AdminQRScanPage() {
         try {
             const res = await apiClient.post('/exhibitions/admin/qr/scan/', { qr_code: qrCode });
             setScanResult({ success: true, ...res.data });
-            message.success("Check-in Successful!");
+            toast.success("Check-in Successful!");
         } catch (err) {
             console.error(err);
             const msg = err.response?.data?.error || "Scan Failed";
             setScanResult({ success: false, message: msg });
-            message.error(msg);
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
