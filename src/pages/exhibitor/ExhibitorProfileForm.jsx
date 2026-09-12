@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Form, Input, Select, Button, Card, message } from 'antd';
-import { PhoneOutlined, EnvironmentOutlined, SolutionOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { PhoneOutlined, EnvironmentOutlined, SolutionOutlined, ArrowLeftOutlined, GlobalOutlined } from '@ant-design/icons';
 import { BankOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -152,6 +152,23 @@ export default function ExhibitorProfileForm() {
                             <Option value="HOME_LIVING">Home & Living</Option>
                             <Option value="OTHER_BUSINESSES">Other Businesses</Option>
                         </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                        name="website"
+                        label={
+                            <span className="flex items-center gap-2">
+                                <GlobalOutlined /> Website <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                            </span>
+                        }
+                        rules={[
+                            {
+                                type: 'url',
+                                message: 'Please enter a valid URL (e.g. https://yoursite.com)',
+                            }
+                        ]}
+                    >
+                        <Input placeholder="https://yourwebsite.com" />
                     </Form.Item>
 
                     <Form.Item className="mt-6 mb-0">

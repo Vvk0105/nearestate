@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { publicApiClient } from '../../context/AuthContext';
-import { MapPin, Building, Phone } from 'lucide-react';
+import { MapPin, Building, Phone, Globe } from 'lucide-react';
 import ImageCarousel from '../../components/ImageCarousel';
 import FullPageLoader from '../../components/FullPageLoader';
 
@@ -76,6 +76,16 @@ export default function ExhibitorDetailsPage() {
                     <span className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full text-sm">
                         Booth: {exhibitor.booth_number}
                     </span>
+                    {exhibitor.website && (
+                        <a
+                            href={exhibitor.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-full text-sm transition-colors"
+                        >
+                            <Globe size={16} /> Visit Website
+                        </a>
+                    )}
                 </div>
             </div>
 

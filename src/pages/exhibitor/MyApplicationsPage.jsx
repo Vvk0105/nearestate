@@ -55,16 +55,21 @@ export default function MyApplicationsPage() {
                             <div className="flex items-center gap-2 text-sm text-slate-600 mt-1">
                                 {/* <Calendar size={14} /> Applied on: {new Date(app.applied_at).toLocaleDateString()} */}
                             </div>
-                            <div className='flex flex-row gap-4 justify-center items-center'>
+                            <div className='flex flex-row gap-4 justify-start items-center flex-wrap mt-1'>
+                                {app.booking_ref && (
+                                    <p className="text-xs text-slate-500 font-mono bg-slate-100 px-2 py-0.5 rounded">
+                                        Ref: <strong>{app.booking_ref}</strong>
+                                    </p>
+                                )}
                                 {app.booth_number && (
-                                    <p className="text-sm text-slate-600 mt-1">Booth: <strong>{app?.booth_number}</strong></p>
+                                    <p className="text-sm text-slate-600">Booth: <strong>{app?.booth_number}</strong></p>
                                 )}
                                 {app.badge ? (
                                     <div className="cursor-pointer" onClick={() => { setPreviewImage(formatMediaUrl(app.badge)); setPreviewVisible(true); }}>
                                         <p className="text-sm text-slate-600 mt-1">Badge <span className="text-purple-500">Preview</span></p>
                                     </div>
                                 ): (
-                                    <span>No Badge</span>
+                                    <span className="text-sm text-slate-400">No Badge</span>
                                 )}
                             </div>
                         </div>

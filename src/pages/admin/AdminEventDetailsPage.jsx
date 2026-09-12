@@ -319,6 +319,7 @@ export default function AdminEventDetailsPage() {
                 if (companyVals.business_type) formData.append('business_type', companyVals.business_type);
                 if (companyVals.council_area) formData.append('council_area', companyVals.council_area);
                 if (companyVals.contact_number) formData.append('contact_number', companyVals.contact_number);
+                if (companyVals.website) formData.append('website', companyVals.website);
             }
 
             await apiClient.post(
@@ -372,6 +373,7 @@ export default function AdminEventDetailsPage() {
             contact_number: record.contact_number,
             business_type: record.business_type,
             council_area: record.council_area,
+            website: record.website || '',
         });
         setShowEditExhibitorModal(true);
     };
@@ -499,6 +501,14 @@ export default function AdminEventDetailsPage() {
             render: (num) => num
                 ? <Tag color="green">#{num}</Tag>
                 : <Tag color="orange">Pending</Tag>
+        },
+        {
+            title: 'Booking Ref',
+            dataIndex: 'booking_ref',
+            key: 'booking_ref',
+            render: (ref) => ref
+                ? <span className="font-mono text-xs text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">{ref}</span>
+                : <span className="text-gray-400 text-xs">—</span>
         },
         {
             title: 'Actions', key: 'action', render: (_, record) => (
@@ -780,9 +790,13 @@ export default function AdminEventDetailsPage() {
                         {drawerType === 'exhibitor' && (
                             <>
                                 <Descriptions.Item label="Booth">{drawerItem.booth_number}</Descriptions.Item>
+                                <Descriptions.Item label="Booking Ref">{drawerItem.booking_ref || '—'}</Descriptions.Item>
                                 <Descriptions.Item label="Contact Number">{drawerItem.contact_number || 'N/A'}</Descriptions.Item>
                                 <Descriptions.Item label="Business Type">{drawerItem.business_type || 'N/A'}</Descriptions.Item>
                                 <Descriptions.Item label="Council Area">{drawerItem.council_area || 'N/A'}</Descriptions.Item>
+                                <Descriptions.Item label="Website">
+                                    {drawerItem.website ? <a href={drawerItem.website} target="_blank" rel="noreferrer">{drawerItem.website}</a> : 'N/A'}
+                                </Descriptions.Item>
                                 {drawerItem.badge && (
                                     <Descriptions.Item label="Badge">
                                         <a href={drawerItem.badge} target="_blank" rel="noreferrer">View Badge</a>
@@ -940,7 +954,8 @@ export default function AdminEventDetailsPage() {
                                     <p className="text-sm mb-1"><strong>Company:</strong> {exhibitorLookup.profile.company_name}</p>
                                     <p className="text-sm mb-1"><strong>Business Type:</strong> {exhibitorLookup.profile.business_type}</p>
                                     <p className="text-sm mb-1"><strong>Council Area:</strong> {exhibitorLookup.profile.council_area}</p>
-                                    <p className="text-sm mb-0"><strong>Contact:</strong> {exhibitorLookup.profile.contact_number}</p>
+                                    <p className="text-sm mb-1"><strong>Contact:</strong> {exhibitorLookup.profile.contact_number}</p>
+                                    {exhibitorLookup.profile.website && <p className="text-sm mb-0"><strong>Website:</strong> <a href={exhibitorLookup.profile.website} target="_blank" rel="noreferrer">{exhibitorLookup.profile.website}</a></p>}
                                 </div>
                                 <p className="text-gray-500 text-sm mb-4">
                                     These existing company details will be used. Click <strong>Next</strong> to assign a booth.
@@ -1011,6 +1026,9 @@ export default function AdminEventDetailsPage() {
                                     <Form.Item label="Contact Number" name="contact_number"
                                         rules={[{ required: true, message: 'Contact number is required' }]}>
                                         <Input placeholder="+61400000000" />
+                                    </Form.Item>
+                                    <Form.Item label="Website" name="website">
+                                        <Input placeholder="https://company.com (optional)" />
                                     </Form.Item>
                                     <div className="flex justify-end gap-2 mt-1">
                                         <Button onClick={() => setExhibitorStep(0)}>← Back</Button>
@@ -1146,6 +1164,9 @@ export default function AdminEventDetailsPage() {
                     </Form.Item>
                     <Form.Item label="Contact Number" name="contact_number">
                         <Input placeholder="+61400000000" />
+                    </Form.Item>
+                    <Form.Item label="Website" name="website">
+                        <Input placeholder="https://company.com (optional)" />
                     </Form.Item>
                     <Form.Item label="Business Type" name="business_type">
                         <Select placeholder="Select business type" showSearch optionFilterProp="children">
