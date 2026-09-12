@@ -18,7 +18,7 @@ export default function ProfilePage() {
     const [companyProfile, setCompanyProfile] = useState(null);
     const [companyLoading, setCompanyLoading] = useState(false);
     const [companyForm, setCompanyForm] = useState({
-        company_name: '', council_area: '', business_type: 'DEVELOPER', contact_number: ''
+        company_name: '', council_area: '', business_type: 'DEVELOPER', contact_number: '', website: ''
     });
     const [savingCompany, setSavingCompany] = useState(false);
 
@@ -42,6 +42,7 @@ export default function ProfilePage() {
                         council_area:   detailRes.data.council_area   || '',
                         business_type:  detailRes.data.business_type  || 'DEVELOPER',
                         contact_number: detailRes.data.contact_number || '',
+                        website:        detailRes.data.website        || '',
                     });
                 }
             } catch (err) {
@@ -361,6 +362,18 @@ export default function ProfilePage() {
                                         onChange={e => setCompanyForm({ ...companyForm, contact_number: e.target.value })}
                                         className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
                                         placeholder="+91 98765 43210"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Website <span className="text-xs text-slate-400 font-normal">(optional)</span>
+                                    </label>
+                                    <input
+                                        type="url"
+                                        value={companyForm.website}
+                                        onChange={e => setCompanyForm({ ...companyForm, website: e.target.value })}
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                                        placeholder="https://yourwebsite.com"
                                     />
                                 </div>
                             </div>

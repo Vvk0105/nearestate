@@ -19,7 +19,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
     const [companyProfile, setCompanyProfile] = useState(null);
     const [companyLoading, setCompanyLoading] = useState(false);
     const [companyForm, setCompanyForm] = useState({
-        company_name: '', council_area: '', business_type: 'DEVELOPER', contact_number: ''
+        company_name: '', council_area: '', business_type: 'DEVELOPER', contact_number: '', website: ''
     });
     const [savingCompany, setSavingCompany] = useState(false);
 
@@ -45,6 +45,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
                         council_area:   detailRes.data.council_area   || '',
                         business_type:  detailRes.data.business_type  || 'DEVELOPER',
                         contact_number: detailRes.data.contact_number || '',
+                        website:        detailRes.data.website        || '',
                     });
                 }
             } catch (err) {
@@ -248,6 +249,18 @@ export default function UserProfileModal({ isOpen, onClose }) {
                                                 value={companyForm.contact_number}
                                                 onChange={e => setCompanyForm({ ...companyForm, contact_number: e.target.value })}
                                                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            />
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                                Website <span className="text-slate-400 font-normal">(optional)</span>
+                                            </label>
+                                            <input
+                                                type="url"
+                                                value={companyForm.website}
+                                                onChange={e => setCompanyForm({ ...companyForm, website: e.target.value })}
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                placeholder="https://yourwebsite.com"
                                             />
                                         </div>
                                     </div>
