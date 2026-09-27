@@ -5,61 +5,60 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    // Raise the warning threshold — the vendor chunk will still be large, but
-    // it's cached by the browser after the first load (never re-downloaded).
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // ── React core (tiny, downloaded once) ─────────────────────────────
-          if (id.includes('node_modules/react/') ||
-              id.includes('node_modules/react-dom/') ||
-              id.includes('node_modules/react-router') ||
-              id.includes('node_modules/scheduler/')) {
-            return 'vendor-react';
+          // ── React + Ant Design MUST stay together ──────────────────────────
+          // Ant Design calls React.useLayoutEffect directly. If React is in a
+          // separate chunk it may not be initialized when antd loads, causing:
+          // "Cannot read properties of undefined (reading 'useLayoutEffect')"
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/scheduler/') ||
+            id.includes('node_modules/antd/') ||
+            id.includes('node_modules/@ant-design/') ||
+            id.includes('node_modules/rc-')
+          ) {
+            return 'vendor-react-antd';
           }
 
-          // ── TanStack Query (separate, tiny) ─────────────────────────────────
+          // ── TanStack Query ─────────────────────────────────────────────────
           if (id.includes('@tanstack/react-query')) {
             return 'vendor-query';
           }
 
-          // ── Ant Design (heaviest lib — isolated so everything else stays small)
-          if (id.includes('node_modules/antd/') ||
-              id.includes('node_modules/@ant-design/') ||
-              id.includes('node_modules/rc-')) {
-            return 'vendor-antd';
+          // ── React Router ───────────────────────────────────────────────────
+          if (id.includes('node_modules/react-router')) {
+            return 'vendor-router';
           }
 
-          // ── Ant Design Icons (very large — separate chunk, loaded lazily) ──
-          if (id.includes('node_modules/@ant-design/icons')) {
-            return 'vendor-antd-icons';
-          }
-
-          // ── Lucide icons ────────────────────────────────────────────────────
+          // ── Lucide icons ───────────────────────────────────────────────────
           if (id.includes('node_modules/lucide-react')) {
             return 'vendor-lucide';
           }
 
-          // ── Google OAuth ─────────────────────────────────────────────────────
-          if (id.includes('@react-oauth/google') ||
-              id.includes('node_modules/google')) {
-            return 'vendor-google';
-          }
-
-          // ── QR / camera / zxing (only used in admin QR page) ────────────────
-          if (id.includes('node_modules/@zxing') ||
-              id.includes('node_modules/html5-qrcode') ||
-              id.includes('node_modules/jsqr')) {
+          // ── QR / camera (only loaded on /admin/scan) ───────────────────────
+          if (
+            id.includes('node_modules/@zxing') ||
+            id.includes('node_modules/html5-qrcode') ||
+            id.includes('node_modules/jsqr')
+          ) {
             return 'vendor-qr';
           }
 
-          // ── Date / image utilities ───────────────────────────────────────────
+          // ── Date utilities ─────────────────────────────────────────────────
           if (id.includes('node_modules/dayjs')) {
             return 'vendor-dayjs';
           }
 
-          // Everything else stays in the default auto-split chunks
+          // ── Google OAuth ───────────────────────────────────────────────────
+          if (id.includes('@react-oauth/google')) {
+            return 'vendor-google';
+          }
+
+          // Everything else → auto-split by Vite (route chunks from React.lazy)
         },
       },
     },
