@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import EventCard from './EventCard';
 import { EventGridSkeleton } from './Skeleton';
 import { useAuth, publicApiClient } from '../context/AuthContext';
+import { usePublicEvents, useBannerEvents } from '../api/queries';
 import {
     Loader, LayoutGrid, Zap, CalendarDays, Clock,
     MapPin, Calendar, ChevronLeft, ChevronRight,
@@ -193,75 +194,60 @@ export default function EventsHomePage({
     const { apiClient: contextApiClient } = useAuth();
     const activeApiClient = role === 'public' ? publicApiClient : (propApiClient || contextApiClient || publicApiClient);
 
-    const [events, setEvents] = useState([]);
-    const [upcomingEventsForBanner, setUpcomingEventsForBanner] = useState([]);
-    const [counts, setCounts] = useState({ all: 0, ongoing: 0, upcoming: 0, past: 0 });
-    const [loadingEvents, setLoadingEvents] = useState(true);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const loadMoreRef = useRef(null);
-    const [cancellingId, setCancellingId] = useState(null);
-
+    // ── Search with debounce ──────────────────────────────────────────────────
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
-
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedSearch(search), 400);
         return () => clearTimeout(timer);
     }, [search]);
 
-    // Fetch upcoming events specifically for the Hero Banner slider
-    useEffect(() => {
-        let isMounted = true;
-        const fetchUpcomingForBanner = async () => {
-            try {
-                const res = await activeApiClient.get('/exhibitions/public/exhibitions/', {
-                    params: { page: 1, limit: 5, status: 'upcoming' }
-                });
-                if (isMounted) {
-                    setUpcomingEventsForBanner(res.data.data || []);
-                }
-            } catch (error) {
-                console.error("Failed to fetch banner exhibitions", error);
-            }
-        };
-        fetchUpcomingForBanner();
-        return () => { isMounted = false; };
-    }, [activeApiClient]);
+    // ── TanStack Query: Banner (cached 10 min) ────────────────────────────────
+    const { data: bannerData } = useBannerEvents();
+    const upcomingEventsForBanner = bannerData || [];
 
-    // Initial/Filter load
-    useEffect(() => {
-        let isMounted = true;
-        const fetchInitial = async () => {
-            try {
-                setLoadingEvents(true);
-                const res = await activeApiClient.get('/exhibitions/public/exhibitions/', {
-                    params: { page: 1, limit: 10, status: activeFilter, search: debouncedSearch }
-                });
-                if (isMounted) {
-                    const data = res.data.data || [];
-                    const total = res.data.total || data.length;
-                    setEvents(data);
-                    setHasMore(data.length < total);
-                    setPage(1);
-                    if (res.data.counts) {
-                        setCounts(res.data.counts);
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to fetch homepage exhibitions", error);
-            } finally {
-                if (isMounted) {
-                    setLoadingEvents(false);
-                }
-            }
-        };
-        fetchInitial();
-        return () => { isMounted = false; };
-    }, [activeApiClient, activeFilter, debouncedSearch]);
+    // ── TanStack Query: Main events list (cached 5 min per filter+search) ────
+    const queryParams = { page: 1, limit: 10, status: activeFilter, search: debouncedSearch };
+    const {
+        data: eventsData,
+        isFetching: loadingEvents,
+    } = usePublicEvents(queryParams);
 
-    // Next page fetch
+    // Derive events and counts from query result
+    const baseEvents = eventsData?.data || [];
+    const baseTotal  = eventsData?.total || baseEvents.length;
+    const counts     = eventsData?.counts || { all: 0, ongoing: 0, upcoming: 0, past: 0 };
+
+    // ── Accumulate pages for infinite scroll ─────────────────────────────────
+    // useQuery handles page 1; pages 2+ are accumulated imperatively.
+    const [extraEvents, setExtraEvents] = useState([]);
+    const [page, setPage]               = useState(1);
+    const [hasMore, setHasMore]         = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const loadMoreRef                   = useRef(null);
+    const [cancellingId, setCancellingId] = useState(null);
+
+    // Reset extra pages whenever the query key changes (filter or search changed)
+    useEffect(() => {
+        setExtraEvents([]);
+        setPage(1);
+        setHasMore(true);
+    }, [activeFilter, debouncedSearch]);
+
+    // Update hasMore once page-1 data arrives
+    useEffect(() => {
+        if (eventsData) {
+            setHasMore(baseEvents.length < baseTotal);
+        }
+    }, [eventsData, baseEvents.length, baseTotal]);
+
+    // Combine page-1 results with extra accumulated pages
+    const events = (() => {
+        const combined = [...baseEvents, ...extraEvents];
+        return Array.from(new Map(combined.map(e => [e.id, e])).values());
+    })();
+
+    // Next page fetch (imperative, outside useQuery)
     const fetchNextPage = async () => {
         if (loadingMore || !hasMore) return;
         setLoadingMore(true);
@@ -270,48 +256,30 @@ export default function EventsHomePage({
             const res = await activeApiClient.get('/exhibitions/public/exhibitions/', {
                 params: { page: nextPage, limit: 10, status: activeFilter, search: debouncedSearch }
             });
-            const data = res.data.data || [];
+            const data  = res.data.data || [];
             const total = res.data.total || (events.length + data.length);
-            
-            setEvents(prev => {
+            setExtraEvents(prev => {
                 const combined = [...prev, ...data];
-                const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
-                setHasMore(unique.length < total);
-                return unique;
+                return Array.from(new Map(combined.map(e => [e.id, e])).values());
             });
+            setHasMore(events.length + data.length < total);
             setPage(nextPage);
-            if (res.data.counts) {
-                setCounts(res.data.counts);
-            }
         } catch (error) {
-            console.error("Failed to fetch homepage exhibitions page", error);
+            console.error('Failed to fetch next page', error);
         } finally {
             setLoadingMore(false);
         }
     };
 
-    // Intersection observer
+    // Intersection observer for infinite scroll
     useEffect(() => {
         if (loadingEvents || !hasMore || initialLoadingProp) return;
-
         const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting) {
-                    fetchNextPage();
-                }
-            },
+            (entries) => { if (entries[0].isIntersecting) fetchNextPage(); },
             { rootMargin: '150px' }
         );
-
-        if (loadMoreRef.current) {
-            observer.observe(loadMoreRef.current);
-        }
-
-        return () => {
-            if (loadMoreRef.current) {
-                observer.unobserve(loadMoreRef.current);
-            }
-        };
+        if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+        return () => { if (loadMoreRef.current) observer.unobserve(loadMoreRef.current); };
     }, [hasMore, page, loadingEvents, loadingMore, initialLoadingProp]);
 
     if (initialLoadingProp) return <EventGridSkeleton count={6} />;

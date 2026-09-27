@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { Table, Button, Input, Tag, Card, Modal } from 'antd';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { PlusOutlined, SearchOutlined, ReloadOutlined, EyeOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { LayoutGrid, Zap, CalendarDays, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useAdminEvents, queryKeys } from '../../api/queries';
 
 // ── Status classifier (mirrors EventsHomePage logic) ─────────────────────────
 const FILTERS = [
@@ -30,53 +32,33 @@ function classifyEvent(event) {
 
 export default function AdminEventsPage() {
     const { apiClient } = useAuth();
-    const [allEvents, setAllEvents]   = useState([]);
-    const [loading, setLoading]       = useState(false);
+    const queryClient   = useQueryClient();
     const [togglingId, setTogglingId] = useState(null);
-    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
     const [search, setSearch]         = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
-    const [counts, setCounts]         = useState({ all: 0, ongoing: 0, upcoming: 0, past: 0, active: 0, inactive: 0 });
 
-    useEffect(() => {
-        fetchEvents(1, pagination.pageSize, search, activeFilter);
-    }, [activeFilter]); // Trigger fetch whenever filter changes
+    // ── TanStack Query: Admin events list ─────────────────────────────────────
+    const queryParams = { page: pagination.current, limit: pagination.pageSize, search, status: activeFilter };
+    const { data: eventsData, isFetching: loading, refetch } = useAdminEvents(queryParams);
 
-    const fetchEvents = async (page = 1, limit = 10, query = '', statusFilter = 'all') => {
-        setLoading(true);
-        try {
-            const res = await apiClient.get('/exhibitions/admin/exhibitions/', {
-                params: { page, limit, search: query, status: statusFilter }
-            });
-            if (res.data.data) {
-                setAllEvents(res.data.data);
-                setPagination(prev => ({ ...prev, current: page, pageSize: limit, total: res.data.total }));
-                if (res.data.counts) {
-                    setCounts(res.data.counts);
-                }
-            } else {
-                setAllEvents(res.data);
-                setPagination(prev => ({ ...prev, total: res.data.length }));
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to load events');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const allEvents = eventsData?.data || eventsData || [];
+    const counts    = eventsData?.counts || { all: 0, ongoing: 0, upcoming: 0, past: 0, active: 0, inactive: 0 };
+    const total     = eventsData?.total   || allEvents.length;
+
+    const invalidateAdminEvents = () => queryClient.invalidateQueries({ queryKey: ['adminEvents'] });
 
     const handleTableChange = (newPagination) => {
-        fetchEvents(newPagination.current, newPagination.pageSize, search, activeFilter);
+        setPagination({ current: newPagination.current, pageSize: newPagination.pageSize });
     };
 
     const handleSearch = () => {
-        fetchEvents(1, pagination.pageSize, search, activeFilter);
+        setPagination(prev => ({ ...prev, current: 1 }));
     };
 
     const handleReset = () => {
         setSearch('');
-        fetchEvents(1, 10, '', activeFilter);
+        setPagination({ current: 1, pageSize: 10 });
     };
 
     const handleDelete = (event) => {
@@ -90,7 +72,7 @@ export default function AdminEventsPage() {
                 try {
                     await apiClient.delete(`/exhibitions/admin/exhibitions/${event.id}/delete/`);
                     toast.success('Event deleted successfully');
-                    fetchEvents(pagination.current, pagination.pageSize, search, activeFilter);
+                    invalidateAdminEvents();
                 } catch (error) {
                     toast.error(error.response?.data?.message || 'Failed to delete event');
                 }
@@ -115,7 +97,7 @@ export default function AdminEventsPage() {
                     toast.success(
                         willActivate ? 'Event activated successfully' : 'Event deactivated successfully'
                     );
-                    fetchEvents(pagination.current, pagination.pageSize, search, activeFilter);
+                    invalidateAdminEvents();
                 } catch (error) {
                     toast.error(error.response?.data?.message || 'Failed to update status');
                 } finally {
@@ -304,7 +286,7 @@ export default function AdminEventsPage() {
                     pagination={{
                         current: pagination.current,
                         pageSize: pagination.pageSize,
-                        total: pagination.total,
+                        total: total,
                         showSizeChanger: true,
                     }}
                     onChange={handleTableChange}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { publicApiClient } from '../../context/AuthContext';
@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import ImageCarousel from '../../components/ImageCarousel';
 import { EventDetailSkeleton } from '../../components/Skeleton';
+import { useEventDetail, useEventExhibitors, useVisitorStatus, useMyApplications } from '../../api/queries';
 
 export default function EventDetailsPage() {
     const MEDIA_BASE = import.meta.env.VITE_MEDIA_BASE_URL;
@@ -14,9 +15,6 @@ export default function EventDetailsPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const { apiClient, user } = useAuth();
-    const [event, setEvent] = useState(null);
-    const [exhibitors, setExhibitors] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [registering, setRegistering] = useState(false);
     const [isRegistered, setIsRegistered] = useState(false);
 
@@ -37,50 +35,37 @@ export default function EventDetailsPage() {
     const isVisitor = activeRole === 'VISITOR';
 
     // Resolve base path for exhibitor tab links
-    // Public guests & visitors use /events/:id/exhibitors/:exhibitorId
-    // Exhibitors use /exhibitor/events/:id/exhibitors/:exhibitorId
     const exhibitorLinkBase =
         activeRole === 'EXHIBITOR' ? '/exhibitor/events' : '/events';
 
-    const fetchData = useCallback(async () => {
-        try {
-            // ✅ Use publicApiClient for event data — no auth token needed.
-            // This allows guests to view event details without logging in (Apple 5.1.1v).
-            const [eventRes, exhibitorRes] = await Promise.all([
-                publicApiClient.get(`/exhibitions/public/exhibitions/${id}/`),
-                publicApiClient.get(`/exhibitions/public/exhibitions/${id}/exhibitors/`),
-            ]);
-            setEvent(eventRes.data);
-            setExhibitors(exhibitorRes.data);
+    // ── TanStack Query: Event detail + Exhibitors (both cached 5 min) ─────────
+    const { data: event, isLoading: loadingEvent, refetch: refetchEvent } = useEventDetail(id);
+    const { data: exhibitors = [], isLoading: loadingExhibitors } = useEventExhibitors(id);
+    const loading = loadingEvent || loadingExhibitors;
 
-            // Fetch user-specific status only when logged in
-            if (user) {
-                const currentRole = user.active_role || user.role;
-                if (currentRole === 'VISITOR') {
-                    const statusRes = await apiClient.get(
-                        `/exhibitions/visitor/register/${id}/`
-                    );
-                    setIsRegistered(statusRes.data.is_registered);
-                } else if (currentRole === 'EXHIBITOR') {
-                    const appsRes = await apiClient.get('/exhibitions/exhibitor/my-applications/');
-                    const myApp = appsRes.data.find(a => a.exhibition_id === parseInt(id));
-                    if (myApp) {
-                        setApplicationStatus(myApp.status);
-                        setIsRegistered(true);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Failed to fetch event details', error);
-            toast.error('Failed to load event details.');
-        } finally {
-            setLoading(false);
-        }
-    }, [id, apiClient, user]);
-
+    // ── TanStack Query: Visitor registration status (only when visitor) ────────
+    const { data: visitorStatus, refetch: refetchVisitorStatus } = useVisitorStatus(id, isVisitor);
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        if (visitorStatus) setIsRegistered(visitorStatus.is_registered);
+    }, [visitorStatus]);
+
+    // ── TanStack Query: Exhibitor applications (only when exhibitor) ───────────
+    const { data: myApplications = [] } = useMyApplications(isExhibitor);
+    useEffect(() => {
+        if (isExhibitor && myApplications.length > 0) {
+            const myApp = myApplications.find(a => a.exhibition_id === parseInt(id));
+            if (myApp) {
+                setApplicationStatus(myApp.status);
+                setIsRegistered(true);
+            }
+        }
+    }, [myApplications, isExhibitor, id]);
+
+    // A lightweight refetch helper for actions that mutate state
+    const fetchData = () => {
+        refetchEvent();
+        if (isVisitor) refetchVisitorStatus();
+    };
 
     // Guard: if event becomes available and current tab is 'recaps' but event is not past,
     // fall back to 'details' so users can't be stuck on an invalid tab.
