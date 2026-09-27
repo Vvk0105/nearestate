@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Card, Row, Col, Statistic, Spin, Progress, Tag, Tooltip } from 'antd';
 import {
     CalendarOutlined, UserOutlined, ShopOutlined,
-    RiseOutlined, BarChartOutlined
+    RiseOutlined, BarChartOutlined, QrcodeOutlined
 } from '@ant-design/icons';
 
 // ── Friendly business type labels ─────────────────────────────────────────
@@ -88,6 +88,26 @@ export default function AdminDashboard() {
                     </Card>
                 </Col>
             </Row>
+
+            {/* ── QR Check-In Quick Action ── */}
+            <div
+                onClick={() => window.open('/admin/scan', '_blank')}
+                className="cursor-pointer rounded-2xl p-5 flex items-center gap-5 shadow-lg transition-all hover:shadow-indigo-300/40 hover:scale-[1.01] active:scale-100"
+                style={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
+                }}
+            >
+                <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+                    <QrcodeOutlined style={{ fontSize: 30, color: '#fff' }} />
+                </div>
+                <div className="flex-1">
+                    <h3 className="text-white font-bold text-lg leading-tight">QR Gate Check-In</h3>
+                    <p className="text-indigo-100 text-sm mt-0.5">Open the camera scanner to check visitors in at the entrance</p>
+                </div>
+                <div className="hidden sm:flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-all">
+                    Open Scanner →
+                </div>
+            </div>
 
             {/* ── Analytics ── */}
             <div>

@@ -11,7 +11,7 @@ import {
     ArrowLeftOutlined, EyeOutlined, CheckCircleOutlined,
     CloseCircleOutlined, SearchOutlined, ReloadOutlined,
     UserAddOutlined, ShopOutlined, UploadOutlined, CheckOutlined, LinkOutlined, EnvironmentOutlined,
-    DownloadOutlined, EditOutlined, DeleteOutlined
+    DownloadOutlined, EditOutlined, DeleteOutlined, QrcodeOutlined
 } from '@ant-design/icons';
 import { ApprovalModal } from './ApprovalModal';
 
@@ -752,6 +752,18 @@ export default function AdminEventDetailsPage() {
                         />
                         <Button icon={<ReloadOutlined />} onClick={() => fetchVisitors(1, 10, "")}>Refresh</Button>
                         <Button icon={<DownloadOutlined />} onClick={handleDownloadVisitors}>Download Excel</Button>
+                        <Button
+                            icon={<QrcodeOutlined />}
+                            onClick={() => window.open('/admin/scan', '_blank')}
+                            style={{
+                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                color: '#fff',
+                                border: 'none',
+                                fontWeight: 600,
+                            }}
+                        >
+                            Start QR Scan
+                        </Button>
                         <Button
                             type="primary"
                             icon={<UserAddOutlined />}

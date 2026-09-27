@@ -108,6 +108,10 @@ function App() {
               <Routes>
                 {/* ─── Admin Routes ─── */}
                 <Route path="/admin/login" element={<AdminLoginPage />} />
+
+                {/* ─── QR Scan: full-screen, no admin sidebar ─── */}
+                <Route path="/admin/scan" element={<AdminQRScanPage />} />
+
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<Navigate to="dashboard" replace />} />
                   <Route path="dashboard" element={<AdminDashboard />} />
@@ -116,7 +120,6 @@ function App() {
                   <Route path="events/:id" element={<AdminEventDetailsPage />} />
                   <Route path="events/:id/edit" element={<AdminEditEventPage />} />
                   <Route path="events/:id/recap" element={<AdminEventRecapPage />} />
-                  <Route path="scan" element={<AdminQRScanPage />} />
                 </Route>
 
                 {/* ─── Minimal Layout (No Nav) ─── */}
