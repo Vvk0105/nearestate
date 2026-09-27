@@ -274,7 +274,7 @@ export default function EventDetailsPage() {
                                             {isExhibitor && !isPastEvent ? (
                                                 <>
                                                     <h3 className="text-xl font-bold text-slate-900 mb-3">
-                                                        {priceTiers.length > 0 ? 'Booth Pricing' : 'Application Fee'}
+                                                        {priceTiers.length > 0 ? 'Booth Pricing' : 'Booth Pricing'}
                                                     </h3>
                                                     {priceTiers.length > 0 ? (
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -290,7 +290,7 @@ export default function EventDetailsPage() {
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        <p className="text-sm text-slate-600 font-semibold">{event.currency_symbol || '₹'}{event.registration_fee}</p>
+                                                        <p className="text-sm text-slate-600 font-semibold">Pricing unavailable</p>
                                                     )}
                                                 </>
                                             ) : !isExhibitor && !isPastEvent ? (
