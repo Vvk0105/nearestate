@@ -478,12 +478,13 @@ export default function AdminEventDetailsPage() {
 
 
     const exhibitorColumns = [
-        { title: 'Company Name', dataIndex: 'company_name', key: 'company_name', render: text => <strong>{text}</strong> },
-        { title: 'Email', dataIndex: 'email', key: 'email' },
+        { title: 'Company Name', dataIndex: 'company_name', key: 'company_name', width: 180, render: text => <strong className="line-clamp-2">{text}</strong> },
+        { title: 'Email', dataIndex: 'email', key: 'email', width: 200, render: text => <span className="break-all">{text}</span> },
         {
             title: 'Plan',
             dataIndex: 'selected_tier_name',
             key: 'selected_tier_name',
+            width: 140,
             render: (name, record) => name ? (
                 <span>
                     <Tag color="blue">{name}</Tag>
@@ -499,6 +500,7 @@ export default function AdminEventDetailsPage() {
             title: 'Booth No',
             dataIndex: 'booth_number',
             key: 'booth_number',
+            width: 110,
             render: (num) => num
                 ? <Tag color="green">#{num}</Tag>
                 : <Tag color="orange">Pending</Tag>
@@ -507,13 +509,14 @@ export default function AdminEventDetailsPage() {
             title: 'Booking Ref',
             dataIndex: 'booking_ref',
             key: 'booking_ref',
+            width: 130,
             render: (ref) => ref
                 ? <span className="font-mono text-xs text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">{ref}</span>
                 : <span className="text-gray-400 text-xs">—</span>
         },
         {
-            title: 'Actions', key: 'action', render: (_, record) => (
-                <Space>
+            title: 'Actions', key: 'action', width: 260, render: (_, record) => (
+                <Space size="small" wrap>
                     <Button size="small" icon={<EyeOutlined />} onClick={() => showDetails(record, 'exhibitor')}>
                         View
                     </Button>
@@ -543,19 +546,19 @@ export default function AdminEventDetailsPage() {
     ];
 
     const visitorColumns = [
-        { title: 'Name', dataIndex: 'name', key: 'name', render: text => <strong>{text}</strong> },
-        { title: 'Email', dataIndex: 'email', key: 'email' },
+        { title: 'Name', dataIndex: 'name', key: 'name', width: 170, render: text => <strong className="line-clamp-2">{text}</strong> },
+        { title: 'Email', dataIndex: 'email', key: 'email', width: 200, render: text => <span className="break-all">{text}</span> },
         {
-            title: 'Status', key: 'status', render: (_, record) => (
+            title: 'Status', key: 'status', width: 120, render: (_, record) => (
                 <Tag color={record.is_checked_in ? 'green' : 'orange'}>
                     {record.is_checked_in ? 'Checked In' : 'Registered'}
                 </Tag>
             )
         },
-        { title: 'QR Code', dataIndex: 'qr_code', key: 'qr_code', render: qr => <span className="text-gray-400">{qr.substring(0, 8)}...</span> },
+        { title: 'QR Code', dataIndex: 'qr_code', key: 'qr_code', width: 130, render: qr => <span className="font-mono text-xs text-gray-500 bg-slate-100 px-1.5 py-0.5 rounded">{qr?.substring(0, 8)}...</span> },
         {
-            title: 'Actions', key: 'actions', render: (_, record) => (
-                <Space>
+            title: 'Actions', key: 'actions', width: 260, render: (_, record) => (
+                <Space size="small" wrap>
                     <Button
                         size="small"
                         type={record.is_checked_in ? 'default' : 'primary'}
@@ -583,12 +586,12 @@ export default function AdminEventDetailsPage() {
     const isPastEvent = event.end_date && new Date(event.end_date) < new Date();
 
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
+        <div className="p-3 sm:p-6 max-w-full">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
                 <Link to="/admin/events" className="flex items-center gap-2 text-gray-500 hover:text-black">
                     <ArrowLeftOutlined /> Back to Events
                 </Link>
-                <Space>
+                <Space wrap>
                     {isPastEvent && (
                         <Button>
                             <Link to={`/admin/events/${id}/recap`}>🎉 Manage Event Recap</Link>
@@ -600,13 +603,13 @@ export default function AdminEventDetailsPage() {
                 </Space>
             </div>
 
-            <Card className="mb-6 shadow-sm">
-                <Row gutter={24} align="middle">
-                    <Col span={16}>
-                        <h1 className="text-2xl font-bold mb-2">{event.name}</h1>
-                        <p className="text-gray-500 mb-0">{event.city} • {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}</p>
+            <Card className="mb-6 shadow-sm" bodyStyle={{ padding: '16px' }}>
+                <Row gutter={[16, 16]} align="middle">
+                    <Col xs={24} sm={16}>
+                        <h1 className="text-xl sm:text-2xl font-bold mb-1">{event.name}</h1>
+                        <p className="text-gray-500 mb-0 text-sm">{event.city} • {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}</p>
                     </Col>
-                    <Col span={8} className="text-right">
+                    <Col xs={24} sm={8} className="text-left sm:text-right">
                         <Tag color={event.is_active ? 'green' : 'red'}>{event.is_active ? 'Active' : 'Inactive'}</Tag>
                     </Col>
                 </Row>
@@ -708,21 +711,23 @@ export default function AdminEventDetailsPage() {
                 </TabPane>
 
                 <TabPane tab="Exhibitors" key="2">
-                    <div className="mb-4 flex gap-2 flex-wrap">
+                    <div className="mb-4 flex flex-wrap gap-2 items-center">
                         <Input
                             placeholder="Search exhibitors..."
                             prefix={<SearchOutlined />}
                             value={exhibitorsSearch}
                             onChange={(e) => setExhibitorsSearch(e.target.value)}
-                            style={{ width: 300 }}
+                            className="w-full sm:w-64"
                         />
-                        <Button icon={<ReloadOutlined />} onClick={() => fetchExhibitors(1, 10, "")}>Refresh</Button>
-                        <Button icon={<DownloadOutlined />} onClick={handleDownloadExhibitors}>Download Excel</Button>
+                        <div className="flex gap-2 flex-wrap">
+                            <Button icon={<ReloadOutlined />} onClick={() => fetchExhibitors(1, 10, "")}>Refresh</Button>
+                            <Button icon={<DownloadOutlined />} onClick={handleDownloadExhibitors}>Download Excel</Button>
+                        </div>
                         <Button
                             type="primary"
                             icon={<ShopOutlined />}
                             onClick={() => setShowAddExhibitorModal(true)}
-                            style={{ marginLeft: 'auto' }}
+                            className="w-full sm:w-auto sm:ml-auto"
                         >
                             Add Exhibitor
                         </Button>
@@ -732,43 +737,47 @@ export default function AdminEventDetailsPage() {
                         dataSource={exhibitors}
                         rowKey="id"
                         loading={exhibitorsLoading}
+                        scroll={{ x: 850 }}
                         pagination={{
                             current: exhibitorsPagination.current,
                             pageSize: exhibitorsPagination.pageSize,
                             total: exhibitorsTotal,
+                            responsive: true,
                         }}
                         onChange={handleExhibitorTableChange}
                     />
                 </TabPane>
 
                 <TabPane tab="Visitors" key="3">
-                    <div className="mb-4 flex gap-2 flex-wrap">
+                    <div className="mb-4 flex flex-wrap gap-2 items-center">
                         <Input
                             placeholder="Search visitors..."
                             prefix={<SearchOutlined />}
                             value={visitorsSearch}
                             onChange={(e) => setVisitorsSearch(e.target.value)}
-                            style={{ width: 300 }}
+                            className="w-full sm:w-64"
                         />
-                        <Button icon={<ReloadOutlined />} onClick={() => fetchVisitors(1, 10, "")}>Refresh</Button>
-                        <Button icon={<DownloadOutlined />} onClick={handleDownloadVisitors}>Download Excel</Button>
-                        <Button
-                            icon={<QrcodeOutlined />}
-                            onClick={() => window.open('/admin/scan', '_blank')}
-                            style={{
-                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                color: '#fff',
-                                border: 'none',
-                                fontWeight: 600,
-                            }}
-                        >
-                            Start QR Scan
-                        </Button>
+                        <div className="flex gap-2 flex-wrap">
+                            <Button icon={<ReloadOutlined />} onClick={() => fetchVisitors(1, 10, "")}>Refresh</Button>
+                            <Button icon={<DownloadOutlined />} onClick={handleDownloadVisitors}>Download Excel</Button>
+                            <Button
+                                icon={<QrcodeOutlined />}
+                                onClick={() => window.open('/admin/scan', '_blank')}
+                                style={{
+                                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                    color: '#fff',
+                                    border: 'none',
+                                    fontWeight: 600,
+                                }}
+                            >
+                                Start QR Scan
+                            </Button>
+                        </div>
                         <Button
                             type="primary"
                             icon={<UserAddOutlined />}
                             onClick={() => setShowAddVisitorModal(true)}
-                            style={{ marginLeft: 'auto' }}
+                            className="w-full sm:w-auto sm:ml-auto"
                         >
                             Add Visitor
                         </Button>
@@ -778,10 +787,12 @@ export default function AdminEventDetailsPage() {
                         dataSource={visitors}
                         rowKey="id"
                         loading={visitorsLoading}
+                        scroll={{ x: 800 }}
                         pagination={{
                             current: visitorsPagination.current,
                             pageSize: visitorsPagination.pageSize,
                             total: visitorsTotal,
+                            responsive: true,
                         }}
                         onChange={handleVisitorTableChange}
                     />

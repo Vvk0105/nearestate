@@ -122,9 +122,10 @@ export default function AdminEventsPage() {
             title: 'Event Name',
             dataIndex: 'name',
             key: 'name',
+            width: 220,
             render: (text, record) => (
                 <div>
-                    <div className="font-medium">{text}</div>
+                    <div className="font-medium text-slate-800 line-clamp-2">{text}</div>
                     <div className="text-xs text-gray-400">ID: {record.id}</div>
                 </div>
             )
@@ -132,10 +133,11 @@ export default function AdminEventsPage() {
         {
             title: 'Date',
             key: 'date',
+            width: 150,
             render: (_, record) => (
                 <>
-                    <div>{new Date(record.start_date).toLocaleDateString()}</div>
-                    <div className="text-xs text-gray-500">to {new Date(record.end_date).toLocaleDateString()}</div>
+                    <div className="whitespace-nowrap">{new Date(record.start_date).toLocaleDateString()}</div>
+                    <div className="text-xs text-gray-500 whitespace-nowrap">to {new Date(record.end_date).toLocaleDateString()}</div>
                 </>
             )
         },
@@ -143,10 +145,13 @@ export default function AdminEventsPage() {
             title: 'Location',
             dataIndex: 'city',
             key: 'city',
+            width: 120,
+            render: (city) => <span className="whitespace-nowrap">{city || '—'}</span>
         },
         {
             title: 'Timeline',
             key: 'timeline',
+            width: 110,
             render: (_, record) => {
                 const status = record._status || classifyEvent(record);
                 return (
@@ -160,6 +165,7 @@ export default function AdminEventsPage() {
             title: 'Status',
             dataIndex: 'is_active',
             key: 'is_active',
+            width: 100,
             render: (active) => (
                 <Tag color={active ? 'green' : 'red'}>
                     {active ? 'Active' : 'Inactive'}
@@ -169,10 +175,11 @@ export default function AdminEventsPage() {
         {
             title: 'Actions',
             key: 'actions',
+            width: 240,
             render: (_, record) => (
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-1 flex-wrap">
                     <Link to={`/admin/events/${record.id}`}>
-                        <Button type="link" icon={<EyeOutlined />}>View Details</Button>
+                        <Button type="link" size="small" icon={<EyeOutlined />}>View</Button>
                     </Link>
 
                     {/* Toggle Active/Inactive — only shown in the Active/Inactive tabs */}
@@ -180,28 +187,31 @@ export default function AdminEventsPage() {
                         record.is_active ? (
                             <Button
                                 type="link"
+                                size="small"
                                 danger
                                 icon={<StopOutlined />}
                                 loading={togglingId === record.id}
                                 onClick={() => handleToggleStatus(record)}
                             >
-                                Make Inactive
+                                Deactivate
                             </Button>
                         ) : (
                             <Button
                                 type="link"
+                                size="small"
                                 style={{ color: '#16a34a' }}
                                 icon={<CheckCircleOutlined />}
                                 loading={togglingId === record.id}
                                 onClick={() => handleToggleStatus(record)}
                             >
-                                Make Active
+                                Activate
                             </Button>
                         )
                     )}
 
                     <Button
                         type="link"
+                        size="small"
                         danger
                         onClick={() => handleDelete(record)}
                     >
@@ -213,29 +223,31 @@ export default function AdminEventsPage() {
     ];
 
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Events Management</h1>
+        <div className="p-3 sm:p-6 max-w-full">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold">Events Management</h1>
                 <Link to="/admin/events/new">
-                    <Button type="primary" icon={<PlusOutlined />} size="large">
+                    <Button type="primary" icon={<PlusOutlined />} size="middle" className="w-full sm:w-auto">
                         Create Event
                     </Button>
                 </Link>
             </div>
 
-            <Card className="shadow-sm">
+            <Card className="shadow-sm overflow-hidden" bodyStyle={{ padding: '16px' }}>
                 {/* ── Search bar ── */}
-                <div className="mb-4 flex gap-4 flex-wrap">
+                <div className="mb-4 flex flex-col sm:flex-row gap-3">
                     <Input
                         placeholder="Search events..."
                         prefix={<SearchOutlined />}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         onPressEnter={handleSearch}
-                        style={{ width: 300 }}
+                        className="w-full sm:w-72"
                     />
-                    <Button type="primary" onClick={handleSearch}>Search</Button>
-                    <Button icon={<ReloadOutlined />} onClick={handleReset}>Reset</Button>
+                    <div className="flex gap-2">
+                        <Button type="primary" onClick={handleSearch}>Search</Button>
+                        <Button icon={<ReloadOutlined />} onClick={handleReset}>Reset</Button>
+                    </div>
                 </div>
 
                 {/* ── Filter Pills ── */}
@@ -246,7 +258,7 @@ export default function AdminEventsPage() {
                             <button
                                 key={key}
                                 onClick={() => setActiveFilter(key)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 shadow-sm ${
+                                className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all duration-200 shadow-sm ${
                                     isActive
                                         ? `${activeBg} border-transparent shadow-md`
                                         : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:shadow'
@@ -267,27 +279,29 @@ export default function AdminEventsPage() {
                 {activeFilter === 'inactive' && (
                     <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">
                         <XCircle size={16} />
-                        Events in this tab are <strong>not visible to the public</strong>. Click <strong>Make Active</strong> to publish an event.
+                        Events in this tab are <strong>not visible to the public</strong>. Click <strong>Activate</strong> to publish an event.
                     </div>
                 )}
                 {activeFilter === 'active' && (
                     <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm">
                         <CheckCircle size={16} />
-                        Events in this tab are <strong>publicly visible</strong>. Click <strong>Make Inactive</strong> to hide an event.
+                        Events in this tab are <strong>publicly visible</strong>. Click <strong>Deactivate</strong> to hide an event.
                     </div>
                 )}
 
-                {/* ── Events Table ── */}
+                {/* ── Events Table (Responsive with horizontal scroll) ── */}
                 <Table
                     columns={columns}
                     dataSource={filtered}
                     rowKey="id"
                     loading={loading}
+                    scroll={{ x: 800 }}
                     pagination={{
                         current: pagination.current,
                         pageSize: pagination.pageSize,
                         total: total,
                         showSizeChanger: true,
+                        responsive: true,
                     }}
                     onChange={handleTableChange}
                 />
