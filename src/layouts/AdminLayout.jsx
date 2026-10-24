@@ -10,6 +10,8 @@ import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
     QrcodeOutlined,
+    DollarOutlined,
+    TransactionOutlined,
 } from '@ant-design/icons';
 import FullPageLoader from '../components/FullPageLoader';
 
@@ -64,6 +66,18 @@ export default function AdminLayout() {
             icon: <CalendarOutlined />,
             label: 'Events',
             onClick: () => navigate('/admin/events'),
+        },
+        {
+            key: '/admin/revenue',
+            icon: <DollarOutlined />,
+            label: 'Revenue',
+            onClick: () => navigate('/admin/revenue'),
+        },
+        {
+            key: '/admin/transactions',
+            icon: <TransactionOutlined />,
+            label: 'Transactions',
+            onClick: () => navigate('/admin/transactions'),
         },
     ];
 

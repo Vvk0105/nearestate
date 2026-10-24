@@ -16,6 +16,7 @@ export default function EventDetailsPage() {
     const navigate = useNavigate();
     const { apiClient, user } = useAuth();
     const [registering, setRegistering] = useState(false);
+    const [showRegisterConfirm, setShowRegisterConfirm] = useState(false);
     const [isRegistered, setIsRegistered] = useState(false);
 
     // ── URL-persisted tab state ───────────────────────────────────────────────
@@ -88,6 +89,11 @@ export default function EventDetailsPage() {
             return;
         }
 
+        // Visitors must confirm before the registration (and QR) is created
+        setShowRegisterConfirm(true);
+    };
+
+    const confirmRegister = async () => {
         setRegistering(true);
         try {
             await apiClient.post(`/exhibitions/visitor/register/${id}/`);
@@ -104,6 +110,7 @@ export default function EventDetailsPage() {
             }
         } finally {
             setRegistering(false);
+            setShowRegisterConfirm(false);
         }
     };
 
@@ -704,7 +711,45 @@ export default function EventDetailsPage() {
                 </div>
             </div>
 
-
+            {/* ── Visitor registration confirmation ── */}
+            {showRegisterConfirm && (
+                <div
+                    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+                    onClick={() => !registering && setShowRegisterConfirm(false)}
+                >
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="h-11 w-11 rounded-full bg-indigo-50 flex items-center justify-center">
+                                <QrCode size={22} className="text-indigo-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900">Confirm registration</h3>
+                        </div>
+                        <p className="text-sm text-slate-600">
+                            Register for <span className="font-semibold text-slate-900">{event?.name}</span>?
+                            Your entry QR code will be generated and emailed to you.
+                        </p>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => setShowRegisterConfirm(false)}
+                                disabled={registering}
+                                className="flex-1 py-3 rounded-xl font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmRegister}
+                                disabled={registering}
+                                className="flex-1 py-3 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 flex items-center justify-center gap-2 disabled:opacity-60"
+                            >
+                                {registering ? <><Loader size={16} className="animate-spin" /> Registering...</> : 'Yes, register'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

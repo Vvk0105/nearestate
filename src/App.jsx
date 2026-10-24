@@ -61,6 +61,8 @@ const AdminCreateEventPage = lazy(() => import('./pages/admin/AdminCreateEventPa
 const AdminEditEventPage  = lazy(() => import('./pages/admin/AdminEditEventPage'));
 const AdminQRScanPage     = lazy(() => import('./pages/admin/AdminQRScanPage'));
 const AdminEventRecapPage = lazy(() => import('./pages/admin/AdminEventRecapPage'));
+const AdminRevenuePage = lazy(() => import('./pages/admin/AdminRevenuePage'));
+const AdminTransactionsPage = lazy(() => import('./pages/admin/AdminTransactionsPage'));
 
 // Common
 const ProfilePage         = lazy(() => import('./pages/common/ProfilePage'));
@@ -120,6 +122,8 @@ function App() {
                   <Route path="events/:id" element={<AdminEventDetailsPage />} />
                   <Route path="events/:id/edit" element={<AdminEditEventPage />} />
                   <Route path="events/:id/recap" element={<AdminEventRecapPage />} />
+                  <Route path="revenue" element={<AdminRevenuePage />} />
+                  <Route path="transactions" element={<AdminTransactionsPage />} />
                 </Route>
 
                 {/* ─── Minimal Layout (No Nav) ─── */}
