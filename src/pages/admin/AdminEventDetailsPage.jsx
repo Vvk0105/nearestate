@@ -1081,7 +1081,7 @@ export default function AdminEventDetailsPage() {
                             <Input type="number" min={1} placeholder="e.g. 12" size="large" />
                         </Form.Item>
 
-                        <Form.Item label="Badge (optional — PDF or image)">
+                        <Form.Item label="Badge (optional — auto-generated if you don't upload one)">
                             <Upload
                                 beforeUpload={(file) => { setBadgeFile(file); return false; }}
                                 onRemove={() => setBadgeFile(null)}
