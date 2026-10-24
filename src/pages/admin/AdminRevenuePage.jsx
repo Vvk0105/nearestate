@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Card, Row, Col, Statistic, Spin, Table, Empty } from 'antd';
 
@@ -70,7 +71,7 @@ export default function AdminRevenuePage() {
                         </Col>
                     </Row>
 
-                    <h3 className="font-semibold text-slate-800 mb-2">By Event</h3>
+                    <h3 className="font-semibold text-slate-800 mb-2">By Event <span className="text-xs font-normal text-slate-400">(click an event to see its transactions)</span></h3>
                     <Table
                         size="small"
                         rowKey="exhibition_id"
@@ -78,7 +79,13 @@ export default function AdminRevenuePage() {
                         dataSource={c.per_exhibition}
                         scroll={{ x: true }}
                         columns={[
-                            { title: 'Event', dataIndex: 'exhibition' },
+                            {
+                                title: 'Event',
+                                dataIndex: 'exhibition',
+                                render: (v, r) => (
+                                    <Link to={`/admin/transactions?event=${r.exhibition_id}`}>{v}</Link>
+                                ),
+                            },
                             { title: 'Bookings', dataIndex: 'bookings' },
                             {
                                 title: 'Revenue',

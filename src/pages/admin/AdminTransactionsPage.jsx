@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Table, Tag, Select, Input, Spin } from 'antd';
+import { Table, Tag, Select, Input, Spin, Statistic, Card } from 'antd';
 
 const STATUS_COLOR = { PAID: 'green', PENDING: 'gold', FAILED: 'red' };
 
@@ -8,6 +9,8 @@ export default function AdminTransactionsPage() {
     const { apiClient } = useAuth();
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const eventId = searchParams.get('event') || 'ALL';
     const [status, setStatus] = useState('ALL');
     const [search, setSearch] = useState('');
 
@@ -25,17 +28,40 @@ export default function AdminTransactionsPage() {
         load();
     }, [apiClient]);
 
+    const events = useMemo(() => {
+        const map = new Map();
+        rows.forEach((r) => map.set(String(r.exhibition_id), r.exhibition));
+        return [...map.entries()].map(([value, label]) => ({ value, label }));
+    }, [rows]);
+
+    const setEventId = (v) => {
+        const next = new URLSearchParams(searchParams);
+        if (v === 'ALL') next.delete('event');
+        else next.set('event', v);
+        setSearchParams(next, { replace: true });
+    };
+
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
         return rows.filter(
             (r) =>
+                (eventId === 'ALL' || String(r.exhibition_id) === eventId) &&
                 (status === 'ALL' || r.payment_status === status) &&
                 (!q ||
                     [r.exhibitor, r.email, r.exhibition, r.booking_ref, r.stripe_id]
                         .filter(Boolean)
                         .some((v) => v.toLowerCase().includes(q)))
         );
-    }, [rows, status, search]);
+    }, [rows, status, search, eventId]);
+
+    // Paid totals for whatever is currently shown, per currency
+    const paidTotals = useMemo(() => {
+        const t = {};
+        filtered.filter((r) => r.payment_status === 'PAID').forEach((r) => {
+            t[r.currency_symbol] = (t[r.currency_symbol] || 0) + r.amount;
+        });
+        return Object.entries(t);
+    }, [filtered]);
 
     const columns = [
         {
@@ -74,6 +100,14 @@ export default function AdminTransactionsPage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
+                <Select
+                    value={eventId}
+                    onChange={setEventId}
+                    style={{ width: 240 }}
+                    showSearch
+                    optionFilterProp="label"
+                    options={[{ value: 'ALL', label: 'All events' }, ...events]}
+                />
                 <Input.Search
                     placeholder="Search exhibitor, email, event, booking ref"
                     allowClear
@@ -92,6 +126,17 @@ export default function AdminTransactionsPage() {
                     ]}
                 />
             </div>
+
+            <Card size="small">
+                <div className="flex flex-wrap gap-8">
+                    <Statistic title="Transactions" value={filtered.length} />
+                    <Statistic
+                        title="Paid Revenue"
+                        value={paidTotals.length ? paidTotals.map(([sym, v]) => `${sym}${v.toLocaleString()}`).join(' + ') : '0'}
+                        valueStyle={{ color: '#16a34a' }}
+                    />
+                </div>
+            </Card>
 
             <Table
                 rowKey="id"
